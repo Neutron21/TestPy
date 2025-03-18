@@ -1,0 +1,9 @@
+# Ignorar entornos virtuales
+venv/
+ivan-venv/
+.env
+*.pyc
+__pycache__/
+.idea/
+.vscode/
+.DS_Store
