@@ -17,7 +17,7 @@
 # El comando quedaria de la siguiente forma:
     'python3 -m venv ivan-venv cursoPython'
     
-# Estructura del proyecto
+# Estructura del proyecto 
     cursoFastApi/
     │── app/
     │   │── __init__.py      # <- Asegúrate de que este archivo exista
