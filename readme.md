@@ -28,3 +28,5 @@
     │── requirements.txt
     │── .env                 # <- No subir a Git
 
+# Comando uvicorn, en ocasiones al agregar dependencias nuevas hay que recargar de nuevo el proyecto con uvicorn
+# este debe hacerse con el venv activo y en la carpeta que contenga la carpeta app
