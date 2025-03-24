@@ -2,9 +2,9 @@ import zoneinfo
 from fastapi import FastAPI
 from datetime import datetime
 
-from app.models import Invoice, Transaction
+from app.models import Invoice
 from app.db import create_all_tables
-from .routers import customers
+from .routers import customers, transactions
 
 country_timezones = {
     "CO": "America/Bogota",
@@ -16,6 +16,7 @@ country_timezones = {
 
 app = FastAPI(lifespan=create_all_tables)
 app.include_router(customers.router)
+app.include_router(transactions.router)
 
 @app.get("/")
 async def root():
@@ -37,10 +38,6 @@ async def time(iso_code: str):
         "place": timezone_str
         }
 
-
-@app.post("/transactions")
-async def create_customer(transaction_data: Transaction):
-    return transaction_data
 
 @app.post("/invoices")
 async def create_invoice(invoice_data: Invoice):
