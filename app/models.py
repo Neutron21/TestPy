@@ -5,6 +5,27 @@ from app.db import engine
 
 # Una buena práctica en arquitecturas limpias es usar ORM para la capa de acceso a datos y DTO
 # para la comunicación con la API, evitando exponer modelos de la base de datos directamente. 🚀
+
+# MODELOS OFICIALES
+class TipoFinEnum(str, Enum):
+    LIGA = "L"
+    MAIL = "M"
+
+class Financieras(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    nombre: str = Field(default=None)
+    tipo: str = Field(min_length=1, max_length=1)
+    fase: int = Field(default=None)
+
+class Productos(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    nombre: str = Field(default=None)
+    checklist: str = Field(default=None)
+    ch_viabilidad: str = Field(default=None)
+    institucion_id: int = Field(foreign_key="financiera.id")
+    tipo_persona: str = Field(min_length=1, max_length=5)
+    
+# MODELOS DE EJEMPLO
 class StatusEnum(str, Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
