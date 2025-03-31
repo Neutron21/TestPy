@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, EmailStr, field_validator
 from sqlmodel import SQLModel, Field, Relationship, Session, select
@@ -24,6 +25,54 @@ class Productos(SQLModel, table=True):
     ch_viabilidad: str = Field(default=None)
     institucion_id: int = Field(foreign_key="financiera.id")
     tipo_persona: str = Field(min_length=1, max_length=5)
+
+class UsuarioDTO (SQLModel):
+    nombre: str = Field(default=None)
+    email: str = Field(default=None)
+    rol: str = Field(default=None, min_length=1, max_length=1)
+    broker: str = Field(default=None)
+    sede: str = Field(default=None)
+
+class Usuarios (UsuarioDTO, table=True):
+    pass
+    id: int = Field(primary_key=True)
+
+class Formatos (SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    nombre: str = Field(default=None)
+    financiera_id: int = Field(foreign_key="financiera.id")
+
+class Producto_formato(SQLModel, table=True):
+    producto_id: int = Field(foreign_key="producto.id", primary_key=True)
+    formato_id: int = Field(foreign_key="formato.id", primary_key=True)    
+
+class Cotizacion(SQLModel, table=True):
+    id_cotizacion: int = Field(default=None, primary_key=True, nullable=False)
+    id_usuario: str = Field(max_length=100, nullable=False)
+    id_financiera: int = Field(nullable=False)
+    producto: int = Field(nullable=False)
+    tipo_persona: str = Field(nullable=False)  
+    nombre: str = Field(max_length=100, nullable=False)
+    rfc: str = Field(max_length=100, nullable=False)
+    plazo: int = Field(nullable=False)
+    edad: int = Field(nullable=False)
+    monto: float = Field(nullable=False)  
+    ingresos: float = Field(nullable=False)
+    estatus: int = Field(nullable=False) 
+    timestamp: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    antiguedad_empresa: int = Field(nullable=False)
+    OpCliente: str = Field(max_length=250, nullable=False)
+    broker: str = Field(nullable=False)  
+    localidad: str = Field(nullable=False)  
+
+
+
+
+
+
+
+
+
     
 # MODELOS DE EJEMPLO
 class StatusEnum(str, Enum):

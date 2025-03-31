@@ -21,7 +21,7 @@ async def get_producto_by_id(producto_id: int, session: SessionDep):
 
 @router.get("/productosByFin/{financiera_id}", response_model=list[Productos])
 async def get_producto_by_financiera(financiera_id: int, session: SessionDep):
-    statement = select(Productos).where(Productos.institucion_id == financiera_id)
-    productos_db = session.exec(statement).all()
+    query = select(Productos).where(Productos.institucion_id == financiera_id)
+    productos_db = session.exec(query).all()
     print(productos_db) 
     return productos_db

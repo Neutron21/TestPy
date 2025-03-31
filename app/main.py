@@ -5,7 +5,7 @@ from datetime import datetime
 
 from app.models import Invoice
 from app.db import create_all_tables
-from .routers import customers, transactions, plans, financieras, productos
+from .routers import customers, transactions, plans, financieras, productos, usuarios, formatos, producto_formato, cotizacion
 
 country_timezones = {
     "CO": "America/Bogota",
@@ -21,6 +21,13 @@ app = FastAPI()
 # app.include_router(plans.router)
 app.include_router(financieras.router)
 app.include_router(productos.router)
+app.include_router(usuarios.router)
+app.include_router(formatos.router)
+app.include_router(producto_formato.router)
+app.include_router(cotizacion.router)
+
+
+
 
 @app.middleware("http")
 async def log_request_time(request: Request, call_next):
