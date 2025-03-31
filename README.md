@@ -4,6 +4,7 @@ practica de fastapi con python
 # El env se encuentra dentro de la carpeta cursoFastApi
 # El comando a ejecutar para activar el entorno virtual es:
     'source ivan-venv/bin/activate'
+    'source desarollo/bin/activate'
     'deactivate' para desactivar el venv
 
 # Una vez activado el env se procede a correr el proyecto
