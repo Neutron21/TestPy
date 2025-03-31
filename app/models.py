@@ -67,12 +67,6 @@ class Cotizacion(SQLModel, table=True):
 
 
 
-
-
-
-
-
-
     
 # MODELOS DE EJEMPLO
 class StatusEnum(str, Enum):
