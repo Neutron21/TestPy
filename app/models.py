@@ -64,7 +64,23 @@ class Cotizacion(SQLModel, table=True):
     OpCliente: str = Field(max_length=250, nullable=False)
     broker: str = Field(nullable=False)  
     localidad: str = Field(nullable=False)  
+    custom_prod: str = Field(nullable=False)  
 
+
+class Comentarios(SQLModel, table=True):
+    id_comentario: int = Field(primary_key=True)
+    id_cotizacion: int = Field(default=None)
+    id_usuario: str = Field(default=None)
+    comentarios: str = Field(default=None)
+    archivo: str = Field(default=None)   
+    timestamp: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
+class Correos(SQLModel, table=True):
+    id_correo: int = Field(primary_key=True)
+    id_financiera: int = Field(default=None)
+    mail: str = Field(default=None)
+    nombre: str = Field(default=None)
+    activo: bool = Field(default=True)
 
 
     
