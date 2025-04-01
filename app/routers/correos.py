@@ -5,12 +5,23 @@ from app.models import Correos
 
 router = APIRouter(tags=["Correos"])
 
-@router.get("/correos/{mail}", response_model=list[Correos])  
-async def obtener_correos(mail: str, session: SessionDep):
-    query = select(Correos).where(Correos.mail == mail)
+@router.get("/correos/{id_financiera}", response_model=list[Correos])  
+async def obtener_correos(id_financiera: int, session: SessionDep):
+    query = select(Correos).where(Correos.id_financiera == id_financiera)
     correos = session.exec(query).all()  
 
     if not correos:  
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se encontraron correos para este email")  
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se encontraron correos para esta financiera")  
 
-    return correos 
+    return correos  
+@router.get("/correos/{id_financiera}/activos", response_model=list[Correos])  
+async def obtener_correos_activos(id_financiera: int, session: SessionDep):
+    query = select(Correos).where(
+        (Correos.id_financiera == id_financiera) & (Correos.activo == 1)
+    )
+    correos = session.exec(query).all()  
+
+    if not correos:  
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se encontraron correos activos para esta financiera")  
+
+    return correos  

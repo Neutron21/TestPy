@@ -13,22 +13,20 @@ async def obtener_comentarios(id_cotizacion: int, session: SessionDep):
     if not comentarios:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay comentarios para esta cotización")
     
-    # Si solo hay un comentario, devolverlo como objeto en lugar de lista
     if len(comentarios) == 1:
         return comentarios[0]
     
-    return comentarios  # Si hay más de uno, devolver la lista completa
+    return comentarios 
 @router.get("/comentarios/usuario/{id_usuario}")
 async def obtener_comentarios_por_usuario(id_usuario: str, session: SessionDep):
     query = select(Comentarios).where(Comentarios.id_usuario == id_usuario)
-    comentarios = session.exec(query).all()  # Obtener todos los resultados
+    comentarios = session.exec(query).all()  
 
     if not comentarios:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay comentarios para este usuario")
     
-    # Si solo hay un comentario, devolverlo como objeto en lugar de lista
     if len(comentarios) == 1:
         return comentarios[0]
     
-    return comentarios  # Si hay más de uno, devolver la lista completa
+    return comentarios 
 
