@@ -44,7 +44,13 @@ class Formatos (SQLModel, table=True):
 
 class Producto_formato(SQLModel, table=True):
     producto_id: int = Field(foreign_key="producto.id", primary_key=True)
-    formato_id: int = Field(foreign_key="formato.id", primary_key=True)    
+    formato_id: int = Field(foreign_key="formato.id", primary_key=True)  
+
+class Estatus_tramites(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    name: str = Field(default=None)
+
+
 
 class Cotizacion(SQLModel, table=True):
     id_cotizacion: int = Field(default=None, primary_key=True, nullable=False)
@@ -101,7 +107,7 @@ class Plan(SQLModel, table=True):
     price: int = Field(default=None)
     descripcion: str = Field(default=None)
     customers: list['Customer'] = Relationship( # Custome aun no esta definido en esta linea, por ese se usan comillas
-        back_populates="plans", link_model=CustomerPlan
+    back_populates="plans", link_model=CustomerPlan
     )
 
 class CustomerBase(SQLModel):

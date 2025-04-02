@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from firebase_admin import auth, credentials
 
 from app.db import create_all_tables # En caso de que necesite crear las tablas
-from .routers import financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos
+from .routers import financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -50,6 +50,8 @@ app.include_router(producto_formato.router)
 app.include_router(cotizacion.router)
 app.include_router(comentarios.router)
 app.include_router(correos.router)
+app.include_router(estatus_tramites.router)
+
 
 # 🔹 Middleware de autenticación Firebase
 class FirebaseAuthMiddleware(BaseHTTPMiddleware):

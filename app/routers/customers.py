@@ -5,8 +5,8 @@ from app.db import SessionDep
 
 router = APIRouter(tags=['Customers'])
 
-@router.post("/customers", response_model=Customer)
-async def create_customer(customer_data: CustomerCreate, session: SessionDep):
+@router.post("/customers", response_model=Customer) # la respuesta
+async def create_customer(customer_data: CustomerCreate, session: SessionDep): # el recibe o el request
     customer = Customer.model_validate(customer_data.model_dump())
     session.add(customer)
     session.commit()

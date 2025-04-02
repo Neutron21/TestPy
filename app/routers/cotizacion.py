@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.db import SessionDep
@@ -19,4 +20,11 @@ async def obtener_cotizaciones(id_usuario: str, session: SessionDep):
     query = select(Cotizacion).where(Cotizacion.id_usuario == id_usuario)
     cotizaciones = session.exec(query).all()
     
+    return cotizaciones
+@router.get("/cotizaciones/estatus/{estatus}", response_model=List[Cotizacion])
+async def get_cotizaciones_by_estatus(estatus: int, session: SessionDep):
+    query = select(Cotizacion).where(Cotizacion.estatus == estatus)
+    cotizaciones = session.exec(query).all()
+    if not cotizaciones:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existen Cotizaciones con ese estatus")
     return cotizaciones
