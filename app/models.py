@@ -1,8 +1,10 @@
 from datetime import datetime
 from enum import Enum
+from zoneinfo import ZoneInfo
 from pydantic import BaseModel, EmailStr, field_validator
 from sqlmodel import SQLModel, Field, Relationship, Session, select
 from app.db import engine
+from pydantic import ConfigDict
 
 # Una buena práctica en arquitecturas limpias es usar ORM para la capa de acceso a datos y DTO
 # para la comunicación con la API, evitando exponer modelos de la base de datos directamente. 🚀
@@ -32,10 +34,11 @@ class UsuarioDTO (SQLModel):
     rol: str = Field(default=None, min_length=1, max_length=1)
     broker: str = Field(default=None)
     sede: str = Field(default=None)
+    membresia: int = Field(default=None)
 
 class Usuarios (UsuarioDTO, table=True):
     pass
-    id: int = Field(primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)  # Permite que la BD genere el ID
 
 class Formatos (SQLModel, table=True):
     id: int = Field(primary_key=True)
@@ -50,10 +53,7 @@ class Estatus_tramites(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     name: str = Field(default=None)
 
-
-
-class Cotizacion(SQLModel, table=True):
-    id_cotizacion: int = Field(default=None, primary_key=True, nullable=False)
+class CotizacionDTO (SQLModel):
     id_usuario: str = Field(max_length=100, nullable=False)
     id_financiera: int = Field(nullable=False)
     producto: int = Field(nullable=False)
@@ -65,12 +65,17 @@ class Cotizacion(SQLModel, table=True):
     monto: float = Field(nullable=False)  
     ingresos: float = Field(nullable=False)
     estatus: int = Field(nullable=False) 
-    timestamp: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     antiguedad_empresa: int = Field(nullable=False)
     OpCliente: str = Field(max_length=250, nullable=False)
     broker: str = Field(nullable=False)  
     localidad: str = Field(nullable=False)  
     custom_prod: str = Field(nullable=False)  
+
+class Cotizacion (CotizacionDTO, table=True ):   
+    pass 
+    timestamp: datetime | None = Field(default_factory=lambda: datetime.now(ZoneInfo("America/Mexico_City")), nullable=False)
+    id_cotizacion: int | None = Field(default=None, primary_key=True, nullable=False)
+
 
 
 class Comentarios(SQLModel, table=True):

@@ -80,7 +80,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
         return await call_next(request)
 
-app.add_middleware(FirebaseAuthMiddleware)
+# app.add_middleware(FirebaseAuthMiddleware)
 
 # 🔹 Middleware para medir tiempos de respuesta
 @app.middleware("http")
