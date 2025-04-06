@@ -14,19 +14,30 @@ class TipoFinEnum(str, Enum):
     LIGA = "L"
     MAIL = "M"
 
-class Financieras(SQLModel, table=True):
+class FinancierasDTO(SQLModel):
     id: int = Field(primary_key=True)
     nombre: str = Field(default=None)
     tipo: str = Field(min_length=1, max_length=1)
     fase: int = Field(default=None)
 
-class Productos(SQLModel, table=True):
-    id: int = Field(primary_key=True)
+class Financieras(FinancierasDTO,table=True):
+        pass
+        id: int | None = Field(default=None,primary_key=True)
+
+
+class ProductosDTO(SQLModel):
     nombre: str = Field(default=None)
     checklist: str = Field(default=None)
     ch_viabilidad: str = Field(default=None)
     institucion_id: int = Field(foreign_key="financiera.id")
     tipo_persona: str = Field(min_length=1, max_length=5)
+
+class Productos(ProductosDTO,table=True):
+    pass
+    id: int | None = Field(default=None, primary_key=True)  # Permite que la BD genere el ID
+ 
+
+
 
 class UsuarioDTO (SQLModel):
     nombre: str = Field(default=None)
@@ -86,12 +97,16 @@ class Comentarios(SQLModel, table=True):
     archivo: str = Field(default=None)   
     timestamp: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
-class Correos(SQLModel, table=True):
-    id_correo: int = Field(primary_key=True)
+class CorreosDTO(SQLModel):
     id_financiera: int = Field(default=None)
     mail: str = Field(default=None)
     nombre: str = Field(default=None)
     activo: bool = Field(default=True)
+
+class Correos(CorreosDTO ,table=True ):  
+    pass
+    id_correo: int | None = Field(default=None, primary_key=True)
+
 
 
     

@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 from grpc import Status
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import Financieras
+from app.models import Financieras, FinancierasDTO
 
 router = APIRouter(tags=["Financieras"])
 
@@ -28,3 +28,11 @@ async def get_financieras_by_fase(fase: int, session: SessionDep):
     if not financieras:
         raise HTTPException(status_code=Status.HTTP_404_NOT_FOUND, detail="No existen Financieras con esa fase")
     return financieras
+
+@router.post("/financiera", response_model=Financieras)
+async def create_financiera(financiera_data: FinancierasDTO, session: SessionDep):
+    financiera = Financieras.model_validate(financiera_data.model_dump())  
+    session.add(financiera)  
+    session.commit() 
+    session.refresh(financiera) 
+    return financiera

@@ -1,7 +1,8 @@
+from itertools import product
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import Productos
+from app.models import Productos, ProductosDTO
 
 router = APIRouter(tags=["Productos"])
 
@@ -25,3 +26,11 @@ async def get_producto_by_financiera(financiera_id: int, session: SessionDep):
     productos_db = session.exec(query).all()
     print(productos_db) 
     return productos_db
+
+@router.post("/producto", response_model=Productos) 
+async def create_producto(producto_data: ProductosDTO, session: SessionDep):
+    cotizacion = Productos.model_validate(producto_data.model_dump())  
+    session.add(product)  
+    session.commit() 
+    session.refresh(product) 
+    return product  

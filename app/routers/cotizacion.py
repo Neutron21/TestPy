@@ -30,7 +30,7 @@ async def get_cotizaciones_by_estatus(estatus: int, session: SessionDep):
     return cotizaciones
 
 @router.post("/cotizacion", response_model=Cotizacion) 
-async def create_usuario(usuario_data: CotizacionDTO, session: SessionDep):
+async def create_cotizacion(usuario_data: CotizacionDTO, session: SessionDep):
     cotizacion = Cotizacion.model_validate(usuario_data.model_dump())  
     session.add(cotizacion)  
     session.commit() 
