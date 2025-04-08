@@ -1,14 +1,19 @@
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import time
 import firebase_admin
 from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
 from firebase_admin import auth, credentials
+from routers.correo import router as correo_router
 
-from app.db import create_all_tables # En caso de que necesite crear las tablas
-from .routers import financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites
+from app.db import create_all_tables
+from .routers import financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, correo
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
@@ -51,6 +56,7 @@ app.include_router(cotizacion.router)
 app.include_router(comentarios.router)
 app.include_router(correos.router)
 app.include_router(estatus_tramites.router)
+app.include_router(correo.router)
 
 
 # 🔹 Middleware de autenticación Firebase

@@ -1,9 +1,13 @@
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import smtplib
 from typing import List
 from fastapi import APIRouter, HTTPException
 from grpc import Status
 from sqlmodel import select
 from app.db import SessionDep
 from app.models import Financieras, FinancierasDTO
+
 
 router = APIRouter(tags=["Financieras"])
 
@@ -36,3 +40,8 @@ async def create_financiera(financiera_data: FinancierasDTO, session: SessionDep
     session.commit() 
     session.refresh(financiera) 
     return financiera
+
+
+
+
+
