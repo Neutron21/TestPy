@@ -11,18 +11,18 @@ SMTP_FROM_NAME = "KONNECT"
 SMTP_FROM_EMAIL = SMTP_USER
 
 def enviar_correo(destinatario: str, mensaje: str):
-    msg = MIMEMultipart()
+    msg = MIMEMultipart("alternative")
     msg['From'] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
     msg['To'] = destinatario
     msg['Subject'] = 'Correo de prueba desde Python'
 
-    msg.attach(MIMEText(mensaje, 'plain'))
+    msg.attach(MIMEText(mensaje, 'html'))
 
     try:
         server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
         server.starttls()
         server.login(SMTP_USER, SMTP_PASSWORD)
-        server.send_message(msg)
+        server.sendmail(msg)
         server.quit()
         return "Correo enviado con éxito."
     except Exception as e:
