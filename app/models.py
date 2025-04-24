@@ -1,14 +1,17 @@
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 from zoneinfo import ZoneInfo
 from pydantic import BaseModel, EmailStr, field_validator
 from sqlmodel import SQLModel, Field, Relationship, Session, select
 from app.db import engine
 from pydantic import ConfigDict
 
+
 # Una buena práctica en arquitecturas limpias es usar ORM para la capa de acceso a datos y DTO
 # para la comunicación con la API, evitando exponer modelos de la base de datos directamente. 🚀
-
+def mexico_timestamp():
+    return datetime.now(ZoneInfo("America/Mexico_City"))
 # MODELOS OFICIALES
 class TipoFinEnum(str, Enum):
     LIGA = "L"
@@ -84,18 +87,18 @@ class CotizacionDTO (SQLModel):
 
 class Cotizacion (CotizacionDTO, table=True ):   
     pass 
-    timestamp: datetime | None = Field(default_factory=lambda: datetime.now(ZoneInfo("America/Mexico_City")), nullable=False)
+    timestamp: datetime | None = Field(default_factory=mexico_timestamp, nullable=False)
     id_cotizacion: int | None = Field(default=None, primary_key=True, nullable=False)
 
-
-
-class Comentarios(SQLModel, table=True):
-    id_comentario: int = Field(primary_key=True)
+class ComentariosDTO(SQLModel):
     id_cotizacion: int = Field(default=None)
     id_usuario: str = Field(default=None)
     comentarios: str = Field(default=None)
-    archivo: str = Field(default=None)   
-    timestamp: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
+class Comentarios(ComentariosDTO, table=True):
+    pass
+    id_comentario: Optional[int] | None = Field(primary_key=True)
+    timestamp: datetime = Field(default_factory=mexico_timestamp, nullable=False)
 
 class CorreosDTO(SQLModel):
     id_financiera: int = Field(default=None)
