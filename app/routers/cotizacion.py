@@ -6,7 +6,6 @@ from app.models import Cotizacion, CotizacionDTO
 
 router = APIRouter(tags=["Cotizacion"])
 
-
 @router.get("/cotizacion/{id_cotizacion}" , response_model=Cotizacion)
 async def get_cotizacion_by_id(id_cotizacion: int, session: SessionDep):
     query = select(Cotizacion).where(Cotizacion.id_cotizacion == id_cotizacion)
@@ -15,9 +14,14 @@ async def get_cotizacion_by_id(id_cotizacion: int, session: SessionDep):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Cotización")
     return  cotizacion
 
-@router.get("/cotizaciones/{id_usuario}", response_model=list[Cotizacion])
-async def obtener_cotizaciones(id_usuario: str, session: SessionDep):
-    query = select(Cotizacion).where(Cotizacion.id_usuario == id_usuario)
+@router.get("/cotizaciones", response_model=list[Cotizacion])
+async def obtener_cotizaciones(
+    session: SessionDep,
+    id_usuario: Optional[str] = Query(None)):
+    if not id_usuario:
+        query = select(Cotizacion)
+    else:    
+        query = select(Cotizacion).where(Cotizacion.id_usuario == id_usuario)
     cotizaciones = session.exec(query).all()
     
     return cotizaciones

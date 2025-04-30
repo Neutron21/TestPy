@@ -1,9 +1,10 @@
 import os
 from fastapi import APIRouter
+from app.models import Correos, ReqMail
 from utils.email import enviar_correo
 from jinja2 import Environment, FileSystemLoader
 
-router = APIRouter(tags=["Correo"])
+router = APIRouter(tags=["SendMails"])
 
 # Carga el entorno Jinja2 apuntando a la carpeta templates
 ruta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -11,7 +12,7 @@ ruta_templates = os.path.join(ruta_base, "templates")
 env = Environment(loader=FileSystemLoader(ruta_templates))
 
 @router.post("/enviar-correo")
-async def enviar_mail():
+async def enviar_mail(request: ReqMail):
     # Variables que vas a pasar a la plantilla
     context = {
         "cliente": "Juan Pérez",

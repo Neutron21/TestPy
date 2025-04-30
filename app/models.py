@@ -40,8 +40,6 @@ class Productos(ProductosDTO,table=True):
     id: int | None = Field(default=None, primary_key=True)  # Permite que la BD genere el ID
  
 
-
-
 class UsuarioDTO (SQLModel):
     nombre: str = Field(default=None)
     email: str = Field(default=None)
@@ -110,9 +108,21 @@ class Correos(CorreosDTO ,table=True ):
     pass
     id_correo: int | None = Field(default=None, primary_key=True)
 
+class ReqMail(BaseModel):
+    emailUser: EmailStr
+    cliente: str
+    rfc: str
+    monto: str
+    producto: str
+    broker: str
+    numCotizacion: int
+    financiera: int
+    institucion: str
+    OpCliente: str
+    sede: str
+    userName: str
+    isNew:  bool
 
-
-    
 # MODELOS DE EJEMPLO
 class StatusEnum(str, Enum):
     ACTIVE = "active"

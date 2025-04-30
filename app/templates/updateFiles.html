@@ -1,0 +1,37 @@
+<!-- template.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+            color: black;
+        }
+        .footer {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h4>Actualizaci&oacute;n de Documentos</h4>
+    <p>Se actualiz&oacute; el expediente del Folio Konnect {{numCotizacion}}</p>
+    <p>Me puedes apoyar a revisarlo</p>
+    <ul>
+        <li><strong>Cliente:</strong> {{cliente}}</li>
+        <li><strong>RFC:</strong> {{rfc}}</li>
+        <li><strong>Instituci&oacute;n:</strong> {{institucion}}</li>
+        <li><strong>Monto:</strong> {{monto}}</li>
+        <li><strong>Producto:</strong> {{producto}}</li>
+        <li><strong>Broker:</strong> {{broker}}</li>
+        <li><strong>Folio Konnect:</strong> {{numCotizacion}}</li>
+    </ul>
+    <a href="https://konecct.com.mx/api/viewDownloadExp.php?archivo={{cotizacionB64}}">Descarga aquí el expediente</a>
+    <p>Quedo pendiente a tus comentarios.</p>
+    <p>Saludos cordiales,</p>
+    <div class="footer">
+        <img src="cid:firma" alt="Konnect Cotizador" style="width: 300px; height: auto;">
+    </div>
+</body>
+</html>

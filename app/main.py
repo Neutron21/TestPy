@@ -8,10 +8,10 @@ from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
 from firebase_admin import auth, credentials
-from routers.correo import router as correo_router
+
 
 from app.db import create_all_tables
-from .routers import financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, correo
+from .routers import financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, send_mail
 from dotenv import load_dotenv
 
 
@@ -56,7 +56,7 @@ app.include_router(cotizacion.router)
 app.include_router(comentarios.router)
 app.include_router(correos.router)
 app.include_router(estatus_tramites.router)
-app.include_router(correo.router)
+app.include_router(send_mail.router)
 
 
 # 🔹 Middleware de autenticación Firebase
