@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
 from firebase_admin import auth, credentials
-
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import create_all_tables
 from .routers import financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, send_mail, uploadFiles
@@ -25,6 +25,11 @@ app = FastAPI(
     description="API protegida con JWT de Firebase",
     version="1.0"
 )
+origins = [
+    "http://localhost:4200",  # Angular en local
+    "http://127.0.0.1:4200",
+    # Agrega aquí otros dominios si lo despliegas
+]
 original_openapi = app.openapi
 # 🔹 Función personalizada para OpenAPI con seguridad JWT
 def custom_openapi():
@@ -97,3 +102,11 @@ async def log_request_time(request: Request, call_next):
     process_time = time.time() - start_time
     print(f"Request: {request.url} completed in: {process_time:.4f} seconds")
     return response
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,            # Permitir solo estos orígenes
+    allow_credentials=True,
+    allow_methods=["*"],              # Permitir todos los métodos: GET, POST, etc.
+    allow_headers=["*"],              # Permitir todos los headers
+)

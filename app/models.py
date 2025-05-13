@@ -22,6 +22,7 @@ class FinancierasDTO(SQLModel):
     nombre: str = Field(default=None)
     tipo: str = Field(min_length=1, max_length=1)
     fase: int = Field(default=None)
+    img: str = Field(default=None)
 
 class Financieras(FinancierasDTO,table=True):
         pass
@@ -47,6 +48,8 @@ class UsuarioDTO (SQLModel):
     broker: str = Field(default=None)
     sede: str = Field(default=None)
     membresia: int = Field(default=None)
+    id_broker: int = Field(default=None)
+    id_sede: int = Field(default=None)
 
 class Usuarios (UsuarioDTO, table=True):
     pass

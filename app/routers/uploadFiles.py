@@ -7,7 +7,7 @@ from fastapi import APIRouter, File, Form, HTTPException, Query, Request, Upload
 from fastapi.responses import JSONResponse, StreamingResponse
 
 router = APIRouter(tags=["Files"])
-main_path = os.getenv("RUTA_COTIZACIONES")
+main_path = os.getenv("RUTA_COTIZACIONES")  
 
 @router.post("/uploadFiles")
 async def carga_archivos_endpoint(request: Request):
