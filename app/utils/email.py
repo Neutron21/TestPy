@@ -12,11 +12,12 @@ SMTP_PASSWORD = "Mexico_2025"
 SMTP_FROM_NAME = "KONNECT"
 SMTP_FROM_EMAIL = SMTP_USER
 
-def enviar_correo(destinatario: str, mensaje: str):
+def enviar_correo(destinatario: str, mensaje: str, correos: list[str]):
     msg = MIMEMultipart("related")  # 👈 para permitir imágenes embebidas
 
     msg['From'] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
     msg['To'] = destinatario
+    msg['Cc'] = ", ".join(correos)
     msg['Subject'] = 'Correo de prueba desde Python'
 
     # Crear la parte HTML del mensaje
@@ -41,7 +42,10 @@ def enviar_correo(destinatario: str, mensaje: str):
         server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
         server.starttls()
         server.login(SMTP_USER, SMTP_PASSWORD)
-        server.sendmail(SMTP_FROM_EMAIL, [destinatario], msg.as_string())
+
+        todos_destinatarios = [destinatario] + correos
+        server.sendmail(SMTP_FROM_EMAIL, todos_destinatarios, msg.as_string())
+
         server.quit()
         return "Correo enviado con éxito."
     except Exception as e:

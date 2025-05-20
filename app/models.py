@@ -121,19 +121,22 @@ class Correos(CorreosDTO ,table=True ):
     id_correo: int | None = Field(default=None, primary_key=True)
 
 class ReqMail(BaseModel):
-    emailUser: EmailStr
-    cliente: str
-    rfc: str
-    monto: str
-    producto: str
+    OpCliente: str
     broker: str
-    numCotizacion: int
+    cliente: str
+    emailUser: EmailStr
     financiera: int
     institucion: str
-    OpCliente: str
-    sede: str
-    userName: str
     isNew:  bool
+    listaMails: list[str]
+    monto: int
+    numCotizacion: int
+    producto: str
+    rfc: str
+    sede: str
+    update: int
+    userName: str
+    cotizacionB64: Optional[str] = None
 
 class EstatusUpdate(BaseModel):
     estatus: int
