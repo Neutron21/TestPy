@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
 from zoneinfo import ZoneInfo
 from pydantic import BaseModel, EmailStr, field_validator
 from sqlmodel import SQLModel, Field, Relationship, Session, select
@@ -22,7 +22,7 @@ class FinancierasDTO(SQLModel):
     nombre: str = Field(default=None)
     tipo: str = Field(min_length=1, max_length=1)
     fase: int = Field(default=None)
-    img: str = Field(default=None)
+    # img: str = Field(default=None)
 
 class Financieras(FinancierasDTO,table=True):
         pass
@@ -34,12 +34,21 @@ class ProductosDTO(SQLModel):
     checklist: str = Field(default=None)
     ch_viabilidad: str = Field(default=None)
     institucion_id: int = Field(foreign_key="financiera.id")
-    tipo_persona: str = Field(min_length=1, max_length=5)
+
+class ProductosTipoPersonaDTO(ProductosDTO):
+    id: int
+    tipo_persona: List[str] = Field(default_factory=list)
 
 class Productos(ProductosDTO,table=True):
     pass
     id: int | None = Field(default=None, primary_key=True)  # Permite que la BD genere el ID
  
+class ProductoFormatoTipoPersona(SQLModel, table=True):
+    __tablename__ = "producto_formato_tipo_persona"
+    id: int | None = Field(default=None, primary_key=True)  
+    producto_id: int = Field(foreign_key="producto.id")
+    formato_id: int = Field(foreign_key="formato.id")
+    tipo_persona: str = Field(primary_key=True)
 
 class UsuarioDTO (SQLModel):
     nombre: str = Field(default=None)
@@ -82,9 +91,9 @@ class CotizacionDTO (SQLModel):
     estatus: int = Field(nullable=False) 
     antiguedad_empresa: int = Field(nullable=False)
     OpCliente: str = Field(max_length=250, nullable=False)
-    broker: str = Field(nullable=False)  
-    localidad: str = Field(nullable=False)  
-    custom_prod: str = Field(nullable=False)  
+    broker: int = Field(default=None, nullable=True)
+    sede: Optional[int] = Field(default=None, nullable=True) # aun no se recibe del front
+    custom_prod: Optional[int] = Field(default=None, nullable=True)
 
 class Cotizacion (CotizacionDTO, table=True ):   
     pass 
@@ -125,6 +134,10 @@ class ReqMail(BaseModel):
     sede: str
     userName: str
     isNew:  bool
+
+class EstatusUpdate(BaseModel):
+    estatus: int
+    id_cotizacion: int
 
 # MODELOS DE EJEMPLO
 class StatusEnum(str, Enum):

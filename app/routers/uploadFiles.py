@@ -1,14 +1,40 @@
 import base64
 import os
+import re
 import tempfile
-from typing import List, Optional
+from typing import List
 import zipfile
-from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile, status
+from fastapi import APIRouter, HTTPException, Query, Request, UploadFile
 from fastapi.responses import JSONResponse, StreamingResponse
 
 router = APIRouter(tags=["Files"])
 main_path = os.getenv("RUTA_COTIZACIONES")  
 
+
+@router.get("/getFiles/{idCotizacion}", response_model=List[str])
+async def get_lista_docs(idCotizacion: int):
+    try:
+        id_b64 = base64.b64encode(str(idCotizacion).encode("utf-8")).decode("utf-8")
+
+        carpeta_adjuntos = os.path.join(main_path, id_b64)
+        print(carpeta_adjuntos)
+        if not os.path.isdir(carpeta_adjuntos):
+            return []  # Carpeta no existe, devolver array vacío
+
+        archivos = os.listdir(carpeta_adjuntos)
+
+        extensiones_validas = re.compile(r'\.(pdf|rar|zip|jpg|png)$', re.IGNORECASE)
+
+        adjuntos_validos = [
+            archivo for archivo in archivos
+            if os.path.isfile(os.path.join(carpeta_adjuntos, archivo)) and extensiones_validas.search(archivo)
+        ]
+
+        return adjuntos_validos
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Ocurrió un error: {str(e)}")
+    
 @router.post("/uploadFiles")
 async def carga_archivos_endpoint(request: Request):
     # 👀 Este no se puede probar en SWAGGER 👀

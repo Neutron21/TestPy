@@ -1,8 +1,8 @@
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Path
 from sqlmodel import select, text
 from app.db import SessionDep
-from app.models import Cotizacion, CotizacionDTO
+from app.models import Cotizacion, CotizacionDTO, EstatusUpdate
 
 router = APIRouter(tags=["Cotizacion"])
 
@@ -89,3 +89,18 @@ async def create_cotizacion(usuario_data: CotizacionDTO, session: SessionDep):
     session.commit() 
     session.refresh(cotizacion) 
     return cotizacion  
+
+@router.patch("/cotizacion/status_udpate", response_model=Cotizacion)
+async def update_estatus_cotizacion(
+    estatus_data: EstatusUpdate, session: SessionDep,):
+
+    cotizacion = session.get(Cotizacion, estatus_data.id_cotizacion)
+    if not cotizacion:
+        raise HTTPException(status_code=404, detail="Cotización no encontrada")
+    
+    cotizacion.estatus = estatus_data.estatus
+    session.add(cotizacion)
+    session.commit()
+    session.refresh(cotizacion)
+    
+    return cotizacion

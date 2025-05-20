@@ -14,7 +14,7 @@ router = APIRouter(tags=["Financieras"])
 
 @router.get("/financieras", response_model=list[Financieras])
 async def list_financieras(session: SessionDep):
-    query = select(Financieras)
+    query = select(Financieras).where(Financieras.fase > 0).order_by(Financieras.nombre)
     financieras = session.exec(query).all()
     return financieras
 @router.get("/financieras/tipo/{tipo}", response_model=List[Financieras])
