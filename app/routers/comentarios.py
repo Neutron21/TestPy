@@ -9,10 +9,9 @@ router = APIRouter(tags=["Comentarios"])
 async def obtener_comentarios(id_cotizacion: int, session: SessionDep):
     query = select(Comentarios).where(Comentarios.id_cotizacion == id_cotizacion)
     comentarios = session.exec(query).all() 
-
-    if not comentarios:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay comentarios para esta cotización")
-    
+    print(f"comentarios: {comentarios}")
+    # if not comentarios:
+    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay comentarios para esta cotización")
     return comentarios 
 
 @router.post("/comentario", response_model=Comentarios) 

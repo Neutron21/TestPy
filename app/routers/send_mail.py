@@ -37,11 +37,10 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
     query = select(Correos.mail).where(
         (Correos.id_financiera == request.financiera) & (Correos.activo == 1)
     )
-    # result = session.exec(query).all()
+
     correos = session.exec(query).all()
-    # correos = [row[0] for row in result]
-    print("CORREOS ")
-    print(correos)
+
+    print(f"CORREOS: {correos}")
     cotizacionBytes = str(request.numCotizacion).encode('utf-8')
     base64_bytes = base64.b64encode(cotizacionBytes)
     request.cotizacionB64 = base64_bytes.decode('utf-8')
