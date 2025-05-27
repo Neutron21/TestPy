@@ -10,8 +10,8 @@ router = APIRouter(tags=["Producto_formatos"])
 async def formatos_financiera(producto_id: int, session: SessionDep):
     query = select(Formatos.nombre).join(Producto_formato, Producto_formato.formato_id == Formatos.id).where(Producto_formato.producto_id == producto_id)
     result = session.exec(query).all()
-    if not result:
-        raise HTTPException(status_code=404, detail="No se encontraron formatos para este producto")
+    # if not result:
+        # raise HTTPException(status_code=404, detail="No se encontraron formatos para este producto")
     return result
 
    
