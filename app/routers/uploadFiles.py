@@ -1,11 +1,12 @@
 import base64
 import os
+from pathlib import Path
 import re
 import tempfile
 from typing import List
 import zipfile
 from fastapi import APIRouter, HTTPException, Query, Request, UploadFile
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
 router = APIRouter(tags=["Files"])
 main_path = os.getenv("RUTA_COTIZACIONES")  
@@ -109,3 +110,23 @@ def descargar_zip(numCotizacion: str = Query(..., description="Número de cotiza
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+@router.get("/download-file")
+def descarga_formato(
+    fileName: str = Query(..., alias="fileName"),
+    type: str = Query(...),
+    idFinanciera: str = Query(...)
+):
+    base_dir = Path(os.getenv("RUTA_STORE"))# Ruta absoluta a tu carpeta store
+    
+    
+    ruta_archivo = base_dir / type / idFinanciera / Path(fileName).name
+
+    if ruta_archivo.exists() and ruta_archivo.is_file():
+        return FileResponse(
+            path=ruta_archivo,
+            filename=ruta_archivo.name,
+            media_type='application/octet-stream'
+        )
+    else:
+        raise HTTPException(status_code=404, detail="El archivo no existe.")
