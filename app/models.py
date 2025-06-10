@@ -93,7 +93,7 @@ class CotizacionDTO (SQLModel):
     OpCliente: str = Field(max_length=250, nullable=False)
     broker: int = Field(default=None, nullable=True)
     sede: Optional[int] = Field(default=None, nullable=True) # aun no se recibe del front
-    custom_prod: Optional[int] = Field(default=None, nullable=True)
+    custom_prod: Optional[str] = Field(default=None, nullable=True)
 
 class Cotizacion (CotizacionDTO, table=True ):   
     pass 

@@ -1,6 +1,8 @@
 # Ignorar entornos virtuales
 venv/
 .env
+.env.qa
+.env.pro
 *.pyc
 __pycache__/
 .idea/
