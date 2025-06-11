@@ -19,6 +19,7 @@ load_dotenv()
 
 cred = credentials.Certificate("app/serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
+PUBLIC_ROUTES = os.getenv("PUBLIC_ROUTES", "").split(",")
 
 app = FastAPI(
     title="API de Konnect",
@@ -68,7 +69,8 @@ app.include_router(uploadFiles.router)
 # 🔹 Middleware de autenticación Firebase
 class FirebaseAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        if request.url.path in ["/docs", "/openapi.json"]:  # Excluir Swagger
+        # if request.url.path in ["/docs", "/openapi.json"]:  # Excluir Swagger
+        if any(request.url.path.startswith(route) for route in PUBLIC_ROUTES):
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization")
