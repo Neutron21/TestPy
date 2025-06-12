@@ -1,7 +1,7 @@
 import base64
 import os
 from fastapi import APIRouter
-from app.models import Correos, ReqMail
+from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes
 from sqlmodel import select
 from app.db import SessionDep
 from utils.email import enviar_correo
@@ -16,38 +16,50 @@ env = Environment(loader=FileSystemLoader(ruta_templates))
 
 @router.post("/enviar-correo")
 async def enviar_mail(request: ReqMail, session: SessionDep):
-    # Variables que vas a pasar a la plantilla
-    context = {
-        "isNew":"true",
-        "emailUser":"ij.innovaciones@gmail.com",
-        "cliente":" ",
-        "financiera":13,
-        "rfc":"cala930521",
-        "monto":500000,
-        "producto":"ARRENDAMIENTO PURO PF",
-        "broker":'',
-        "sede":'',
-        "userName":'',
-        "numCotizacion":219,
-        "institucion":"Arrenda+",
-        "OpCliente":"CDMX",
-        "update":1,
-        "listaMails":[]
-        }
-    query = select(Correos.mail).where(
-        (Correos.id_financiera == request.financiera) & (Correos.activo == 1)
-    )
+  
+    query_cotizacion =  select(Cotizacion).where(Cotizacion.id_cotizacion == request.numCotizacion)
+    cotizacion = session.exec(query_cotizacion).first()
+    print(f"Req: {cotizacion}")
 
-    correos = session.exec(query).all()
+    query_correos = select(Correos.mail).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.activo == 1))
+    query_broker = select(Brokers.nombre).where(Brokers.id == cotizacion.broker)
+    query_sede = select(Sedes.nombre).where(Sedes.id == cotizacion.sede)
+    query_fin = select(Financieras.nombre).where(Financieras.id == cotizacion.id_financiera)
 
-    print(f"CORREOS: {correos}")
-    cotizacionBytes = str(request.numCotizacion).encode('utf-8')
+    correos = session.exec(query_correos).all()
+    broker = session.exec(query_broker).first()
+    sede = session.exec(query_sede).first()
+    financiera = session.exec(query_fin).first()
+
+    cotizacionBytes = str(cotizacion.id_cotizacion).encode('utf-8')
     base64_bytes = base64.b64encode(cotizacionBytes)
-    request.cotizacionB64 = base64_bytes.decode('utf-8')
+    bodyMail = BodyMail(
+        OpCliente = cotizacion.OpCliente,
+        brokerName = broker,
+        cliente = cotizacion.nombre,
+        emailUser = cotizacion.id_usuario,
+        ifName = financiera,
+        isNew = request.isNew,
+        listaMails = correos,
+        monto = f"{cotizacion.monto:,.0f}",
+        numCotizacion = cotizacion.id_cotizacion,
+        productoName = request.producto,
+        rfc = cotizacion.rfc.upper(),
+        sedeName = sede,
+        userName = request.userName,
+        cotizacionB64 = base64_bytes.decode('utf-8'),
+        ingresos = f"{cotizacion.ingresos:,.0f}",
+        tipoPersona = cotizacion.tipo_persona.capitalize(),
+        antiguedadEmpresa =  cotizacion.antiguedad_empresa,
+        edad = cotizacion.edad,
+        plazo = cotizacion.plazo
+    )
+    print(f"bodyMail: {bodyMail}")
+
     # Carga y renderiza la plantilla con variables
     template = env.get_template("cotizacion.html")
-    html_content = template.render(request)
+    html_content = template.render(bodyMail)
 
-    destinatario = request.emailUser
-    resultado = enviar_correo(destinatario, html_content, correos)  # Ajuste para enviar HTML
+    resultado = enviar_correo(bodyMail, html_content, correos)  # Ajuste para enviar HTML
     return {"mensaje": resultado}
+    # return {"mensaje": "OK"}

@@ -69,7 +69,6 @@ app.include_router(uploadFiles.router)
 # 🔹 Middleware de autenticación Firebase
 class FirebaseAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # if request.url.path in ["/docs", "/openapi.json"]:  # Excluir Swagger
         if any(request.url.path.startswith(route) for route in PUBLIC_ROUTES):
             return await call_next(request)
 
@@ -94,7 +93,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
         return await call_next(request)
 
-app.add_middleware(FirebaseAuthMiddleware)
+# app.add_middleware(FirebaseAuthMiddleware)
 
 # 🔹 Middleware para medir tiempos de respuesta
 @app.middleware("http")

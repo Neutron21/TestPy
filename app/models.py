@@ -121,26 +121,44 @@ class Correos(CorreosDTO ,table=True ):
     id_correo: int | None = Field(default=None, primary_key=True)
 
 class ReqMail(BaseModel):
+    isNew:  bool
+    producto: str
+    userName: str
+    numCotizacion: int
+
+class BodyMail(BaseModel):
     OpCliente: str
-    broker: str
+    brokerName: str
     cliente: str
     emailUser: EmailStr
-    financiera: int
-    institucion: str
+    ifName: str
     isNew:  bool
     listaMails: list[str]
-    monto: int
+    monto: str
     numCotizacion: int
-    producto: str
+    productoName: str
     rfc: str
-    sede: str
-    update: int
+    sedeName: str
+    # update: int
     userName: str
     cotizacionB64: Optional[str] = None
+    ingresos: str
+    tipoPersona: str
+    antiguedadEmpresa: int
+    edad: int
+    plazo: int
 
 class EstatusUpdate(BaseModel):
     estatus: int
     id_cotizacion: int
+# Tablas de Utileria
+class Brokers(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    nombre: str = Field(default=None)
+
+class Sedes(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    nombre: str = Field(default=None)
 
 # MODELOS DE EJEMPLO
 class StatusEnum(str, Enum):
