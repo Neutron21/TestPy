@@ -160,6 +160,13 @@ class Sedes(SQLModel, table=True):
     id: int = Field(primary_key=True)
     nombre: str = Field(default=None)
 
+class Tp_producto_checklist(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True, nullable=False)
+    producto_id: int = Field(foreign_key="productos.id")
+    tipo_persona: str = Field(default=None)
+    checklist: str = Field(default=None)
+    ch_viabilidad: str = Field(default=None)
+
 # MODELOS DE EJEMPLO
 class StatusEnum(str, Enum):
     ACTIVE = "active"
