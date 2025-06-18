@@ -4,6 +4,8 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from app.models import ReqMail
+
 # Configuración para Hostinger SMTP
 SMTP_HOST = "smtp.hostinger.com"
 SMTP_PORT = 587
@@ -12,13 +14,15 @@ SMTP_PASSWORD = "Mexico_2025"
 SMTP_FROM_NAME = "KONNECT"
 SMTP_FROM_EMAIL = SMTP_USER
 
-def enviar_correo(destinatario: str, mensaje: str, correos: list[str]):
+def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
+    destinatario = request.emailUser
+
     msg = MIMEMultipart("related")  # 👈 para permitir imágenes embebidas
 
     msg['From'] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
     msg['To'] = destinatario
     msg['Cc'] = ", ".join(correos)
-    msg['Subject'] = 'Correo de prueba desde Python'
+    msg['Subject'] = f"Cliente: {request.cliente} {request.rfc}"
 
     # Crear la parte HTML del mensaje
     msg_alternative = MIMEMultipart("alternative")

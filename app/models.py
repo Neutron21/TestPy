@@ -95,7 +95,7 @@ class CotizacionDTO (SQLModel):
     OpCliente: str = Field(max_length=250, nullable=False)
     broker: int = Field(default=None, nullable=True)
     sede: Optional[int] = Field(default=None, nullable=True) # aun no se recibe del front
-    custom_prod: Optional[int] = Field(default=None, nullable=True)
+    custom_prod: Optional[str] = Field(default=None, nullable=True)
 
 class Cotizacion (CotizacionDTO, table=True ):   
     pass 
@@ -123,26 +123,51 @@ class Correos(CorreosDTO ,table=True ):
     id_correo: int | None = Field(default=None, primary_key=True)
 
 class ReqMail(BaseModel):
+    isNew:  bool
+    producto: str
+    userName: str
+    numCotizacion: int
+
+class BodyMail(BaseModel):
     OpCliente: str
-    broker: str
+    brokerName: str
     cliente: str
     emailUser: EmailStr
-    financiera: int
-    institucion: str
+    ifName: str
     isNew:  bool
     listaMails: list[str]
-    monto: int
+    monto: str
     numCotizacion: int
-    producto: str
+    productoName: str
     rfc: str
-    sede: str
-    update: int
+    sedeName: str
+    # update: int
     userName: str
     cotizacionB64: Optional[str] = None
+    ingresos: str
+    tipoPersona: str
+    antiguedadEmpresa: int
+    edad: int
+    plazo: int
 
 class EstatusUpdate(BaseModel):
     estatus: int
     id_cotizacion: int
+# Tablas de Utileria
+class Brokers(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    nombre: str = Field(default=None)
+
+class Sedes(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    nombre: str = Field(default=None)
+
+class Tp_producto_checklist(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True, nullable=False)
+    producto_id: int = Field(foreign_key="productos.id")
+    tipo_persona: str = Field(default=None)
+    checklist: str = Field(default=None)
+    ch_viabilidad: str = Field(default=None)
 
 # MODELOS DE EJEMPLO
 class StatusEnum(str, Enum):

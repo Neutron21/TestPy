@@ -1,5 +1,6 @@
 import os
 import sys
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import time
@@ -11,7 +12,12 @@ from firebase_admin import auth, credentials
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import create_all_tables
+<<<<<<< HEAD
 from .routers import financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, send_mail, uploadFiles,utils
+=======
+from .routers import ( checklist,
+    financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, send_mail, uploadFiles)
+>>>>>>> 2f0e404765f2b980cd03efa440a100ebefbf04f9
 from dotenv import load_dotenv
 
 
@@ -19,6 +25,7 @@ load_dotenv()
 
 cred = credentials.Certificate("app/serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
+PUBLIC_ROUTES = os.getenv("PUBLIC_ROUTES", "").split(",")
 
 app = FastAPI(
     title="API de Konnect",
@@ -63,13 +70,17 @@ app.include_router(correos.router)
 app.include_router(estatus_tramites.router)
 app.include_router(send_mail.router)
 app.include_router(uploadFiles.router)
+<<<<<<< HEAD
 app.include_router(utils.router)
+=======
+app.include_router(checklist.router)
+>>>>>>> 2f0e404765f2b980cd03efa440a100ebefbf04f9
 
 
 # 🔹 Middleware de autenticación Firebase
 class FirebaseAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        if request.url.path in ["/docs", "/openapi.json"]:  # Excluir Swagger
+        if any(request.url.path.startswith(route) for route in PUBLIC_ROUTES):
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization")
