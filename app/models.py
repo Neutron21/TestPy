@@ -6,6 +6,8 @@ from pydantic import BaseModel, EmailStr, field_validator
 from sqlmodel import SQLModel, Field, Relationship, Session, select
 from app.db import engine
 from pydantic import ConfigDict
+from pydantic import BaseModel
+from typing import List
 
 
 # Una buena práctica en arquitecturas limpias es usar ORM para la capa de acceso a datos y DTO
@@ -219,3 +221,6 @@ class PaginatedTransactionsResponse(SQLModel):
     current_page: int  # Página actual
     limit: int         # Límite de elementos por página
     transactions: list[Transaction] 
+
+class utils(BaseModel):
+    numeros: List[int]
