@@ -78,7 +78,7 @@ async def buscador_cotizaciones(
 
     rows = [Cotizacion(**row._mapping) for row in result]
     print(f"Total rows: {len(rows)} - contenido: {rows}")
-    print(f"Contenido: {rows}")
+   
     
     return rows
 

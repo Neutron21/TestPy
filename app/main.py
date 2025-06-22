@@ -12,8 +12,12 @@ from firebase_admin import auth, credentials
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import create_all_tables
+<<<<<<< HEAD
+from .routers import financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, send_mail, uploadFiles,utils
+=======
 from .routers import ( checklist,
     financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, send_mail, uploadFiles)
+>>>>>>> 2f0e404765f2b980cd03efa440a100ebefbf04f9
 from dotenv import load_dotenv
 
 
@@ -66,7 +70,11 @@ app.include_router(correos.router)
 app.include_router(estatus_tramites.router)
 app.include_router(send_mail.router)
 app.include_router(uploadFiles.router)
+<<<<<<< HEAD
+app.include_router(utils.router)
+=======
 app.include_router(checklist.router)
+>>>>>>> 2f0e404765f2b980cd03efa440a100ebefbf04f9
 
 
 # 🔹 Middleware de autenticación Firebase
