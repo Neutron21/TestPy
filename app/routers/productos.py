@@ -2,7 +2,7 @@ from itertools import product
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import ProductoFormatoTipoPersona, Productos, ProductosDTO, ProductosTipoPersonaDTO
+from app.models import Tp_producto_checklist, Productos, ProductosDTO, ProductosTipoPersonaDTO
 
 router = APIRouter(tags=["Productos"])
 
@@ -44,8 +44,8 @@ async def get_producto_by_financiera(financiera_id: int, session: SessionDep):
     for producto in productos_db:  # Obtener tipos de persona por producto
        
         tipos = session.exec(
-            select(ProductoFormatoTipoPersona.tipo_persona)
-            .where(ProductoFormatoTipoPersona.producto_id == producto.id)
+            select(Tp_producto_checklist.tipo_persona)
+            .where(Tp_producto_checklist.producto_id == producto.id)
             .distinct()
         ).all()
 
