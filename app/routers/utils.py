@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List
 import base64
 
-router = APIRouter()
+router = APIRouter(tags=["Utils"])
 
 class NumerosRequest(BaseModel):
     numeros: List[int]

@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Query, status, Path
 from sqlmodel import select, text
 from app.db import SessionDep
 from app.models import Cotizacion, CotizacionDTO, EstatusUpdate
+import base64
 
 router = APIRouter(tags=["Cotizacion"])
 
@@ -77,9 +78,19 @@ async def buscador_cotizaciones(
     result = session.execute(text(query), params)
 
     rows = [Cotizacion(**row._mapping) for row in result]
-    print(f"Total rows: {len(rows)} - contenido: {rows}")
-   
-    
+    print(f"Total rows: {len(rows)}")
+    print(f"Contenido: {rows}")
+    # LAB
+    ids = [obj.id_cotizacion for obj in rows]
+    print(ids)
+    idsList = []
+    for num in ids:
+        numBytes = str(num).encode('utf-8')
+        base64_bytes = base64.b64encode(numBytes)
+        cotizacionB64 = base64_bytes.decode('utf-8')
+        idsList.append(cotizacionB64)
+    print(idsList)
+    # LAB
     return rows
 
 @router.post("/cotizacion", response_model=Cotizacion) 
