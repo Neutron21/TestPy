@@ -98,8 +98,6 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
         return await call_next(request)
 
-app.add_middleware(FirebaseAuthMiddleware)
-
 # 🔹 Middleware para medir tiempos de respuesta
 @app.middleware("http")
 async def log_request_time(request: Request, call_next):
@@ -116,3 +114,4 @@ app.add_middleware(
     allow_methods=["*"],              # Permitir todos los métodos: GET, POST, etc.
     allow_headers=["*"],              # Permitir todos los headers
 )
+app.add_middleware(FirebaseAuthMiddleware)
