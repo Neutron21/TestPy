@@ -31,6 +31,7 @@ app = FastAPI(
 origins = [
     "http://localhost:4200",  # Angular en local
     "http://127.0.0.1:4200",
+    "https://konecct-broker.web.app/"
     # Agrega aquí otros dominios si lo despliegas
 ]
 original_openapi = app.openapi
