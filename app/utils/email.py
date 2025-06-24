@@ -17,11 +17,18 @@ SMTP_FROM_EMAIL = SMTP_USER
 def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
     destinatario = request.emailUser
 
+    # Correos fijos de Team Konnect
+    correos_fijos = ["kfigueroa@konnect.mx", "ara.castro@konnect.mx"]
+
+    # Eliminar duplicados y combinar con correos fijos
+    correos_totales = list(set(correos + correos_fijos))
+    print(f"--> CorreosTotales: {correos_totales}")
     msg = MIMEMultipart("related")  # 👈 para permitir imágenes embebidas
 
     msg['From'] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
     msg['To'] = destinatario
-    msg['Cc'] = ", ".join(correos)
+    msg['Cc'] = ", ".join(correos_totales)
+    msg['Reply-To'] = "Konnect <kfigueroa@konecct.com.mx>"
     msg['Subject'] = f"Cliente: {request.cliente} {request.rfc}"
 
     # Crear la parte HTML del mensaje
@@ -36,7 +43,7 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
     try:
         with open(firma_path, 'rb') as img_file:
             img = MIMEImage(img_file.read())
-            img.add_header('Content-ID', '<firma>')  # 👈 este ID debe coincidir con el usado en el HTML (cid:firma)
+            img.add_header('Content-ID', '<firma>')
             img.add_header('Content-Disposition', 'inline', filename="firma.png")
             msg.attach(img)
     except FileNotFoundError:
