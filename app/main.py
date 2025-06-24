@@ -31,6 +31,7 @@ app = FastAPI(
 origins = [
     "http://localhost:4200",  # Angular en local
     "http://127.0.0.1:4200",
+    "https://konecct-broker.web.app"
     # Agrega aquí otros dominios si lo despliegas
 ]
 original_openapi = app.openapi
@@ -73,6 +74,9 @@ app.include_router(checklist.router)
 # 🔹 Middleware de autenticación Firebase
 class FirebaseAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        if request.method == "OPTIONS": # Permitir options sin validar el token
+            return await call_next(request)
+        
         if any(request.url.path.startswith(route) for route in PUBLIC_ROUTES):
             return await call_next(request)
 
@@ -97,8 +101,6 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
         return await call_next(request)
 
-app.add_middleware(FirebaseAuthMiddleware)
-
 # 🔹 Middleware para medir tiempos de respuesta
 @app.middleware("http")
 async def log_request_time(request: Request, call_next):
@@ -115,3 +117,4 @@ app.add_middleware(
     allow_methods=["*"],              # Permitir todos los métodos: GET, POST, etc.
     allow_headers=["*"],              # Permitir todos los headers
 )
+app.add_middleware(FirebaseAuthMiddleware)
