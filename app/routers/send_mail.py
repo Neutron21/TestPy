@@ -55,9 +55,21 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
         plazo = cotizacion.plazo
     )
     print(f"bodyMail: {bodyMail}")
+      # ✅ Si es nuevo y la financiera es Konfío (id == 1), agregar correos especiales
+    if request.isNew and cotizacion.id_financiera == 1:
+        correosKonfio = ["maria.mendoza@konfio.mx", "luis.ramirez@konfio.mx"]
+        # correos.apend("maria.mendoza@konfio.mx")
+        # correos.apend("luis.ramirez@konfio.mx")
+        correos = list(set(correos + correosKonfio))
+    print(f"--> Correos: {correos}")
+
+    if request.isNew:
+        template_name = "cotizacion.html"
+    else:
+        template_name = "updateFiles.html"
 
     # Carga y renderiza la plantilla con variables
-    template = env.get_template("cotizacion.html")
+    template = env.get_template(template_name)
     html_content = template.render(bodyMail)
 
     resultado = enviar_correo(bodyMail, html_content, correos)  # Ajuste para enviar HTML
