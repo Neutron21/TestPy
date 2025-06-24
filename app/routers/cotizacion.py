@@ -1,5 +1,6 @@
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, status, Path
+from sqlalchemy import desc
 from sqlmodel import select, text
 from app.db import SessionDep
 from app.models import Cotizacion, CotizacionDTO, EstatusUpdate
@@ -16,13 +17,13 @@ async def get_cotizacion_by_id(id_cotizacion: int, session: SessionDep):
     return  cotizacion
 
 @router.get("/cotizaciones", response_model=list[Cotizacion])
-async def obtener_cotizaciones(
+async def obtener_cotizaciones_por_usurio(
     session: SessionDep,
     id_usuario: Optional[str] = Query(None)):
     if not id_usuario:
-        query = select(Cotizacion)
+        query = select(Cotizacion).order_by(desc(Cotizacion.timestamp))
     else:    
-        query = select(Cotizacion).where(Cotizacion.id_usuario == id_usuario)
+        query = select(Cotizacion).where(Cotizacion.id_usuario == id_usuario).order_by(desc(Cotizacion.timestamp))
     cotizaciones = session.exec(query).all()
     
     return cotizaciones
@@ -72,6 +73,8 @@ async def buscador_cotizaciones(
             query += " AND (nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
         params["like"] = like
         params["folioUserRfc"] = folioUserRfc
+    
+    query += " ORDER BY timestamp DESC"
 
     print(f"QUERY: {query}")
     print(f"PARAMS: {params}")
@@ -81,15 +84,15 @@ async def buscador_cotizaciones(
     print(f"Total rows: {len(rows)}")
     print(f"Contenido: {rows}")
     # LAB
-    ids = [obj.id_cotizacion for obj in rows]
-    print(ids)
-    idsList = []
-    for num in ids:
-        numBytes = str(num).encode('utf-8')
-        base64_bytes = base64.b64encode(numBytes)
-        cotizacionB64 = base64_bytes.decode('utf-8')
-        idsList.append(cotizacionB64)
-    print(idsList)
+    # ids = [obj.id_cotizacion for obj in rows]
+    # print(ids)
+    # idsList = []
+    # for num in ids:
+    #     numBytes = str(num).encode('utf-8')
+    #     base64_bytes = base64.b64encode(numBytes)
+    #     cotizacionB64 = base64_bytes.decode('utf-8')
+    #     idsList.append(cotizacionB64)
+    # print(idsList)
     # LAB
     return rows
 
