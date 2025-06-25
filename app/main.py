@@ -82,7 +82,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
 
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
-            return JSONResponse(status_code=401, content={"detail": "Token requerido"})
+            return JSONResponse(status_code=401, content={"error": "Token requerido"})
 
         token = auth_header.split(" ")[1]
 
@@ -97,7 +97,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             request.state.user = decoded_token  # Guardar info del usuario autenticado
 
         except Exception as e:
-            return JSONResponse(status_code=401, content={"detail": f"Token inválido: {str(e)}"})
+            return JSONResponse(status_code=401, content={"error": f"Token inválido: {str(e)}"})
 
         return await call_next(request)
 
