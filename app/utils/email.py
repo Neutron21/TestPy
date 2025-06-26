@@ -18,7 +18,7 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
     destinatario = request.emailUser
 
     # Correos fijos de Team Konnect
-    correos_fijos = ["kfigueroa@konnect.mx", "ara.castro@konnect.mx"]
+    correos_fijos = ["kfigueroa@konnect.mx", "ara.castro@konnect.mx", destinatario, "test-ti6cpho0g@srv1.mail-tester.com"]
 
     # Eliminar duplicados y combinar con correos fijos
     correos_totales = list(set(correos + correos_fijos))
@@ -26,8 +26,8 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
     msg = MIMEMultipart("related")  # 👈 para permitir imágenes embebidas
 
     msg['From'] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
-    msg['To'] = destinatario
-    msg['Cc'] = ", ".join(correos_totales)
+    msg['To'] = ", ".join(correos_fijos)
+    msg['Cc'] = ", ".join(correos)
     msg['Reply-To'] = "Konnect <kfigueroa@konecct.com.mx>"
     msg['Subject'] = f"Cliente: {request.cliente} {request.rfc}"
 
