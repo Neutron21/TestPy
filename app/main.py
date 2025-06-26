@@ -115,6 +115,7 @@ app.add_middleware(
     allow_origins=origins,            # Permitir solo estos orígenes
     allow_credentials=True,
     allow_methods=["*"],              # Permitir todos los métodos: GET, POST, etc.
-    allow_headers=["*"],              # Permitir todos los headers
+    allow_headers=["*"],
+    expose_headers=["Content-Type", "Authorization"] # Permitir todos los headers
 )
 app.add_middleware(FirebaseAuthMiddleware)
