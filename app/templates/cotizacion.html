@@ -34,7 +34,10 @@
         <li><strong>Tipo de Persona:</strong> {{tipoPersona}}</li>
     </ul>
     <p>Yo <strong>{{userName}}</strong> confirmo que esta cotejada la información</p>
+    {% if not isLink %}
     <a href="https://konnect.mx/api/viewDownloadExp.php?archivo={{cotizacionB64}}">Descarga aquí el expediente</a>
+    {% endif %}
+    
     <p>Quedo pendiente a tus comentarios.</p>
     <p>Saludos cordiales,</p>
     <div class="footer">
