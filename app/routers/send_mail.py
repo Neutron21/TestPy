@@ -24,7 +24,7 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
     query_correos = select(Correos.mail).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.activo == 1))
     query_broker = select(Brokers.nombre).where(Brokers.id == cotizacion.broker)
     query_sede = select(Sedes.nombre).where(Sedes.id == cotizacion.sede)
-    query_fin = select(Financieras.nombre).where(Financieras.id == cotizacion.id_financiera)
+    query_fin = select(Financieras).where(Financieras.id == cotizacion.id_financiera)
 
     correos = session.exec(query_correos).all()
     broker = session.exec(query_broker).first()
@@ -38,7 +38,7 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
         brokerName = broker,
         cliente = cotizacion.nombre,
         emailUser = cotizacion.id_usuario,
-        ifName = financiera,
+        ifName = financiera.nombre,
         isNew = request.isNew,
         listaMails = correos,
         monto = f"{cotizacion.monto:,.0f}",
@@ -68,11 +68,12 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
         template_name = "updateFiles.html"
 
     # Carga y renderiza la plantilla con variables
+    withLink = financiera.tipo == 'M'
+
     template = env.get_template(template_name)
-    html_content = template.render(**vars(bodyMail), isLink=request.isLink)
-    print(f"Valor recibido de isLink: {request.isLink}")
+    html_content = template.render(**vars(bodyMail), isLink=withLink)
+    print(f"Valor recibido de isLink: {withLink}")
 
 
     resultado = enviar_correo(bodyMail, html_content, correos)  # Ajuste para enviar HTML
     return {"mensaje": resultado}
-    # return {"mensaje": "OK"}

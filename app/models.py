@@ -127,7 +127,6 @@ class ReqMail(BaseModel):
     producto: str
     userName: str
     numCotizacion: int
-    isLink: bool = False
 
 
 class BodyMail(BaseModel):

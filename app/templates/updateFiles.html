@@ -34,7 +34,9 @@
         <li><strong>Plazo:</strong> {{plazo}}</li>
         <li><strong>Tipo de Persona:</strong> {{tipoPersona}}</li>
     </ul>
+    {% if isLink %}
     <a href="https://konecct.com.mx/api/viewDownloadExp.php?archivo={{cotizacionB64}}">Descarga aquí el expediente</a>
+    {% endif %}
     <p>Quedo pendiente a tus comentarios.</p>
     <p>Saludos cordiales,</p>
     <div class="footer">

@@ -18,7 +18,7 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
     destinatario = request.emailUser
 
     # Correos fijos de Team Konnect
-    correos_fijos = ["kfigueroa@konnect.mx", "ara.castro@konnect.mx", destinatario, "test-ti6cpho0g@srv1.mail-tester.com"]
+    correos_fijos = ["kfigueroa@konnect.mx", "ara.castro@konnect.mx", destinatario]
 
     # Eliminar duplicados y combinar con correos fijos
     correos_totales = list(set(correos + correos_fijos))
