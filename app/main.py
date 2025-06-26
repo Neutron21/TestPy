@@ -71,35 +71,44 @@ app.include_router(utils.router)
 app.include_router(checklist.router)
 
 
-# 🔹 Middleware de autenticación Firebase
+# # 🔹 Middleware de autenticación Firebase
 class FirebaseAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        if request.method == "OPTIONS": # Permitir options sin validar el token
+        if request.method == "OPTIONS":
             return await call_next(request)
-        
+
         if any(request.url.path.startswith(route) for route in PUBLIC_ROUTES):
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
-            return JSONResponse(status_code=401, content={"error": "Token requerido"})
+            return self.unauthorized("Token requerido")
 
         token = auth_header.split(" ")[1]
 
         try:
-            decoded_token = auth.verify_id_token(token)  # 🔹 Verificar token con Firebase
-            firebase_project_id = os.getenv("ID_PROJECT")  # Cambia esto por el ID real de tu Firebase
-
-            # 🔹 Validar que el token pertenece a este proyecto
+            decoded_token = auth.verify_id_token(token)
+            firebase_project_id = os.getenv("ID_PROJECT")
             if decoded_token["aud"] != firebase_project_id:
                 raise ValueError("Token inválido para este proyecto")
 
-            request.state.user = decoded_token  # Guardar info del usuario autenticado
+            request.state.user = decoded_token
 
         except Exception as e:
-            return JSONResponse(status_code=401, content={"error": f"Token inválido: {str(e)}"})
+            return self.unauthorized(f"Token inválido: {str(e)}")
 
         return await call_next(request)
+
+    def unauthorized(self, message: str):
+        return JSONResponse(
+            status_code=401,
+            content={"detail": message},
+            headers={
+                "Access-Control-Allow-Origin": "*",  # o usa el origen permitido si lo quieres restringido
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Methods": "*",
+            }
+        )
 
 # 🔹 Middleware para medir tiempos de respuesta
 @app.middleware("http")
