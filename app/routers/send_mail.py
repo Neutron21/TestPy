@@ -69,7 +69,9 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
 
     # Carga y renderiza la plantilla con variables
     template = env.get_template(template_name)
-    html_content = template.render(bodyMail)
+    html_content = template.render(**vars(bodyMail), isLink=request.isLink)
+    print(f"Valor recibido de isLink: {request.isLink}")
+
 
     resultado = enviar_correo(bodyMail, html_content, correos)  # Ajuste para enviar HTML
     return {"mensaje": resultado}
