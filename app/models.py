@@ -61,6 +61,7 @@ class UsuarioDTO (SQLModel):
     membresia: int = Field(default=None)
     id_broker: int = Field(default=None)
     id_sede: int = Field(default=None)
+    celular: Optional[str] = Field(default=None) 
 
 class Usuarios (UsuarioDTO, table=True):
     pass
@@ -107,6 +108,7 @@ class ComentariosDTO(SQLModel):
     id_usuario: str = Field(default=None)
     comentarios: str = Field(default=None)
 
+
 class Comentarios(ComentariosDTO, table=True):
     pass
     id_comentario: Optional[int] | None = Field(primary_key=True)
@@ -127,6 +129,7 @@ class ReqMail(BaseModel):
     producto: str
     userName: str
     numCotizacion: int
+    
 
 
 class BodyMail(BaseModel):
@@ -150,6 +153,10 @@ class BodyMail(BaseModel):
     antiguedadEmpresa: int
     edad: int
     plazo: int
+    celular: Optional[str] = None
+
+
+    
 
 class EstatusUpdate(BaseModel):
     estatus: int

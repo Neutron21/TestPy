@@ -1,7 +1,7 @@
 import base64
 import os
 from fastapi import APIRouter
-from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes
+from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios
 from sqlmodel import select
 from app.db import SessionDep
 from utils.email import enviar_correo
@@ -25,6 +25,9 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
     query_broker = select(Brokers.nombre).where(Brokers.id == cotizacion.broker)
     query_sede = select(Sedes.nombre).where(Sedes.id == cotizacion.sede)
     query_fin = select(Financieras).where(Financieras.id == cotizacion.id_financiera)
+    query_usuario = select(Usuarios).where(Usuarios.email == cotizacion.id_usuario)
+    usuario = session.exec(query_usuario).first()
+
 
     correos = session.exec(query_correos).all()
     broker = session.exec(query_broker).first()
@@ -52,7 +55,9 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
         tipoPersona = cotizacion.tipo_persona.capitalize(),
         antiguedadEmpresa =  cotizacion.antiguedad_empresa,
         edad = cotizacion.edad,
-        plazo = cotizacion.plazo
+        plazo = cotizacion.plazo,
+        celular = usuario.celular, 
+        
     )
     print(f"bodyMail: {bodyMail}")
       # ✅ Si es nuevo y la financiera es Konfío (id == 1), agregar correos especiales
