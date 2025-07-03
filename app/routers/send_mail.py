@@ -57,6 +57,7 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
         edad = cotizacion.edad,
         plazo = cotizacion.plazo,
         celular = usuario.celular, 
+        destinoCredito = cotizacion.destinoCredito
         
     )
     print(f"bodyMail: {bodyMail}")

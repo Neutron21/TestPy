@@ -96,6 +96,7 @@ class CotizacionDTO (SQLModel):
     OpCliente: str = Field(max_length=250, nullable=False)
     broker: int = Field(default=None, nullable=True)
     sede: Optional[int] = Field(default=None, nullable=True) # aun no se recibe del front
+    destinoCredito: str = Field(max_length=250, nullable=False)
     custom_prod: Optional[str] = Field(default=None, nullable=True)
 
 class Cotizacion (CotizacionDTO, table=True ):   
@@ -154,6 +155,8 @@ class BodyMail(BaseModel):
     edad: int
     plazo: int
     celular: Optional[str] = None
+    destinoCredito: str
+
 
 
     
