@@ -260,3 +260,7 @@ class PaginatedTransactionsResponse(SQLModel):
 
 class utils(BaseModel):
     numeros: List[int]
+
+class MontoUpdateDTO(BaseModel):
+    id_cotizacion: int
+    monto: float
