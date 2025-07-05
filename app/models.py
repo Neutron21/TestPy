@@ -157,12 +157,12 @@ class BodyMail(BaseModel):
     celular: Optional[str] = None
     destinoCredito: str
 
-
-
-    
-
 class EstatusUpdate(BaseModel):
     estatus: int
+    id_cotizacion: int
+
+class MontoUpdate(BaseModel):
+    monto: float
     id_cotizacion: int
 # Tablas de Utileria
 class Brokers(SQLModel, table=True):

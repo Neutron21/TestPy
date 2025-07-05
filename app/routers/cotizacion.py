@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Query, status, Path
 from sqlalchemy import desc
 from sqlmodel import select, text
 from app.db import SessionDep
-from app.models import Cotizacion, CotizacionDTO, EstatusUpdate
+from app.models import Cotizacion, CotizacionDTO, EstatusUpdate, MontoUpdate
 import base64
 
 router = APIRouter(tags=["Cotizacion"])
@@ -113,6 +113,21 @@ async def update_estatus_cotizacion(
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
     
     cotizacion.estatus = estatus_data.estatus
+    session.add(cotizacion)
+    session.commit()
+    session.refresh(cotizacion)
+    
+    return cotizacion
+
+@router.patch("/cotizacion/monto_udpate", response_model=Cotizacion)
+async def update_estatus_cotizacion(
+    request: MontoUpdate, session: SessionDep,):
+
+    cotizacion = session.get(Cotizacion, request.id_cotizacion)
+    if not cotizacion:
+        raise HTTPException(status_code=404, detail="Cotización no encontrada")
+    
+    cotizacion.monto = request.monto
     session.add(cotizacion)
     session.commit()
     session.refresh(cotizacion)
