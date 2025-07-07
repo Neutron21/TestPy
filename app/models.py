@@ -8,6 +8,8 @@ from app.db import engine
 from pydantic import ConfigDict
 from pydantic import BaseModel
 from typing import List
+from sqlmodel import SQLModel, Field
+from typing import Optional
 
 
 # Una buena práctica en arquitecturas limpias es usar ORM para la capa de acceso a datos y DTO
@@ -264,3 +266,11 @@ class utils(BaseModel):
 class MontoUpdateDTO(BaseModel):
     id_cotizacion: int
     monto: float
+
+class Brokers(SQLModel, table=True):
+    __tablename__ = "brokers"
+    __table_args__ = {"extend_existing": True} 
+    id: Optional[int] = Field(default=None, primary_key=True)
+    nombre: str
+   
+ 
