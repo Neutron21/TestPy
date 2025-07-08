@@ -23,18 +23,14 @@ load_dotenv()
 cred = credentials.Certificate("app/serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
 PUBLIC_ROUTES = os.getenv("PUBLIC_ROUTES", "").split(",")
+ALLOW_SERVERS = os.getenv("ALLOW_SERVERS", "").split(",")
 
 app = FastAPI(
     title="API de Konnect",
     description="API protegida con JWT de Firebase",
     version="1.0"
 )
-origins = [
-    "http://localhost:4200",  # Angular en local
-    "http://127.0.0.1:4200",
-    "https://konecct-broker.web.app"
-    # Agrega aquí otros dominios si lo despliegas
-]
+
 original_openapi = app.openapi
 # 🔹 Función personalizada para OpenAPI con seguridad JWT
 def custom_openapi():
@@ -125,7 +121,7 @@ async def log_request_time(request: Request, call_next):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,            # Permitir solo estos orígenes
+    allow_origins=ALLOW_SERVERS,            # Permitir solo estos orígenes
     allow_credentials=True,
     allow_methods=["*"],              # Permitir todos los métodos: GET, POST, etc.
     allow_headers=["*"],
