@@ -33,6 +33,7 @@ async def buscador_cotizaciones(
     session: SessionDep,
     estatus: Optional[int] = Query(None),
     fin: Optional[int] = Query(None),
+    broker: Optional[int] = Query(None),
     folioUserRfc: Optional[str] = Query(None),
     fechaDesde: Optional[str] = Query(None),
     fechaHasta: Optional[str] = Query(None),
@@ -41,7 +42,7 @@ async def buscador_cotizaciones(
     ):
     rows = [] 
     
-    if estatus is None and fin is None and not folioUserRfc and not fechaDesde and not fechaHasta:
+    if estatus is None and fin is None and not folioUserRfc and not fechaDesde and not fechaHasta and not broker:
         raise HTTPException(status_code=400, detail="Error: Campos incompletos.")
 
     
@@ -64,6 +65,10 @@ async def buscador_cotizaciones(
     if fin is not None:
         query += " AND id_financiera = :fin"
         params["fin"] = fin
+    
+    if broker is not None:
+        query += " AND broker = :broker"
+        params["broker"] = broker
 
     if folioUserRfc:
         like = f"%{folioUserRfc}%"
