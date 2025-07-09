@@ -29,7 +29,8 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
     msg['To'] = ", ".join(correos_fijos)
     msg['Cc'] = ", ".join(correos)
     msg['Reply-To'] = "Konnect <kfigueroa@konecct.com.mx>"
-    msg['Subject'] = f"Cliente: {request.cliente} {request.rfc}"
+    tipo_solicitud = "Cliente" if request.isNew else "Actualización"
+    msg['Subject'] = f"{tipo_solicitud}: {request.cliente} {request.rfc}"
 
     # Crear la parte HTML del mensaje
     msg_alternative = MIMEMultipart("alternative")
