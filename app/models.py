@@ -182,6 +182,24 @@ class Tp_producto_checklist(SQLModel, table=True):
     checklist: str = Field(default=None)
     ch_viabilidad: str = Field(default=None)
 
+class MontoUpdateDTO(BaseModel):
+    id_cotizacion: int
+    monto: float
+
+class Brokers(SQLModel, table=True):
+    __tablename__ = "brokers"
+    __table_args__ = {"extend_existing": True} 
+    id: Optional[int] = Field(default=None, primary_key=True)
+    nombre: str
+
+class Proceso(SQLModel, table=True):
+    __tablename__ = "procesos"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    step: str
+    descripcion: str
+    id_financiera: int = Field(foreign_key="financieras.id")
+    id_categoria: int = Field(foreign_key="categorias.id")
+
 # MODELOS DE EJEMPLO
 class StatusEnum(str, Enum):
     ACTIVE = "active"
@@ -262,24 +280,3 @@ class PaginatedTransactionsResponse(SQLModel):
 
 class utils(BaseModel):
     numeros: List[int]
-
-class MontoUpdateDTO(BaseModel):
-    id_cotizacion: int
-    monto: float
-
-class Brokers(SQLModel, table=True):
-    __tablename__ = "brokers"
-    __table_args__ = {"extend_existing": True} 
-    id: Optional[int] = Field(default=None, primary_key=True)
-    nombre: str
-
-class Proceso(SQLModel, table=True):
-    __tablename__ = "procesos"
-    id: Optional[int] = Field(default=None, primary_key=True)
-    step: str
-    descripcion: str
-    id_financiera: int = Field(foreign_key="financieras.id")
-    id_categoria: int = Field(foreign_key="categorias.id")
-
-   
- 

@@ -8,13 +8,14 @@ router = APIRouter(tags=["Procesos"])
 
 @router.get("/procesos", response_model=list[Proceso])
 def get_procesos(
-    id_financiera: Optional[int] = None,
+    id_financiera: int,
+    id_categoria: int,
     session: Session = Depends(get_session)
 ):
     try:
         query = select(Proceso)
         if id_financiera is not None:
-            query = query.where(Proceso.id_financiera == id_financiera)
+            query = query.where((Proceso.id_financiera == id_financiera) & (Proceso.id_categoria == id_categoria)).order_by(Proceso.step)
         procesos = session.exec(query).all()
         return procesos
     except Exception as e:
