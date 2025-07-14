@@ -32,12 +32,22 @@ class Financieras(FinancierasDTO,table=True):
         pass
         id: int | None = Field(default=None,primary_key=True)
 
+class Categorias(SQLModel):
+    id: int = Field(primary_key=True)
+    nombre: str = Field(default=None)
+
+class SubCategorias(SQLModel):
+    __tablename__ = "subCategorias"
+    id: int = Field(primary_key=True)
+    nombre: str = Field(default=None)
 
 class ProductosDTO(SQLModel):
     nombre: str = Field(default=None)
     checklist: str = Field(default=None)
     ch_viabilidad: str = Field(default=None)
     institucion_id: int = Field(foreign_key="financiera.id")
+    id_categoria: int = Field(foreign_key="categorias.id")
+    id_subCategoria: int = Field(foreign_key="subCategorias.id")
 
 class ProductosTipoPersonaDTO(ProductosDTO):
     id: int
@@ -132,8 +142,6 @@ class ReqMail(BaseModel):
     producto: str
     userName: str
     numCotizacion: int
-    
-
 
 class BodyMail(BaseModel):
     OpCliente: str
