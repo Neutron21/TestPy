@@ -6,14 +6,14 @@ from app.db import get_session
 
 router = APIRouter(tags=["Procesos"])
 
-@router.get("/procesos", response_model=list[Proceso])
+@router.get("/procesos", response_model=list[str])
 def get_procesos(
     id_financiera: int,
     id_categoria: int,
     session: Session = Depends(get_session)
 ):
     try:
-        query = select(Proceso)
+        query = select(Proceso.descripcion)
         if id_financiera is not None:
             query = query.where((Proceso.id_financiera == id_financiera) & (Proceso.id_categoria == id_categoria)).order_by(Proceso.step)
         procesos = session.exec(query).all()

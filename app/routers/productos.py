@@ -56,7 +56,9 @@ async def get_producto_by_financiera(financiera_id: int, session: SessionDep):
             checklist=producto.checklist,
             ch_viabilidad=producto.ch_viabilidad,
             institucion_id=producto.institucion_id,
-            tipo_persona=tipos
+            tipo_persona=tipos,
+            id_categoria=producto.id_categoria,
+            id_subCategoria=producto.id_subCategoria
         )
 
         productos_con_tipo_persona.append(dto)
