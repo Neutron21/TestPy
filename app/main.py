@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import procesos 
 
 from app.db import create_all_tables
-from .routers import ( checklist,
+from .routers import ( checklist, membresias,
     financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, send_mail, uploadFiles, utils, brokers, procesos)
 from dotenv import load_dotenv
 
@@ -61,6 +61,7 @@ app.include_router(cotizacion.router)
 app.include_router(estatus_tramites.router)
 app.include_router(financieras.router)
 app.include_router(formatos.router)
+app.include_router(membresias.router)
 app.include_router(producto_formato.router)
 app.include_router(productos.router)
 app.include_router(procesos.router)

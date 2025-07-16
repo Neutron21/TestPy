@@ -197,16 +197,20 @@ class MontoUpdateDTO(BaseModel):
 class Brokers(SQLModel, table=True):
     __tablename__ = "brokers"
     __table_args__ = {"extend_existing": True} 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     nombre: str
 
 class Proceso(SQLModel, table=True):
     __tablename__ = "procesos"
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     step: str
     descripcion: str
     id_financiera: int = Field(foreign_key="financieras.id")
     id_categoria: int = Field(foreign_key="categorias.id")
+
+class Membresias(SQLModel, table=True):
+     id: int = Field(default=None, primary_key=True)
+     nombre: str
 
 # MODELOS DE EJEMPLO
 class StatusEnum(str, Enum):
