@@ -9,8 +9,8 @@ from app.models import ReqMail
 # Configuración para Hostinger SMTP
 SMTP_HOST = "smtp.hostinger.com"
 SMTP_PORT = 587
-SMTP_USER = "konecct.ti@solu-tec.net"
-SMTP_PASSWORD = "Mexico_2025"
+SMTP_USER = "web.app.no.reply@konnect.mx"
+SMTP_PASSWORD = "TiaCaquitas_007"
 SMTP_FROM_NAME = "KONNECT"
 SMTP_FROM_EMAIL = SMTP_USER
 

@@ -78,6 +78,7 @@ class UsuarioDTO (SQLModel):
 class Usuarios (UsuarioDTO, table=True):
     pass
     id: int | None = Field(default=None, primary_key=True)  # Permite que la BD genere el ID
+    id_superior: int = Field(foreign_key="usuarios.id")
 
 class Formatos (SQLModel, table=True):
     id: int = Field(primary_key=True)
@@ -115,6 +116,7 @@ class Cotizacion (CotizacionDTO, table=True ):
     pass 
     timestamp: datetime | None = Field(default_factory=mexico_timestamp, nullable=False)
     id_cotizacion: int | None = Field(default=None, primary_key=True, nullable=False)
+    id_user: int = Field(foreign_key="usuarios.id")
 
 class ComentariosDTO(SQLModel):
     id_cotizacion: int = Field(default=None)
