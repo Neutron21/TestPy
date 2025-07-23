@@ -36,7 +36,7 @@ async def obtener_cotizaciones_por_usurio(
               INNER JOIN subordinates s ON u.id_superior = s.id
             )
             SELECT * FROM cotizacion WHERE id_user IN (SELECT id FROM subordinates)
-            ORDER BY id_cotizacion
+            ORDER BY id_cotizacion DESC
         """)
         result = session.execute(query, {"user_id": id_user})
         cotizaciones = [Cotizacion(**dict(row._mapping)) for row in result.fetchall()]
