@@ -19,14 +19,37 @@ async def get_cotizacion_by_id(id_cotizacion: int, session: SessionDep):
 @router.get("/cotizaciones", response_model=list[Cotizacion])
 async def obtener_cotizaciones_por_usurio(
     session: SessionDep,
-    id_usuario: Optional[str] = Query(None)):
-    if not id_usuario:
-        query = select(Cotizacion).order_by(desc(Cotizacion.timestamp))
-    else:    
-        query = select(Cotizacion).where(Cotizacion.id_usuario == id_usuario).order_by(desc(Cotizacion.timestamp))
-    cotizaciones = session.exec(query).all()
+    id_user: Optional[int] = Query(None),
+    nivel_user: Optional[int] = Query(None)):
+
+    if nivel_user == 4:
+        # MasterBroker ve todo
+        cotizaciones = session.exec(select(Cotizacion)).all()
+
+    elif nivel_user in [2, 3]:
+        # Director o Gerente ve las suyas y las de sus subordinados
+        query = text("""
+            WITH RECURSIVE subordinates AS (
+              SELECT id FROM usuarios WHERE id = :user_id
+              UNION ALL
+              SELECT u.id FROM usuarios u
+              INNER JOIN subordinates s ON u.id_superior = s.id
+            )
+            SELECT * FROM cotizacion WHERE id_user IN (SELECT id FROM subordinates)
+            ORDER BY id_cotizacion
+        """)
+        result = session.execute(query, {"user_id": id_user})
+        cotizaciones = [Cotizacion(**dict(row._mapping)) for row in result.fetchall()]
+
+    else:
+        # Operador solo ve las suyas
+        cotizaciones = session.exec(
+            select(Cotizacion).where(Cotizacion.id_user == id_user)
+        ).all()
     
     return cotizaciones
+
+
 
 @router.get("/cotizacion/buscar/", response_model=List[Cotizacion])
 async def buscador_cotizaciones(
@@ -37,7 +60,7 @@ async def buscador_cotizaciones(
     folioUserRfc: Optional[str] = Query(None),
     fechaDesde: Optional[str] = Query(None),
     fechaHasta: Optional[str] = Query(None),
-    user: Optional[str] = Query(None),
+    user: Optional[int] = Query(None),
     rol: Optional[str] = Query(None),
     ):
     rows = [] 
@@ -46,40 +69,92 @@ async def buscador_cotizaciones(
         raise HTTPException(status_code=400, detail="Error: Campos incompletos.")
 
     
-    query = "SELECT * FROM cotizacion WHERE 1=1"
+    # query = "SELECT * FROM cotizacion WHERE 1=1"
+    # params = {}
+
+    # if rol != 'a' and user:
+    #     query += " AND id_usuario = :user"
+    #     params["user"] = user
+
+    # if fechaDesde and fechaHasta:
+    #     query += " AND timestamp BETWEEN :fechaDesde AND :fechaHasta"
+    #     params["fechaDesde"] = fechaDesde
+    #     params["fechaHasta"] = fechaHasta + " 23:59:59"
+
+    # if estatus is not None:
+    #     query += " AND estatus = :estatus"
+    #     params["estatus"] = estatus
+
+    # if fin is not None:
+    #     query += " AND id_financiera = :fin"
+    #     params["fin"] = fin
+    
+    # if broker is not None:
+    #     query += " AND broker = :broker"
+    #     params["broker"] = broker
+
+    # if folioUserRfc:
+    #     like = f"%{folioUserRfc}%"
+    #     if rol == 'a':
+    #         query += " AND (id_usuario LIKE :like OR nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
+    #     else:
+    #         query += " AND (nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
+    #     params["like"] = like
+    #     params["folioUserRfc"] = folioUserRfc
+    
+    # query += " ORDER BY timestamp DESC"
+
+    query_filters = ""
     params = {}
 
-    if rol != 'a' and user:
-        query += " AND id_usuario = :user"
-        params["user"] = user
-
-    if fechaDesde and fechaHasta:
-        query += " AND timestamp BETWEEN :fechaDesde AND :fechaHasta"
-        params["fechaDesde"] = fechaDesde
-        params["fechaHasta"] = fechaHasta + " 23:59:59"
-
     if estatus is not None:
-        query += " AND estatus = :estatus"
+        query_filters += " AND estatus = :estatus"
         params["estatus"] = estatus
 
     if fin is not None:
-        query += " AND id_financiera = :fin"
+        query_filters += " AND id_financiera = :fin"
         params["fin"] = fin
-    
+
     if broker is not None:
-        query += " AND broker = :broker"
+        query_filters += " AND broker = :broker"
         params["broker"] = broker
+
+    if fechaDesde and fechaHasta:
+        query_filters += " AND timestamp BETWEEN :fechaDesde AND :fechaHasta"
+        params["fechaDesde"] = fechaDesde
+        params["fechaHasta"] = fechaHasta + " 23:59:59"
 
     if folioUserRfc:
         like = f"%{folioUserRfc}%"
         if rol == 'a':
-            query += " AND (id_usuario LIKE :like OR nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
+            query_filters += " AND (id_usuario LIKE :like OR nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
         else:
-            query += " AND (nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
+            query_filters += " AND (nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
         params["like"] = like
         params["folioUserRfc"] = folioUserRfc
-    
-    query += " ORDER BY timestamp DESC"
+
+    # Aquí decides si usas recursive o no
+    if rol != 'a' and user:
+        query = f"""
+        WITH RECURSIVE subordinates AS (
+            SELECT id FROM usuarios WHERE id = :user_id
+            UNION ALL
+            SELECT u.id FROM usuarios u
+            JOIN subordinates s ON u.id_superior = s.id
+        )
+        SELECT * FROM cotizacion
+        WHERE id_user IN (SELECT id FROM subordinates)
+        {query_filters}
+        ORDER BY timestamp DESC
+        """
+        params["user_id"] = user
+    else:
+        query = f"""
+        SELECT * FROM cotizacion
+        WHERE 1=1
+        {query_filters}
+        ORDER BY timestamp DESC
+        """
 
     print(f"QUERY: {query}")
     print(f"PARAMS: {params}")

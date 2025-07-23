@@ -73,7 +73,8 @@ class UsuarioDTO (SQLModel):
     membresia: int = Field(default=None)
     id_broker: int = Field(default=None)
     id_sede: int = Field(default=None)
-    celular: Optional[str] = Field(default=None) 
+    celular: Optional[str] = Field(default=None)
+    nivel: int = Field(default=None)
 
 class Usuarios (UsuarioDTO, table=True):
     pass
@@ -192,6 +193,14 @@ class Tp_producto_checklist(SQLModel, table=True):
     tipo_persona: str = Field(default=None)
     checklist: str = Field(default=None)
     ch_viabilidad: str = Field(default=None)
+
+class ChecklistResponse(SQLModel):
+    producto_id: int
+    tipo_persona: str
+    checklist: str
+    ch_viabilidad: str
+    id_categoria: int
+    id_subCategoria: int
 
 class MontoUpdateDTO(BaseModel):
     id_cotizacion: int
