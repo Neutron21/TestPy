@@ -95,6 +95,7 @@ class Estatus_tramites(SQLModel, table=True):
 
 class CotizacionDTO (SQLModel):
     id_usuario: str = Field(max_length=100, nullable=False)
+    id_user: int = Field(nullable=False) 
     id_financiera: int = Field(nullable=False)
     producto: int = Field(nullable=False)
     tipo_persona: str = Field(nullable=False)  
@@ -116,7 +117,7 @@ class Cotizacion (CotizacionDTO, table=True ):
     pass 
     timestamp: datetime | None = Field(default_factory=mexico_timestamp, nullable=False)
     id_cotizacion: int | None = Field(default=None, primary_key=True, nullable=False)
-    id_user: int = Field(foreign_key="usuarios.id")
+    id_user: int = Field(foreign_key="usuarios.id", nullable=False)
 
 class ComentariosDTO(SQLModel):
     id_cotizacion: int = Field(default=None)
