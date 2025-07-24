@@ -36,7 +36,7 @@ async def obtener_cotizaciones_por_usurio(
               INNER JOIN subordinates s ON u.id_superior = s.id
             )
             SELECT * FROM cotizacion WHERE id_user IN (SELECT id FROM subordinates)
-            ORDER BY id_cotizacion DESC
+            ORDER BY timestamp DESC
         """)
         result = session.execute(query, {"user_id": id_user})
         cotizaciones = [Cotizacion(**dict(row._mapping)) for row in result.fetchall()]
@@ -67,42 +67,6 @@ async def buscador_cotizaciones(
     
     if estatus is None and fin is None and not folioUserRfc and not fechaDesde and not fechaHasta and not broker:
         raise HTTPException(status_code=400, detail="Error: Campos incompletos.")
-
-    
-    # query = "SELECT * FROM cotizacion WHERE 1=1"
-    # params = {}
-
-    # if rol != 'a' and user:
-    #     query += " AND id_usuario = :user"
-    #     params["user"] = user
-
-    # if fechaDesde and fechaHasta:
-    #     query += " AND timestamp BETWEEN :fechaDesde AND :fechaHasta"
-    #     params["fechaDesde"] = fechaDesde
-    #     params["fechaHasta"] = fechaHasta + " 23:59:59"
-
-    # if estatus is not None:
-    #     query += " AND estatus = :estatus"
-    #     params["estatus"] = estatus
-
-    # if fin is not None:
-    #     query += " AND id_financiera = :fin"
-    #     params["fin"] = fin
-    
-    # if broker is not None:
-    #     query += " AND broker = :broker"
-    #     params["broker"] = broker
-
-    # if folioUserRfc:
-    #     like = f"%{folioUserRfc}%"
-    #     if rol == 'a':
-    #         query += " AND (id_usuario LIKE :like OR nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
-    #     else:
-    #         query += " AND (nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
-    #     params["like"] = like
-    #     params["folioUserRfc"] = folioUserRfc
-    
-    # query += " ORDER BY timestamp DESC"
 
     query_filters = ""
     params = {}

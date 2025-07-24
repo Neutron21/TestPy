@@ -18,11 +18,12 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
     destinatario = request.emailUser
 
     # Correos fijos de Team Konnect
-    correos_fijos = ["kfigueroa@konnect.mx", "ara.castro@konnect.mx", destinatario]
+    correos_fijos = ['kfigueroa@konnect.mx', 'ara.castro@konnect.mx', destinatario]
 
     # Eliminar duplicados y combinar con correos fijos
     correos_totales = list(set(correos + correos_fijos))
     print(f"--> CorreosTotales: {correos_totales}")
+    print(f"--> correos_fijos: {", ".join(correos_fijos)}")
     msg = MIMEMultipart("related")  # 👈 para permitir imágenes embebidas
 
     msg['From'] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
@@ -38,7 +39,6 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
 
     msg_alternative.attach(MIMEText(mensaje, 'html'))
 
-    # Ruta corregida para la imagen de firma
     firma_path = os.path.join(os.path.dirname(__file__), "static", "firma.png")
 
     try:
@@ -55,8 +55,8 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
         server.starttls()
         server.login(SMTP_USER, SMTP_PASSWORD)
 
-        todos_destinatarios = [destinatario] + correos
-        server.sendmail(SMTP_FROM_EMAIL, todos_destinatarios, msg.as_string())
+        # todos_destinatarios = [destinatario] + correos
+        server.sendmail(SMTP_FROM_EMAIL, correos_totales, msg.as_string())
 
         server.quit()
         return "Correo enviado con éxito."
