@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
 from app.db import SessionDep
 from app.models import UsuarioDTO, Usuarios
@@ -22,3 +23,9 @@ async def create_usuario(usuario_data: UsuarioDTO, session: SessionDep):
     session.commit() 
     session.refresh(usuario) 
     return usuario  
+
+@router.get("/usuarios", response_model=List[Usuarios])
+async def get_usuarios(session: SessionDep):
+    query = select(Usuarios)
+    usuarios = session.exec(query).all()
+    return usuarios

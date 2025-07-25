@@ -11,7 +11,7 @@ practica de fastapi con python
 # El cual se encuntra en la carpeta 'project', con el siguiente comando:
     'fastapi dev'
 # Si el archivo main esta dentro de una carpeta se pone la ruta
-    'fastapi dev app/main.py'
+    'source desarollo/bin/activate'
 
 # En caso de ser un proyecto nuevo debemos instalar fastapi y standard con el siguiente comando
     'pip install "fastapi[standard]"'
