@@ -24,8 +24,7 @@ async def obtener_cotizaciones_por_usurio(
 
     if nivel_user == 4:
         # MasterBroker ve todo
-        cotizaciones = session.exec(select(Cotizacion)).all()
-
+        cotizaciones = session.exec(select(Cotizacion).order_by(desc(Cotizacion.timestamp))).all()
     elif nivel_user in [2, 3]:
         # Director o Gerente ve las suyas y las de sus subordinados
         query = text("""
@@ -44,7 +43,7 @@ async def obtener_cotizaciones_por_usurio(
     else:
         # Operador solo ve las suyas
         cotizaciones = session.exec(
-            select(Cotizacion).where(Cotizacion.id_user == id_user)
+            select(Cotizacion).where(Cotizacion.id_user == id_user).order_by(desc(Cotizacion.timestamp))
         ).all()
     
     return cotizaciones
