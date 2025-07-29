@@ -23,7 +23,6 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
     # Eliminar duplicados y combinar con correos fijos
     correos_totales = list(set(correos + correos_fijos))
     print(f"--> CorreosTotales: {correos_totales}")
-    print(f"--> correos_fijos: {", ".join(correos_fijos)}")
     msg = MIMEMultipart("related")  # 👈 para permitir imágenes embebidas
 
     msg['From'] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
