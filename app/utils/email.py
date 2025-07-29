@@ -54,7 +54,6 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
         server.starttls()
         server.login(SMTP_USER, SMTP_PASSWORD)
 
-        # todos_destinatarios = [destinatario] + correos
         server.sendmail(SMTP_FROM_EMAIL, correos_totales, msg.as_string())
 
         server.quit()
