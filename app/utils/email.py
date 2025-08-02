@@ -15,19 +15,16 @@ SMTP_FROM_NAME = "KONNECT"
 SMTP_FROM_EMAIL = SMTP_USER
 
 def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
-    destinatario = request.emailUser
+    destinatario = [request.emailUser]
 
-    # Correos fijos de Team Konnect
-    correos_fijos = ['kfigueroa@konnect.mx', 'ara.castro@konnect.mx', destinatario]
-
-    # Eliminar duplicados y combinar con correos fijos
-    correos_totales = list(set(correos + correos_fijos))
+    # Eliminar duplicados con el set y agregamos correo del usuario logueado
+    correos_totales = list(set(correos + destinatario))
     print(f"--> CorreosTotales: {correos_totales}")
-    print(f"--> correos_fijos: {", ".join(correos_fijos)}")
+    
     msg = MIMEMultipart("related")  # 👈 para permitir imágenes embebidas
 
     msg['From'] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
-    msg['To'] = ", ".join(correos_fijos)
+    msg['To'] = ", ".join(destinatario)
     msg['Cc'] = ", ".join(correos)
     msg['Reply-To'] = "Konnect <kfigueroa@konecct.com.mx>"
     tipo_solicitud = "Cliente" if request.isNew else "Actualización"
