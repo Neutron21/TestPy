@@ -1,8 +1,9 @@
 import base64
 import os
+from typing import List
 from fastapi import APIRouter
 from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios
-from sqlmodel import select
+from sqlmodel import select, text
 from app.db import SessionDep
 from utils.email import enviar_correo
 from jinja2 import Environment, FileSystemLoader
@@ -13,6 +14,20 @@ router = APIRouter(tags=["SendMails"])
 ruta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ruta_templates = os.path.join(ruta_base, "templates")
 env = Environment(loader=FileSystemLoader(ruta_templates))
+
+def obtener_jefes(user_id: int, session) -> List[Usuarios]:
+    query = text("""
+        WITH RECURSIVE superiors AS (
+            SELECT id, email, id_superior FROM usuarios WHERE id = :user_id
+            UNION ALL
+            SELECT u.id, u.email, u.id_superior
+            FROM usuarios u
+            INNER JOIN superiors s ON s.id_superior = u.id
+        )
+        SELECT email FROM superiors WHERE id != :user_id
+    """)
+    result = session.exec(query.params(user_id=user_id)).all()
+    return [row[0] for row in result] 
 
 @router.post("/enviar-correo")
 async def enviar_mail(request: ReqMail, session: SessionDep):
@@ -26,10 +41,11 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
     query_sede = select(Sedes.nombre).where(Sedes.id == cotizacion.sede)
     query_fin = select(Financieras).where(Financieras.id == cotizacion.id_financiera)
     query_usuario = select(Usuarios).where(Usuarios.email == cotizacion.id_usuario)
+    correos_superiores = obtener_jefes(cotizacion.id_user, session);
+    print(f"--> Correos_superiores: {correos_superiores}")
     usuario = session.exec(query_usuario).first()
 
-
-    correos = session.exec(query_correos).all()
+    correosIF = session.exec(query_correos).all()
     broker = session.exec(query_broker).first()
     sede = session.exec(query_sede).first()
     financiera = session.exec(query_fin).first()
@@ -43,7 +59,7 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
         emailUser = cotizacion.id_usuario,
         ifName = financiera.nombre,
         isNew = request.isNew,
-        listaMails = correos,
+        listaMails = correosIF,
         monto = f"{cotizacion.monto:,.0f}",
         numCotizacion = cotizacion.id_cotizacion,
         productoName = request.producto,
@@ -61,11 +77,12 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
         
     )
     print(f"bodyMail: {bodyMail}")
-      # ✅ Si es nuevo y la financiera es Konfío (id == 1), agregar correos especiales
+      # ✅ Si es nuevo y la financiera es Konfío (id == 1), agregar correosIF especiales
+    correosKonfio = []
     if request.isNew and cotizacion.id_financiera == 1:
         correosKonfio = ["maria.mendoza@konfio.mx", "luis.ramirez@konfio.mx"]
      
-        correos = list(set(correos + correosKonfio))
+    correos = list(set(correosIF + correosKonfio + correos_superiores))
     print(f"--> Correos: {correos}")
 
     if request.isNew:

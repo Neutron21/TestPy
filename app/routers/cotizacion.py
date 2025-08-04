@@ -48,8 +48,6 @@ async def obtener_cotizaciones_por_usurio(
     
     return cotizaciones
 
-
-
 @router.get("/cotizacion/buscar/", response_model=List[Cotizacion])
 async def buscador_cotizaciones(
     session: SessionDep,
