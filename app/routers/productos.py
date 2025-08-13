@@ -36,7 +36,7 @@ async def get_producto_by_financiera(financiera_id: int, session: SessionDep):
 
 @router.get("/productos/tipoPersona/{financiera_id}", response_model=list[ProductosTipoPersonaDTO])
 async def get_producto_by_financiera(financiera_id: int, session: SessionDep):
-    query = select(Productos).where(Productos.institucion_id == financiera_id)
+    query = select(Productos).where(Productos.institucion_id == financiera_id).order_by(Productos.id_categoria)
     productos_db = session.exec(query).all()
 
     productos_con_tipo_persona = []

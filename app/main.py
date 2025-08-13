@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import procesos 
 
 from app.db import create_all_tables
-from .routers import ( checklist, membresias,
+from .routers import ( checklist, membresias, utms,
     financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, send_mail, uploadFiles, utils, brokers, procesos)
 from dotenv import load_dotenv
 
@@ -69,9 +69,7 @@ app.include_router(send_mail.router)
 app.include_router(uploadFiles.router)
 app.include_router(usuarios.router)
 app.include_router(utils.router)
-
-
-
+app.include_router(utms.router)
 
 # # 🔹 Middleware de autenticación Firebase
 class FirebaseAuthMiddleware(BaseHTTPMiddleware):

@@ -231,6 +231,13 @@ class Membresias(SQLModel, table=True):
      id: int = Field(default=None, primary_key=True)
      nombre: str
 
+class Utms(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    id_usuario: Optional[int] = Field(default=None, foreign_key="usuarios.id")
+    id_financiera: int = Field(foreign_key="financieras.id")
+    tipo_persona: Optional[str] = Field(default=None)
+    url: str
+
 # MODELOS DE EJEMPLO
 class StatusEnum(str, Enum):
     ACTIVE = "active"
