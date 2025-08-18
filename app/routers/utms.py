@@ -35,4 +35,3 @@ async def utms_by_tipo_user_id_If(session: SessionDep, idFin: int, idUsuario: Op
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no existe")
     print(result)
     return result
-

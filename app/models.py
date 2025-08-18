@@ -101,6 +101,14 @@ class Estatus_tramites(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     name: str = Field(default=None)
 
+class Documentos(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    id_producto: int = Field(foreign_key="producto.id", primary_key=True)
+    tipo_persona: str
+    documento: str
+    descripcion: str
+    responsable: str
+
 class CotizacionDTO (SQLModel):
     id_usuario: str = Field(max_length=100, nullable=False)
     id_user: int = Field(nullable=False) 
