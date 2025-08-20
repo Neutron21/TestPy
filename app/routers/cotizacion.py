@@ -17,7 +17,7 @@ async def get_cotizacion_by_id(id_cotizacion: int, session: SessionDep):
     return  cotizacion
 
 @router.get("/cotizaciones", response_model=list[Cotizacion])
-async def obtener_cotizaciones_por_usurio(
+async def obtener_cotizaciones_por_usuario(
     session: SessionDep,
     id_user: Optional[int] = Query(None),
     nivel_user: Optional[int] = Query(None)):

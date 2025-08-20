@@ -68,11 +68,9 @@ class UsuarioDTO (SQLModel):
     nombre: str = Field(default=None)
     email: str = Field(default=None)
     rol: str = Field(default=None, min_length=1, max_length=1)
-    broker: str = Field(default=None)
-    sede: str = Field(default=None)
     membresia: int = Field(default=None)
-    id_broker: int = Field(default=None)
-    id_sede: int = Field(default=None)
+    id_broker: int = Field(foreign_key="brokers.id")
+    id_sede: int = Field(foreign_key="sedes.id")
     celular: Optional[str] = Field(default=None)
     nivel: int = Field(default=None)
 
@@ -234,6 +232,7 @@ class Proceso(SQLModel, table=True):
     descripcion: str
     id_financiera: int = Field(foreign_key="financieras.id")
     id_categoria: int = Field(foreign_key="categorias.id")
+    id_subcategoria: int = Field(foreign_key="subCategorias.id")
 
 class Membresias(SQLModel, table=True):
      id: int = Field(default=None, primary_key=True)
