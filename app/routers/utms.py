@@ -6,7 +6,7 @@ from app.models import Utms
 
 router = APIRouter(tags=["Utms"])
 
-@router.get("/utms", response_model=List[Utms])
+@router.get("/utms", response_model=Utms)
 async def utms_by_tipo_user_id_If(session: SessionDep, idFin: int, idUsuario: Optional[int] = Query(None), tipoPersona: Optional[str] = Query(None)):
 
     query_filters = ""
@@ -29,9 +29,9 @@ async def utms_by_tipo_user_id_If(session: SessionDep, idFin: int, idUsuario: Op
         WHERE 1=1
         {query_filters}
         """
-    result = session.execute(text(query), params)
+    result = session.execute(text(query), params).first()
 
     if not result:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no existe")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utm no encontrada")
     print(result)
     return result
