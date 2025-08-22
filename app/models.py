@@ -101,9 +101,17 @@ class Estatus_tramites(SQLModel, table=True):
 
 class Documentos(SQLModel, table=True):
     id: int = Field(primary_key=True)
-    id_producto: int = Field(foreign_key="producto.id", primary_key=True)
+    id_producto: int = Field(foreign_key="producto.id")
     tipo_persona: str
     documento: str
+    descripcion: str
+    responsable: str
+
+class Viabilidad(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    id_producto: int = Field(foreign_key="producto.id")  # ← ya NO lleva primary_key=True
+    tipo_persona: str
+    documento: str   
     descripcion: str
     responsable: str
 
