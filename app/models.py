@@ -157,6 +157,9 @@ class CorreosDTO(SQLModel):
     mail: str = Field(default=None)
     nombre: str = Field(default=None)
     activo: bool = Field(default=True)
+    v_comercial: bool = Field(default=True)
+    v_mail: bool = Field(default=True)
+    telefono: bool = Field(default=True)
 
 class Correos(CorreosDTO ,table=True ):  
     pass
