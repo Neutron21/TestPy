@@ -1,6 +1,6 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, status, Query
-from sqlmodel import text, select
+from sqlmodel import select
 from app.db import SessionDep
 from app.models import Documentos
 from sqlalchemy import and_
@@ -8,17 +8,17 @@ from sqlalchemy import and_
 router = APIRouter(tags=["Documentos"])
 
 @router.get("/documentos", response_model=List[Documentos])
-async def utms_by_tipo_user_id_If(session: SessionDep, idProducto: int, tipoPersona: str = Query(None)):
-   
-    query = select(Documentos).where(
-                and_(
-                    Documentos.id_producto == idProducto,
-                    Documentos.tipo_persona == tipoPersona
-                ))
+async def get_Documentos_by_If_and_TipoPersona(session: SessionDep, idProducto: int, tipoPersona: str = Query(None)):
+    try:
+        query = select(Documentos).where(
+                    and_(
+                        Documentos.id_producto == idProducto,
+                        Documentos.tipo_persona == tipoPersona
+                    ))
+        result = []
+        result = session.exec(query).all()
 
-    result = session.exec(query).all()
-
-    if not result:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Documentos no encontrados")
-    print(result)
-    return result
+        return result
+    except Exception as e:
+        print("Error:", e)
+        raise HTTPException(status_code=500, detail="Error interno del servidor", error=e)

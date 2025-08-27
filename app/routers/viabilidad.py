@@ -8,17 +8,17 @@ from sqlalchemy import and_
 router = APIRouter(tags=["Viabilidad"])
 
 @router.get("/viabilidad", response_model=List[Viabilidad])
-async def utms_by_tipo_user_id_If(session: SessionDep, idProducto: int, tipoPersona: str = Query(None)):
-   
-    query = select(Viabilidad).where(
-                and_(
-                    Viabilidad.id_producto == idProducto,
-                    Viabilidad.tipo_persona == tipoPersona
-                ))
+async def get_Viiabilidad_by_If_and_TipoPersona(session: SessionDep, idProducto: int, tipoPersona: str = Query(None)):
+    try:
+        query = select(Viabilidad).where(
+                    and_(
+                        Viabilidad.id_producto == idProducto,
+                        Viabilidad.tipo_persona == tipoPersona
+                    ))
+        result = []
+        result = session.exec(query).all()
 
-    result = session.exec(query).all()
-
-    if not result:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Viabilidad no encontrados")
-    print(result)
-    return result
+        return result
+    except Exception as e:
+        print("Error:", e)
+        raise HTTPException(status_code=500, detail="Error interno del servidor", error=e)

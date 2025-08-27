@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import and_
 from sqlmodel import Session, select
-from typing import Optional
 from app.models import Proceso
 from app.db import get_session
 
@@ -10,12 +10,15 @@ router = APIRouter(tags=["Procesos"])
 def get_procesos(
     id_financiera: int,
     id_categoria: int,
-    session: Session = Depends(get_session)
-):
+    id_subCategoria: int = Query(None),
+    session: Session = Depends(get_session)):
+    
     try:
-        query = select(Proceso.descripcion)
-        if id_financiera is not None:
-            query = query.where((Proceso.id_financiera == id_financiera) & (Proceso.id_categoria == id_categoria)).order_by(Proceso.step)
+        query = select(Proceso.descripcion).where(
+            (Proceso.id_financiera == id_financiera) &
+            (Proceso.id_categoria == id_categoria) &
+            (Proceso.id_subcategoria == id_subCategoria)
+            ).order_by(Proceso.step)
         procesos = session.exec(query).all()
         return procesos
     except Exception as e:
