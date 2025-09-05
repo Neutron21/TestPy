@@ -154,12 +154,11 @@ class Comentarios(ComentariosDTO, table=True):
 
 class CorreosDTO(SQLModel):
     id_financiera: int = Field(default=None)
-    mail: str = Field(default=None)
+    correo: str = Field(default=None)
     nombre: str = Field(default=None)
-    activo: bool = Field(default=True)
-    v_comercial: bool = Field(default=True)
-    v_mail: bool = Field(default=True)
-    telefono: bool = Field(default=True)
+    v_comercial: bool = Field(default=True) # vista comercial
+    v_mail: bool = Field(default=True) # envio de correos
+    telefono: str = Field(default=None)
 
 class Correos(CorreosDTO ,table=True ):  
     pass

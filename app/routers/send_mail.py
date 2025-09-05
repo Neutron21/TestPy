@@ -36,7 +36,7 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
     cotizacion = session.exec(query_cotizacion).first()
     print(f"Req: {cotizacion}")
 
-    query_correos = select(Correos.mail).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.activo == 1))
+    query_correos = select(Correos.correo).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1))
     query_broker = select(Brokers.nombre).where(Brokers.id == cotizacion.broker)
     query_sede = select(Sedes.nombre).where(Sedes.id == cotizacion.sede)
     query_fin = select(Financieras).where(Financieras.id == cotizacion.id_financiera)

@@ -14,10 +14,10 @@ async def obtener_correos(id_financiera: int, session: SessionDep):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se encontraron correos para esta financiera")  
 
     return correos  
-@router.get("/correos/{id_financiera}/activos", response_model=list[Correos])  
+@router.get("/correos/activos/{id_financiera}", response_model=list[Correos])  
 async def obtener_correos_activos(id_financiera: int, session: SessionDep):
     query = select(Correos).where(
-        (Correos.id_financiera == id_financiera) & (Correos.activo == 1)
+        (Correos.id_financiera == id_financiera) & (Correos.v_comercial == 1)
     )
     correos = session.exec(query).all()  
 
