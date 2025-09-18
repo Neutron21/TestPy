@@ -82,7 +82,7 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
     if request.isNew and cotizacion.id_financiera == 1:
         correosKonfio = ["maria.mendoza@konfio.mx", "luis.ramirez@konfio.mx"]
      
-    correos = list(set(correosIF + correosKonfio + correos_superiores + ["ara.castro@konnect.mx"]))
+    correos = list(set(correosIF + correosKonfio + correos_superiores + ["ara.castro@konnect.mx", "gerencia.operativa@konnect.mx"]))
     print(f"--> Correos: {correos}")
 
     if request.isNew:

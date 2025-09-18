@@ -39,7 +39,7 @@ async def get_base64_from_numeros(payload: NumerosRequest):
     #         folder_name = numB64
 
     #         # Obtener ruta desde .env
-    #         base_path = os.getenv("RUTA_COTIZACIONES")
+    #         base_path = os.getenv("RUTA_COTIZACIONES")deac
     #         if not base_path:
     #             return {"status": "error", "message": "RUTA_COTIZACIONES no está definida en .env"}
 
