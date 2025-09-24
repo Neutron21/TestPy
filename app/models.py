@@ -79,6 +79,10 @@ class Usuarios (UsuarioDTO, table=True):
     id: int | None = Field(default=None, primary_key=True)  # Permite que la BD genere el ID
     id_superior: int = Field(foreign_key="usuarios.id")
 
+class UsuarioSimple(BaseModel):
+    id: int
+    nombre: str
+    
 class UsuarioResponse(SQLModel):
     nombre: str
     email: str

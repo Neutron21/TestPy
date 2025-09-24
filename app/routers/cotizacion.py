@@ -54,6 +54,7 @@ async def buscador_cotizaciones(
     estatus: Optional[int] = Query(None),
     fin: Optional[int] = Query(None),
     broker: Optional[int] = Query(None),
+    idUser: Optional[int] = Query(None),
     folioUserRfc: Optional[str] = Query(None),
     fechaDesde: Optional[str] = Query(None),
     fechaHasta: Optional[str] = Query(None),
@@ -62,7 +63,7 @@ async def buscador_cotizaciones(
     ):
     rows = [] 
     
-    if estatus is None and fin is None and not folioUserRfc and not fechaDesde and not fechaHasta and not broker:
+    if estatus is None and fin is None and not folioUserRfc and not fechaDesde and not fechaHasta and not broker and not idUser:
         raise HTTPException(status_code=400, detail="Error: Campos incompletos.")
 
     query_filters = ""
@@ -79,6 +80,10 @@ async def buscador_cotizaciones(
     if broker is not None:
         query_filters += " AND broker = :broker"
         params["broker"] = broker
+    
+    if idUser is not None:
+        query_filters += " AND id_user = :idUser"
+        params["idUser"] = idUser
 
     if fechaDesde and fechaHasta:
         query_filters += " AND timestamp BETWEEN :fechaDesde AND :fechaHasta"

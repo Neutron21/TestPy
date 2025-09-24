@@ -1,8 +1,8 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlmodel import Session, select
+from sqlmodel import Session, select, text
 from app.db import SessionDep
-from app.models import UsuarioDTO, UsuarioResponse, Usuarios
+from app.models import UsuarioDTO, UsuarioResponse, UsuarioSimple, Usuarios
 
 router = APIRouter(tags=["Usuarios"])
 
@@ -29,3 +29,20 @@ async def get_usuarios(session: SessionDep):
     query = select(Usuarios)
     usuarios = session.exec(query).all()
     return usuarios
+
+@router.get("/usuarios/subordinados", response_model=list[UsuarioSimple])
+async def list_brokers(id_user: int, session: SessionDep):
+    query = text("""
+        WITH RECURSIVE subordinates AS (
+            SELECT id, id_broker FROM usuarios WHERE id = :user_id
+            UNION ALL
+            SELECT u.id, u.id_broker
+            FROM usuarios u
+            INNER JOIN subordinates s ON u.id_superior = s.id
+        )
+        SELECT id, nombre FROM usuarios WHERE id IN (SELECT id FROM subordinates)
+        ORDER BY nombre         
+        """)
+    result = session.execute(query, {"user_id": id_user})
+
+    return result
