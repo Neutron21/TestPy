@@ -32,17 +32,24 @@ async def get_usuarios(session: SessionDep):
 
 @router.get("/usuarios/subordinados", response_model=list[UsuarioSimple])
 async def list_brokers(id_user: int, session: SessionDep):
-    query = text("""
-        WITH RECURSIVE subordinates AS (
-            SELECT id, id_broker FROM usuarios WHERE id = :user_id
-            UNION ALL
-            SELECT u.id, u.id_broker
-            FROM usuarios u
-            INNER JOIN subordinates s ON u.id_superior = s.id
-        )
-        SELECT id, nombre FROM usuarios WHERE id IN (SELECT id FROM subordinates)
-        ORDER BY nombre         
-        """)
+    queryUser = select(Usuarios).where(Usuarios.id == id_user)
+    user = session.exec(queryUser).first()
+    print(user)
+    if user.rol == 'a':
+        query = select(Usuarios.id, Usuarios.nombre)
+        result = session.exec(query).all()
+    else: 
+        query = text("""
+            WITH RECURSIVE subordinates AS (
+                SELECT id, id_broker FROM usuarios WHERE id = :user_id
+                UNION ALL
+                SELECT u.id, u.id_broker
+                FROM usuarios u
+                INNER JOIN subordinates s ON u.id_superior = s.id
+            )
+            SELECT id, nombre FROM usuarios WHERE id IN (SELECT id FROM subordinates)
+            ORDER BY nombre         
+            """)
     result = session.execute(query, {"user_id": id_user})
 
     return result
