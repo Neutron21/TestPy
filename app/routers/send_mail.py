@@ -2,7 +2,7 @@ import base64
 import os
 from typing import List
 from fastapi import APIRouter
-from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios
+from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios, Productos
 from sqlmodel import select, text
 from app.db import SessionDep
 from utils.email import enviar_correo
@@ -36,7 +36,15 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
     cotizacion = session.exec(query_cotizacion).first()
     print(f"Req: {cotizacion}")
 
-    query_correos = select(Correos.correo).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1))
+    if cotizacion.id_financiera == 14:
+        
+        query_producto = select(Productos.id_categoria).where(Productos.id == cotizacion.producto)
+        categoria = session.exec(query_producto).first()
+        print(f"--> Categoria: {categoria}")
+        query_correos = select(Correos.correo).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1) & (Correos.categoria_id == categoria))
+    else :
+        query_correos = select(Correos.correo).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1))
+        
     query_broker = select(Brokers.nombre).where(Brokers.id == cotizacion.broker)
     query_sede = select(Sedes.nombre).where(Sedes.id == cotizacion.sede)
     query_fin = select(Financieras).where(Financieras.id == cotizacion.id_financiera)
