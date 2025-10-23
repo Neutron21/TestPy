@@ -73,6 +73,8 @@ class UsuarioDTO (SQLModel):
     id_sede: int = Field(foreign_key="sedes.id")
     celular: Optional[str] = Field(default=None)
     nivel: int = Field(default=None)
+    id_financiera: Optional[int] = Field(default=None, foreign_key="financieras.id")
+
 
 class Usuarios (UsuarioDTO, table=True):
     pass
