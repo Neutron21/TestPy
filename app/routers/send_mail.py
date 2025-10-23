@@ -40,7 +40,6 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
         
         query_producto = select(Productos.id_categoria).where(Productos.id == cotizacion.producto)
         categoria = session.exec(query_producto).first()
-        print(f"--> Categoria: {categoria}")
         query_correos = select(Correos.correo).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1) & (Correos.categoria_id == categoria))
     else :
         query_correos = select(Correos.correo).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1))
