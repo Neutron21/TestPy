@@ -165,6 +165,7 @@ class CorreosDTO(SQLModel):
     v_comercial: bool = Field(default=True) # vista comercial
     v_mail: bool = Field(default=True) # envio de correos
     telefono: str = Field(default=None)
+    categoria_id: int = Field(foreign_key="categorias.id")
 
 class Correos(CorreosDTO ,table=True ):  
     pass
