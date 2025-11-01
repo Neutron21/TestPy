@@ -1,11 +1,11 @@
 import base64
 import os
 from typing import List
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios, Productos
 from sqlmodel import select, text
 from app.db import SessionDep
-from utils.email import enviar_correo
+from utils.email import enviar_correo, notificacion_if
 from jinja2 import Environment, FileSystemLoader
 
 router = APIRouter(tags=["SendMails"])
@@ -106,4 +106,22 @@ async def enviar_mail(request: ReqMail, session: SessionDep):
 
 
     resultado = enviar_correo(bodyMail, html_content, correos)  # Ajuste para enviar HTML
+    return {"mensaje": resultado}
+
+@router.post("/comentario-if")
+async def enviar_mail(idCotizacion: int, session: SessionDep):
+
+    query_cotizacion =  select(Cotizacion).where(Cotizacion.id_cotizacion == idCotizacion)
+    cotizacion = session.exec(query_cotizacion).first()
+    if not cotizacion:
+        raise HTTPException(status_code=404, detail="Cotización no encontrada")
+    
+    usuario =  [cotizacion.id_usuario]
+
+    print(f"Enviar mail de la cotizcion: {idCotizacion}")
+    template = env.get_template("comentarioIF.html")
+   
+    html_content = template.render(numCotizacion=idCotizacion)
+
+    resultado = notificacion_if(idCotizacion, html_content, usuario) 
     return {"mensaje": resultado}

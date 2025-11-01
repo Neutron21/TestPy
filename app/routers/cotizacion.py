@@ -142,6 +142,14 @@ async def buscador_cotizaciones(
     # LAB
     return rows
 
+@router.get("/cotizacion/byFin/{id_financiera}" , response_model=Cotizacion)
+async def get_cotizacion_by_id(id_financiera: int, session: SessionDep):
+    query = select(Cotizacion).where(Cotizacion.id_financiera == id_financiera)
+    cotizacion = session.exec(query).all()
+    if not cotizacion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Cotización")
+    return  cotizacion
+
 @router.post("/cotizacion", response_model=Cotizacion) 
 async def create_cotizacion(usuario_data: CotizacionDTO, session: SessionDep):
     cotizacion = Cotizacion.model_validate(usuario_data.model_dump())  
