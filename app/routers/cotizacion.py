@@ -129,22 +129,12 @@ async def buscador_cotizaciones(
     rows = [Cotizacion(**row._mapping) for row in result]
     print(f"Total rows: {len(rows)}")
     print(f"Contenido: {rows}")
-    # LAB
-    # ids = [obj.id_cotizacion for obj in rows]
-    # print(ids)
-    # idsList = []
-    # for num in ids:
-    #     numBytes = str(num).encode('utf-8')
-    #     base64_bytes = base64.b64encode(numBytes)
-    #     cotizacionB64 = base64_bytes.decode('utf-8')
-    #     idsList.append(cotizacionB64)
-    # print(idsList)
-    # LAB
+   
     return rows
 
-@router.get("/cotizacion/byFin/{id_financiera}" , response_model=Cotizacion)
+@router.get("/cotizacion/byFin/{id_financiera}" , response_model=List[Cotizacion])
 async def get_cotizacion_by_id(id_financiera: int, session: SessionDep):
-    query = select(Cotizacion).where(Cotizacion.id_financiera == id_financiera)
+    query = select(Cotizacion).where(Cotizacion.id_financiera == id_financiera).order_by(desc(Cotizacion.timestamp))
     cotizacion = session.exec(query).all()
     if not cotizacion:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Cotización")

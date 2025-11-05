@@ -59,7 +59,7 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
     except Exception as e:
         return f"Error al enviar el correo: {str(e)}"
 
-def notificacion_if(numCotizacion: int, mensaje: str, correos: list[str]):
+def notificacion_if(cliente: str, mensaje: str, correos: list[str]):
 
     
     msg = MIMEMultipart("related")  # 👈 para permitir imágenes embebidas
@@ -69,7 +69,7 @@ def notificacion_if(numCotizacion: int, mensaje: str, correos: list[str]):
     # msg['Cc'] = ", ".join(correos)
     # msg['Reply-To'] = "Konnect <kfigueroa@konecct.com.mx>"
     
-    msg['Subject'] = f"La IF a dejado un comentario del folio {numCotizacion}"
+    msg['Subject'] = f"La IF comento sobre el cliente {cliente}"
 
     # Crear la parte HTML del mensaje
     msg_alternative = MIMEMultipart("alternative")
