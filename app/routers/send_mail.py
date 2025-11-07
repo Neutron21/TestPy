@@ -116,13 +116,13 @@ async def enviar_mail(idCotizacion: int, session: SessionDep):
     if not cotizacion:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
     correos_superiores = obtener_jefes(cotizacion.id_user, session);
-    correos =  [cotizacion.id_usuario]
-    list(set([cotizacion.id_usuario] + correos_superiores ))
+
+    correos = list(set([cotizacion.id_usuario] + correos_superiores ))
     request = dict(
         folioKonnect = idCotizacion,
         cliente = cotizacion.nombre
     )
-
+    print(f"CORREOS: {correos}")
     print(f"Enviar mail de la cotizcion: {idCotizacion}")
     template = env.get_template("comentarioIF.html")
    
