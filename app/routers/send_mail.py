@@ -115,8 +115,9 @@ async def enviar_mail(idCotizacion: int, session: SessionDep):
     cotizacion = session.exec(query_cotizacion).first()
     if not cotizacion:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
-    
-    usuario =  [cotizacion.id_usuario]
+    correos_superiores = obtener_jefes(cotizacion.id_user, session);
+    correos =  [cotizacion.id_usuario]
+    list(set([cotizacion.id_usuario] + correos_superiores ))
     request = dict(
         folioKonnect = idCotizacion,
         cliente = cotizacion.nombre
@@ -127,5 +128,5 @@ async def enviar_mail(idCotizacion: int, session: SessionDep):
    
     html_content = template.render(**request)
 
-    resultado = notificacion_if(cotizacion.nombre, html_content, usuario) 
+    resultado = notificacion_if(cotizacion.nombre, html_content, correos) 
     return {"mensaje": resultado}
