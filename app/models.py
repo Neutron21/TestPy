@@ -65,20 +65,6 @@ class ProductoFormatoTipoPersona(SQLModel, table=True):
     formato_id: int = Field(foreign_key="formato.id")
     tipo_persona: str = Field(primary_key=True)
 
-<<<<<<< HEAD
-
-
-class UsuarioDTO(SQLModel):
-    nombre: Optional[str] = Field(default=None)
-    email: Optional[str] = Field(default=None)
-    rol: Optional[str] = Field(default=None, min_length=1, max_length=1)
-    membresia: Optional[int] = Field(default=None)
-    id_broker: Optional[int] = Field(default=None, foreign_key="brokers.id")
-    id_sede: Optional[int] = Field(default=None, foreign_key="sedes.id")
-    celular: Optional[str] = Field(default=None)
-    nivel: Optional[int] = Field(default=None)
-    id_superior: Optional[int] = Field(default=None, foreign_key="usuarios.id")  
-=======
 class UsuarioDTO (SQLModel):
     nombre: str = Field(default=None)
     email: str = Field(default=None)
@@ -88,7 +74,6 @@ class UsuarioDTO (SQLModel):
     id_sede: Optional[int] = Field(foreign_key="sedes.id")
     celular: Optional[str] = Field(default=None)
     nivel: Optional[int] = Field(default=None)
->>>>>>> 9eb05c39bee5ade4db0d452de8764be1c61f09e6
     id_financiera: Optional[int] = Field(default=None, foreign_key="financieras.id")
 
 
