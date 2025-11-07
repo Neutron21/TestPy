@@ -65,6 +65,7 @@ class ProductoFormatoTipoPersona(SQLModel, table=True):
     formato_id: int = Field(foreign_key="formato.id")
     tipo_persona: str = Field(primary_key=True)
 
+<<<<<<< HEAD
 
 
 class UsuarioDTO(SQLModel):
@@ -77,6 +78,17 @@ class UsuarioDTO(SQLModel):
     celular: Optional[str] = Field(default=None)
     nivel: Optional[int] = Field(default=None)
     id_superior: Optional[int] = Field(default=None, foreign_key="usuarios.id")  
+=======
+class UsuarioDTO (SQLModel):
+    nombre: str = Field(default=None)
+    email: str = Field(default=None)
+    rol: str = Field(default=None, min_length=1, max_length=2)
+    membresia: Optional[int] = Field(default=None)
+    id_broker: Optional[int] = Field(foreign_key="brokers.id")
+    id_sede: Optional[int] = Field(foreign_key="sedes.id")
+    celular: Optional[str] = Field(default=None)
+    nivel: Optional[int] = Field(default=None)
+>>>>>>> 9eb05c39bee5ade4db0d452de8764be1c61f09e6
     id_financiera: Optional[int] = Field(default=None, foreign_key="financieras.id")
 
 
@@ -84,7 +96,7 @@ class UsuarioDTO(SQLModel):
 class Usuarios (UsuarioDTO, table=True):
     pass
     id: int | None = Field(default=None, primary_key=True)  # Permite que la BD genere el ID
-    id_superior: int = Field(foreign_key="usuarios.id")
+    id_superior: Optional[int] = Field(foreign_key="usuarios.id")
 
 class UsuarioSimple(BaseModel):
     id: int

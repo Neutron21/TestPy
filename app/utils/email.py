@@ -58,3 +58,44 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
         return "Correo enviado con éxito."
     except Exception as e:
         return f"Error al enviar el correo: {str(e)}"
+
+def notificacion_if(cliente: str, mensaje: str, correos: list[str]):
+
+    
+    msg = MIMEMultipart("related")  # 👈 para permitir imágenes embebidas
+
+    msg['From'] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
+    msg['To'] = ", ".join(correos)
+    # msg['Cc'] = ", ".join(correos)
+    # msg['Reply-To'] = "Konnect <kfigueroa@konecct.com.mx>"
+    
+    msg['Subject'] = f"La IF comento sobre el cliente {cliente}"
+
+    # Crear la parte HTML del mensaje
+    msg_alternative = MIMEMultipart("alternative")
+    msg.attach(msg_alternative)
+
+    msg_alternative.attach(MIMEText(mensaje, 'html'))
+
+    firma_path = os.path.join(os.path.dirname(__file__), "static", "firma.png")
+
+    try:
+        with open(firma_path, 'rb') as img_file:
+            img = MIMEImage(img_file.read())
+            img.add_header('Content-ID', '<firma>')
+            img.add_header('Content-Disposition', 'inline', filename="firma.png")
+            msg.attach(img)
+    except FileNotFoundError:
+        return f"Error: No se encontró la imagen de firma en {firma_path}"
+
+    try:
+        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASSWORD)
+
+        server.sendmail(SMTP_FROM_EMAIL, correos, msg.as_string())
+
+        server.quit()
+        return "Correo enviado con éxito."
+    except Exception as e:
+        return f"Error al enviar el correo: {str(e)}"

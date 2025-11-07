@@ -27,7 +27,7 @@ async def create_usuario(usuario_data: UsuarioDTO, session: SessionDep):
 
 @router.get("/usuarios", response_model=List[UsuarioResponse])
 async def get_usuarios(session: SessionDep):
-    query = select(Usuarios)
+    query = select(Usuarios).order_by(Usuarios.nombre)
     usuarios = session.exec(query).all()
     return usuarios
 
