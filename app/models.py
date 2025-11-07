@@ -12,6 +12,7 @@ from sqlmodel import SQLModel, Field
 from typing import Optional
 
 
+
 # Una buena práctica en arquitecturas limpias es usar ORM para la capa de acceso a datos y DTO
 # para la comunicación con la API, evitando exponer modelos de la base de datos directamente. 🚀
 def mexico_timestamp():
@@ -64,16 +65,20 @@ class ProductoFormatoTipoPersona(SQLModel, table=True):
     formato_id: int = Field(foreign_key="formato.id")
     tipo_persona: str = Field(primary_key=True)
 
-class UsuarioDTO (SQLModel):
-    nombre: str = Field(default=None)
-    email: str = Field(default=None)
-    rol: str = Field(default=None, min_length=1, max_length=1)
-    membresia: int = Field(default=None)
-    id_broker: int = Field(foreign_key="brokers.id")
-    id_sede: int = Field(foreign_key="sedes.id")
+
+
+class UsuarioDTO(SQLModel):
+    nombre: Optional[str] = Field(default=None)
+    email: Optional[str] = Field(default=None)
+    rol: Optional[str] = Field(default=None, min_length=1, max_length=1)
+    membresia: Optional[int] = Field(default=None)
+    id_broker: Optional[int] = Field(default=None, foreign_key="brokers.id")
+    id_sede: Optional[int] = Field(default=None, foreign_key="sedes.id")
     celular: Optional[str] = Field(default=None)
-    nivel: int = Field(default=None)
+    nivel: Optional[int] = Field(default=None)
+    id_superior: Optional[int] = Field(default=None, foreign_key="usuarios.id")  
     id_financiera: Optional[int] = Field(default=None, foreign_key="financieras.id")
+
 
 
 class Usuarios (UsuarioDTO, table=True):
@@ -208,10 +213,7 @@ class EstatusUpdate(BaseModel):
 class MontoUpdate(BaseModel):
     monto: float
     id_cotizacion: int
-# Tablas de Utileria
-class Brokers(SQLModel, table=True):
-    id: int = Field(primary_key=True)
-    nombre: str = Field(default=None)
+
 
 class Sedes(SQLModel, table=True):
     id: int = Field(primary_key=True)
@@ -342,3 +344,5 @@ class PaginatedTransactionsResponse(SQLModel):
 
 class utils(BaseModel):
     numeros: List[int]
+
+

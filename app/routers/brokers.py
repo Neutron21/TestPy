@@ -2,6 +2,8 @@ from fastapi import APIRouter
 from sqlmodel import select, text
 from app.db import SessionDep
 from app.models import Brokers
+from fastapi import HTTPException
+
 
 
 router = APIRouter(tags=["Brokers"])
@@ -30,3 +32,15 @@ async def list_brokers(id_user: int, session: SessionDep):
     result = session.execute(query, {"user_id": id_user})
 
     return result
+
+@router.post("/brokers", response_model=Brokers)
+async def create_broker(broker: Brokers, session: SessionDep):
+    # Verificar si ya existe un broker con ese nombre
+    existing = session.exec(select(Brokers).where(Brokers.nombre == broker.nombre)).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Broker ya existe")
+
+    session.add(broker)
+    session.commit()
+    session.refresh(broker)
+    return broker

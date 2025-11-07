@@ -5,6 +5,7 @@ import base64
 import os
 import shutil
 from dotenv import load_dotenv
+from app.db import get_session
 
 # Cargar variables de entorno (.env)
 load_dotenv()
