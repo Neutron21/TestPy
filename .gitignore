@@ -12,3 +12,4 @@ serviceAccountKey.json
 # Ambieneste venv
 ivan-venv/ 
 desarollo/
+logs/
