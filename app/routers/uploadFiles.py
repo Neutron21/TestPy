@@ -7,6 +7,7 @@ from typing import List
 import zipfile
 from fastapi import APIRouter, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from app.utils.logger_config import logger
 
 router = APIRouter(tags=["Files"])
 main_path = os.getenv("RUTA_COTIZACIONES")  
@@ -39,35 +40,40 @@ async def get_lista_docs(idCotizacion: int):
 @router.post("/uploadFiles")
 async def carga_archivos_endpoint(request: Request):
     # 👀 Este no se puede probar en SWAGGER 👀
-    form = await request.form()
+    try:
+        form = await request.form()
 
-    user = form.get("user")
-    id_cotizacion = form.get("idCotizacion")
-    if not user or not id_cotizacion:
-        raise HTTPException(status_code=400, detail="Faltan campos obligatorios.")
+        user = form.get("user")
+        id_cotizacion = form.get("idCotizacion")
+        if not user or not id_cotizacion:
+            raise HTTPException(status_code=400, detail="Faltan campos obligatorios.")
 
-    carpeta = f"{main_path}/{id_cotizacion}/"
-    print(carpeta)
-    os.makedirs(carpeta, exist_ok=True)
+        carpeta = f"{main_path}/{id_cotizacion}/"
+        print(carpeta)
+        os.makedirs(carpeta, exist_ok=True)
 
-    archivos_subidos = []
-    print(form.multi_items())
-    for key, valor in form.multi_items():
-        if key.startswith("file"):
-            index = key.replace("file", "")
-            archivo: UploadFile = valor
-            custom_name_key = f"customName{index}"
-            custom_name = form.get(custom_name_key, archivo.filename)
+        archivos_subidos = []
+        print(form.multi_items())
+        for key, valor in form.multi_items():
+            if key.startswith("file"):
+                index = key.replace("file", "")
+                archivo: UploadFile = valor
+                custom_name_key = f"customName{index}"
+                custom_name = form.get(custom_name_key, archivo.filename)
 
-            ruta_destino = os.path.join(carpeta, custom_name)
-            print(f"rt: {ruta_destino}")
-            with open(ruta_destino, "wb") as f:
-                contenido = await archivo.read()
-                f.write(contenido)
+                ruta_destino = os.path.join(carpeta, custom_name)
+                print(f"rt: {ruta_destino}")
+                with open(ruta_destino, "wb") as f:
+                    contenido = await archivo.read()
+                    f.write(contenido)
 
-            archivos_subidos.append(custom_name)
+                archivos_subidos.append(custom_name)
 
-    return JSONResponse(content={"message": "Archivos subidos correctamente", "archivos": archivos_subidos})
+        return JSONResponse(content={"message": "Archivos subidos correctamente", "archivos": archivos_subidos})
+    except Exception as e:
+        logger.error(f"Request: {request}")
+        logger.error(f"❌ Error al cargar documentos: {str(e)}")
+        return JSONResponse(content={"mensaje": {str(e)}})
 
 @router.get("/download-zip")
 def descargar_zip(numCotizacion: str = Query(..., description="Número de cotización en b64")):
@@ -109,6 +115,8 @@ def descargar_zip(numCotizacion: str = Query(..., description="Número de cotiza
         })
 
     except Exception as e:
+        logger.error(f"numCotizacion: {numCotizacion}")
+        logger.error(f"❌ Error al descargar zip: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
     
 @router.get("/download-file")

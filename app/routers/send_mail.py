@@ -6,6 +6,7 @@ from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqM
 from sqlmodel import select, text
 from app.db import SessionDep
 from utils.email import enviar_correo, notificacion_if
+from app.utils.logger_config import logger
 from jinja2 import Environment, FileSystemLoader
 
 router = APIRouter(tags=["SendMails"])
@@ -31,82 +32,86 @@ def obtener_jefes(user_id: int, session) -> List[Usuarios]:
 
 @router.post("/enviar-correo")
 async def enviar_mail(request: ReqMail, session: SessionDep):
-  
-    query_cotizacion =  select(Cotizacion).where(Cotizacion.id_cotizacion == request.numCotizacion)
-    cotizacion = session.exec(query_cotizacion).first()
-    print(f"Req: {cotizacion}")
+  try:
+        query_cotizacion =  select(Cotizacion).where(Cotizacion.id_cotizacion == request.numCotizacion)
+        cotizacion = session.exec(query_cotizacion).first()
+        print(f"Req: {cotizacion}")
 
-    if cotizacion.id_financiera == 14:
+        if cotizacion.id_financiera == 14:
+            
+            query_producto = select(Productos.id_categoria).where(Productos.id == cotizacion.producto)
+            categoria = session.exec(query_producto).first()
+            query_correos = select(Correos.correo).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1) & (Correos.categoria_id == categoria))
+        else :
+            query_correos = select(Correos.correo).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1))
+            
+        query_broker = select(Brokers.nombre).where(Brokers.id == cotizacion.broker)
+        query_sede = select(Sedes.nombre).where(Sedes.id == cotizacion.sede)
+        query_fin = select(Financieras).where(Financieras.id == cotizacion.id_financiera)
+        query_usuario = select(Usuarios).where(Usuarios.email == cotizacion.id_usuario)
+        correos_superiores = obtener_jefes(cotizacion.id_user, session);
+        print(f"--> Correos_superiores: {correos_superiores}")
+        usuario = session.exec(query_usuario).first()
+
+        correosIF = session.exec(query_correos).all()
+        broker = session.exec(query_broker).first()
+        sede = session.exec(query_sede).first()
+        financiera = session.exec(query_fin).first()
+
+        cotizacionBytes = str(cotizacion.id_cotizacion).encode('utf-8')
+        base64_bytes = base64.b64encode(cotizacionBytes)
+        bodyMail = BodyMail(
+            OpCliente = cotizacion.OpCliente,
+            brokerName = broker,
+            cliente = cotizacion.nombre,
+            emailUser = cotizacion.id_usuario,
+            ifName = financiera.nombre,
+            isNew = request.isNew,
+            listaMails = correosIF,
+            monto = f"{cotizacion.monto:,.0f}",
+            numCotizacion = cotizacion.id_cotizacion,
+            productoName = request.producto,
+            rfc = cotizacion.rfc.upper(),
+            sedeName = sede,
+            userName = request.userName,
+            cotizacionB64 = base64_bytes.decode('utf-8'),
+            ingresos = f"{cotizacion.ingresos:,.0f}",
+            tipoPersona = cotizacion.tipo_persona.capitalize(),
+            antiguedadEmpresa =  cotizacion.antiguedad_empresa,
+            edad = cotizacion.edad,
+            plazo = cotizacion.plazo,
+            celular = usuario.celular, 
+            destinoCredito = cotizacion.destinoCredito
+            
+        )
+        print(f"bodyMail: {bodyMail}")
+        # ✅ Si es nuevo y la financiera es Konfío (id == 1), agregar correosIF especiales
+        correosKonfio = []
+        if request.isNew and cotizacion.id_financiera == 1:
+            correosKonfio = ["maria.mendoza@konfio.mx", "luis.ramirez@konfio.mx"]
         
-        query_producto = select(Productos.id_categoria).where(Productos.id == cotizacion.producto)
-        categoria = session.exec(query_producto).first()
-        query_correos = select(Correos.correo).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1) & (Correos.categoria_id == categoria))
-    else :
-        query_correos = select(Correos.correo).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1))
-        
-    query_broker = select(Brokers.nombre).where(Brokers.id == cotizacion.broker)
-    query_sede = select(Sedes.nombre).where(Sedes.id == cotizacion.sede)
-    query_fin = select(Financieras).where(Financieras.id == cotizacion.id_financiera)
-    query_usuario = select(Usuarios).where(Usuarios.email == cotizacion.id_usuario)
-    correos_superiores = obtener_jefes(cotizacion.id_user, session);
-    print(f"--> Correos_superiores: {correos_superiores}")
-    usuario = session.exec(query_usuario).first()
+        correos = list(set(correosIF + correosKonfio + correos_superiores + ["ara.castro@konnect.mx", "gerencia.operativa@konnect.mx"]))
+        print(f"--> Correos: {correos}")
 
-    correosIF = session.exec(query_correos).all()
-    broker = session.exec(query_broker).first()
-    sede = session.exec(query_sede).first()
-    financiera = session.exec(query_fin).first()
+        if request.isNew:
+            template_name = "cotizacion.html"
+        else:
+            template_name = "updateFiles.html"
 
-    cotizacionBytes = str(cotizacion.id_cotizacion).encode('utf-8')
-    base64_bytes = base64.b64encode(cotizacionBytes)
-    bodyMail = BodyMail(
-        OpCliente = cotizacion.OpCliente,
-        brokerName = broker,
-        cliente = cotizacion.nombre,
-        emailUser = cotizacion.id_usuario,
-        ifName = financiera.nombre,
-        isNew = request.isNew,
-        listaMails = correosIF,
-        monto = f"{cotizacion.monto:,.0f}",
-        numCotizacion = cotizacion.id_cotizacion,
-        productoName = request.producto,
-        rfc = cotizacion.rfc.upper(),
-        sedeName = sede,
-        userName = request.userName,
-        cotizacionB64 = base64_bytes.decode('utf-8'),
-        ingresos = f"{cotizacion.ingresos:,.0f}",
-        tipoPersona = cotizacion.tipo_persona.capitalize(),
-        antiguedadEmpresa =  cotizacion.antiguedad_empresa,
-        edad = cotizacion.edad,
-        plazo = cotizacion.plazo,
-        celular = usuario.celular, 
-        destinoCredito = cotizacion.destinoCredito
-        
-    )
-    print(f"bodyMail: {bodyMail}")
-      # ✅ Si es nuevo y la financiera es Konfío (id == 1), agregar correosIF especiales
-    correosKonfio = []
-    if request.isNew and cotizacion.id_financiera == 1:
-        correosKonfio = ["maria.mendoza@konfio.mx", "luis.ramirez@konfio.mx"]
-     
-    correos = list(set(correosIF + correosKonfio + correos_superiores + ["ara.castro@konnect.mx", "gerencia.operativa@konnect.mx"]))
-    print(f"--> Correos: {correos}")
+        # Carga y renderiza la plantilla con variables
+        withLink = financiera.tipo == 'M'
 
-    if request.isNew:
-        template_name = "cotizacion.html"
-    else:
-        template_name = "updateFiles.html"
-
-    # Carga y renderiza la plantilla con variables
-    withLink = financiera.tipo == 'M'
-
-    template = env.get_template(template_name)
-    html_content = template.render(**vars(bodyMail), isLink=withLink)
-    print(f"Valor recibido de isLink: {withLink}")
+        template = env.get_template(template_name)
+        html_content = template.render(**vars(bodyMail), isLink=withLink)
+        print(f"Valor recibido de isLink: {withLink}")
 
 
-    resultado = enviar_correo(bodyMail, html_content, correos)  # Ajuste para enviar HTML
-    return {"mensaje": resultado}
+        resultado = enviar_correo(bodyMail, html_content, correos)  # Ajuste para enviar HTML
+        return {"mensaje": resultado}
+  except Exception as e :
+        logger.error(f"Request: {request}")
+        logger.error(f"❌ Error al preparar  correo: {str(e)}")
+        return {"mensaje": {str(e)}}
 
 @router.post("/comentario-if")
 async def enviar_mail(idCotizacion: int, session: SessionDep):

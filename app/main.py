@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from firebase_admin import auth, credentials
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import procesos 
-
+from app.utils.logger_config import logger
 from app.db import create_all_tables
 from .routers import ( checklist, membresias, utms, documentos,viabilidad,
     financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, send_mail, uploadFiles, utils, brokers, procesos)
@@ -73,7 +73,7 @@ app.include_router(utils.router)
 app.include_router(utms.router)
 app.include_router(viabilidad.router)
 
-
+logger.info("API iniciada correctamente 🚀")
 # # 🔹 Middleware de autenticación Firebase
 class FirebaseAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):

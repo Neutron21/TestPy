@@ -3,7 +3,7 @@ import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
+from app.utils.logger_config import logger
 from app.models import ReqMail
 
 # Configuración para Hostinger SMTP
@@ -57,6 +57,8 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
         server.quit()
         return "Correo enviado con éxito."
     except Exception as e:
+        logger.error(f"Request: {request}")
+        logger.error(f"❌ Error al enviar el correo: {str(e)}")
         return f"Error al enviar el correo: {str(e)}"
 
 def notificacion_if(cliente: str, mensaje: str, correos: list[str]):
@@ -98,4 +100,6 @@ def notificacion_if(cliente: str, mensaje: str, correos: list[str]):
         server.quit()
         return "Correo enviado con éxito."
     except Exception as e:
+        logger.error(f"Request: {cliente} -- {mensaje}")
+        logger.error(f"❌ Error al enviar el correo: {str(e)}")
         return f"Error al enviar el correo: {str(e)}"
