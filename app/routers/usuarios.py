@@ -7,6 +7,7 @@ from app.models import UsuarioDTO, UsuarioResponse, UsuarioSimple, Usuarios
 router = APIRouter(tags=["Usuarios"])
 
 
+
 @router.get("/usuarioByMail", response_model=Usuarios)
 async def usuario_by_mail(email: str, session: SessionDep):
     query = select(Usuarios).where(Usuarios.email == email)
@@ -53,3 +54,13 @@ async def list_brokers(id_user: int, session: SessionDep):
     result = session.execute(query, {"user_id": id_user})
 
     return result
+
+@router.get("/usuarios/superiores", response_model=list[UsuarioSimple])
+async def get_usuarios_superiores(session: SessionDep):
+    query = select(Usuarios.id, Usuarios.nombre, Usuarios.id_superior).where(
+        Usuarios.id_superior.is_not(None),
+        Usuarios.id_superior != 0
+    )
+    usuarios = session.exec(query).all()
+    return [{"id": u.id, "nombre": u.nombre, "id_superior": u.id_superior} for u in usuarios]
+
