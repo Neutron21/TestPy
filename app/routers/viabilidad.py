@@ -37,8 +37,7 @@ async def get_Viiabilidad_by_If_and_TipoPersona_Group(session: SessionDep, idPro
         result = {}
         for item in data:
             key = item.responsable
-            # if not key:  
-            #     continue
+  
             if key not in result:
                 result[key] = []
 
