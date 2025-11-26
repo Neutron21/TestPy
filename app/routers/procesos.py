@@ -16,13 +16,9 @@ def get_procesos(
     try:
         query = select(Proceso.descripcion).where(
             (Proceso.id_financiera == id_financiera) &
-            (Proceso.id_categoria == id_categoria) 
-        )
-       
-        if id_subCategoria is not None:
-            query = query.where(Proceso.id_subcategoria == id_subCategoria)
-
-        query = query.order_by(Proceso.step)
+            (Proceso.id_categoria == id_categoria) &
+            (Proceso.id_subcategoria == id_subCategoria)
+            ).order_by(Proceso.step)
         procesos = session.exec(query).all()
         return procesos
     except Exception as e:
