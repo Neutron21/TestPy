@@ -58,7 +58,7 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
         return "Correo enviado con éxito."
     except Exception as e:
         logger.error(f"Request: {request}")
-        logger.error(f"❌ Error al enviar el correo: {str(e)}")
+        logger.error(f"❌ Error al enviar el correo FN(enviar_correo): {str(e)}")
         return f"Error al enviar el correo: {str(e)}"
 
 def notificacion_if(cliente: str, mensaje: str, correos: list[str]):
@@ -101,5 +101,5 @@ def notificacion_if(cliente: str, mensaje: str, correos: list[str]):
         return "Correo enviado con éxito."
     except Exception as e:
         logger.error(f"Request: {cliente} -- {mensaje}")
-        logger.error(f"❌ Error al enviar el correo: {str(e)}")
+        logger.error(f"❌ Error al enviar el correo FN(notificacion_if): {str(e)}")
         return f"Error al enviar el correo: {str(e)}"
