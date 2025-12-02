@@ -3,6 +3,7 @@ import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import time
 from app.utils.logger_config import logger
 from app.models import ReqMail
 
@@ -52,7 +53,11 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
         server.starttls()
         server.login(SMTP_USER, SMTP_PASSWORD)
 
-        server.sendmail(SMTP_FROM_EMAIL, correos_totales, msg.as_string())
+        # server.sendmail(SMTP_FROM_EMAIL, correos_totales, msg.as_string())
+        for destino in correos_totales:
+            print(f"Enviando a {destino}")
+            server.sendmail(SMTP_FROM_EMAIL, destino, msg.as_string())
+            time.sleep(1)  # Evitar rate limit de Hostinger
 
         server.quit()
         return "Correo enviado con éxito."
