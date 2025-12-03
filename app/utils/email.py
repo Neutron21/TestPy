@@ -57,7 +57,7 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
         for destino in correos_totales:
             print(f"Enviando a {destino}")
             server.sendmail(SMTP_FROM_EMAIL, destino, msg.as_string())
-            time.sleep(2)  # Evitar rate limit de Hostinger
+            time.sleep(9)  # Evitar rate limit de Hostinger
 
         server.quit()
         return "Correo enviado con éxito."
