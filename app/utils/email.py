@@ -57,14 +57,14 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
         for destino in correos_totales:
             print(f"Enviando a {destino}")
             server.sendmail(SMTP_FROM_EMAIL, destino, msg.as_string())
-            time.sleep(9)  # Evitar rate limit de Hostinger
+            time.sleep(8)  # Evitar rate limit de Hostinger
 
         server.quit()
-        return "Correo enviado con éxito."
+        # return "Correo enviado con éxito."
     except Exception as e:
         logger.error(f"Request: {request}")
         logger.error(f"❌ Error al enviar el correo FN(enviar_correo): {str(e)}")
-        return f"Error al enviar el correo: {str(e)}"
+        # return f"Error al enviar el correo: {str(e)}"
 
 def notificacion_if(cliente: str, mensaje: str, correos: list[str]):
 
