@@ -65,34 +65,52 @@ class ProductoFormatoTipoPersona(SQLModel, table=True):
     formato_id: int = Field(foreign_key="formato.id")
     tipo_persona: str = Field(primary_key=True)
 
-class UsuarioDTO (SQLModel):
-    nombre: str = Field(default=None)
-    email: str = Field(default=None)
-    rol: str = Field(default=None, min_length=1, max_length=2)
-    membresia: Optional[int] = Field(default=None)
-    id_broker: Optional[int] = Field(foreign_key="brokers.id")
-    id_sede: Optional[int] = Field(foreign_key="sedes.id")
-    celular: Optional[str] = Field(default=None)
-    nivel: Optional[int] = Field(default=None)
+class UsuarioDTO(BaseModel):
+    nombre: str
+    email: str
+    rol: str
+    membresia: Optional[int] = None
+    id_broker: Optional[int] = None
+    id_sede: Optional[int] = None
+    celular: Optional[str] = None
+    nivel: Optional[int] = None
+    id_financiera: Optional[int] = None
+    id_superior: Optional[int] = None   # ← AHORA SÍ SE MANDA
+    
+
+
+class Usuarios(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    nombre: str
+    email: str
+    rol: str
+    membresia: Optional[int] = None
+    id_broker: Optional[int] = Field(default=None, foreign_key="brokers.id")
+    id_sede: Optional[int] = Field(default=None, foreign_key="sedes.id")
+    celular: Optional[str] = None
+    nivel: Optional[int] = None
     id_financiera: Optional[int] = Field(default=None, foreign_key="financieras.id")
+    id_superior: Optional[int] = Field(default=None, foreign_key="usuarios.id")
 
-
-
-class Usuarios (UsuarioDTO, table=True):
-    pass
-    id: int | None = Field(default=None, primary_key=True)  # Permite que la BD genere el ID
-    id_superior: Optional[int] = Field(foreign_key="usuarios.id")
 
 class UsuarioSimple(BaseModel):
     id: int
     nombre: str
     
 class UsuarioResponse(SQLModel):
+    id: int
     nombre: str
     email: str
-    id: int
-    id_broker: int
-    id_sede: int
+    rol: str
+    membresia: Optional[int]
+    id_broker: Optional[int]
+    id_sede: Optional[int]
+    celular: Optional[str]
+    nivel: Optional[int]
+    id_financiera: Optional[int]
+    id_superior: Optional[int]
+
+
 
 class Formatos (SQLModel, table=True):
     id: int = Field(primary_key=True)
@@ -341,5 +359,4 @@ class PaginatedTransactionsResponse(SQLModel):
 
 class utils(BaseModel):
     numeros: List[int]
-
 

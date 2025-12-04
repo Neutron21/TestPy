@@ -11,3 +11,18 @@ async def list_sedes(session: SessionDep):
     if not sedes:
         raise HTTPException(status_code=404, detail="No hay sedes registradas")
     return sedes
+
+@router.post("/sedes", response_model=Sedes)
+async def create_sede(sede: Sedes, session: SessionDep):
+    # Validar si ya existe una sede con ese nombre
+    existente = session.exec(
+        select(Sedes).where(Sedes.nombre == sede.nombre)
+    ).first()
+
+    if existente:
+        raise HTTPException(status_code=400, detail="La sede ya existe")
+
+    session.add(sede)
+    session.commit()
+    session.refresh(sede)
+    return sede
