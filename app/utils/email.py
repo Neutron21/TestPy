@@ -3,6 +3,7 @@ import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import time
 from app.utils.logger_config import logger
 from app.models import ReqMail
 
@@ -52,14 +53,18 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
         server.starttls()
         server.login(SMTP_USER, SMTP_PASSWORD)
 
-        server.sendmail(SMTP_FROM_EMAIL, correos_totales, msg.as_string())
+        # server.sendmail(SMTP_FROM_EMAIL, correos_totales, msg.as_string())
+        for destino in correos_totales:
+            print(f"Enviando a {destino}")
+            server.sendmail(SMTP_FROM_EMAIL, destino, msg.as_string())
+            time.sleep(8)  # Evitar rate limit de Hostinger
 
         server.quit()
-        return "Correo enviado con éxito."
+        # return "Correo enviado con éxito."
     except Exception as e:
         logger.error(f"Request: {request}")
-        logger.error(f"❌ Error al enviar el correo: {str(e)}")
-        return f"Error al enviar el correo: {str(e)}"
+        logger.error(f"❌ Error al enviar el correo FN(enviar_correo): {str(e)}")
+        # return f"Error al enviar el correo: {str(e)}"
 
 def notificacion_if(cliente: str, mensaje: str, correos: list[str]):
 
@@ -101,5 +106,5 @@ def notificacion_if(cliente: str, mensaje: str, correos: list[str]):
         return "Correo enviado con éxito."
     except Exception as e:
         logger.error(f"Request: {cliente} -- {mensaje}")
-        logger.error(f"❌ Error al enviar el correo: {str(e)}")
+        logger.error(f"❌ Error al enviar el correo FN(notificacion_if): {str(e)}")
         return f"Error al enviar el correo: {str(e)}"
