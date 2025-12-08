@@ -37,11 +37,12 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         cotizacion = session.exec(query_cotizacion).first()
         print(f"Req: {cotizacion}")
 
+        query_producto = select(Productos).where(Productos.id == cotizacion.producto)
+        producto = session.exec(query_producto).first()
+
         if cotizacion.id_financiera == 14:
             
-            query_producto = select(Productos.id_categoria).where(Productos.id == cotizacion.producto)
-            categoria = session.exec(query_producto).first()
-            query_correos = select(Correos.correo).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1) & (Correos.categoria_id == categoria))
+            query_correos = select(Correos.correo).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1) & (Correos.categoria_id == producto.id_categoria))
         else :
             query_correos = select(Correos.correo).where((Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1))
             
@@ -70,10 +71,10 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
             listaMails = correosIF,
             monto = f"{cotizacion.monto:,.0f}",
             numCotizacion = cotizacion.id_cotizacion,
-            productoName = request.producto,
+            productoName = producto.nombre,
             rfc = cotizacion.rfc.upper(),
             sedeName = sede,
-            userName = request.userName,
+            userName = usuario.nombre, 
             cotizacionB64 = base64_bytes.decode('utf-8'),
             ingresos = f"{cotizacion.ingresos:,.0f}",
             tipoPersona = cotizacion.tipo_persona.capitalize(),

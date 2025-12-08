@@ -193,8 +193,8 @@ class Correos(CorreosDTO ,table=True ):
 
 class ReqMail(BaseModel):
     isNew:  bool
-    producto: str
-    userName: str
+    # producto: str
+    # userName: str
     numCotizacion: int
 
 class BodyMail(BaseModel):
