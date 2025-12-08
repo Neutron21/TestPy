@@ -107,10 +107,8 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         html_content = template.render(**vars(bodyMail), isLink=withLink)
         print(f"Valor recibido de isLink: {withLink}")
 
-
         background_tasks.add_task(enviar_correo, bodyMail, html_content, correos)  
-        # resultado = enviar_correo(bodyMail, html_content, correos)
-        # return {"mensaje": resultado}
+
         return {"mensaje": "Solicitud recibida, el correo se está enviando en segundo plano."}
   except Exception as e :
         logger.error(f"Request: {request}")
