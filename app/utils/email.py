@@ -14,6 +14,8 @@ SMTP_USER = "web.app.no.reply@konnect.mx"
 SMTP_PASSWORD = "TiaCaquitas_007"
 SMTP_FROM_NAME = "KONNECT"
 SMTP_FROM_EMAIL = SMTP_USER
+BREVO_API_KEY = "TU_API_KEY_BREVO"
+BREVO_URL = "https://api.brevo.com/v3/smtp/email"
 
 def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
     destinatario = [request.emailUser]
@@ -39,6 +41,18 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
 
     firma_path = os.path.join(os.path.dirname(__file__), "static", "firma.png")
 
+    # Armar payload
+    data = {
+        "sender": {
+            "email": "web.app.no.reply@konnect.mx",
+            "name": "Konnect"
+        },
+        "to": [{"email": e} for e in destinatario],
+        "cc": [{"email": e} for e in correos],
+        "subject": subject,
+        "htmlContent": mensaje_html,
+    }
+    
     try:
         with open(firma_path, 'rb') as img_file:
             img = MIMEImage(img_file.read())
@@ -49,22 +63,11 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
         return f"Error: No se encontró la imagen de firma en {firma_path}"
 
     try:
-        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
-        server.starttls()
-        server.login(SMTP_USER, SMTP_PASSWORD)
 
-        # server.sendmail(SMTP_FROM_EMAIL, correos_totales, msg.as_string())
-        for destino in correos_totales:
-            print(f"Enviando a {destino}")
-            server.sendmail(SMTP_FROM_EMAIL, destino, msg.as_string())
-            time.sleep(8)  # Evitar rate limit de Hostinger
 
-        server.quit()
-        # return "Correo enviado con éxito."
     except Exception as e:
         logger.error(f"Request: {request}")
         logger.error(f"❌ Error al enviar el correo FN(enviar_correo): {str(e)}")
-        # return f"Error al enviar el correo: {str(e)}"
 
 def notificacion_if(cliente: str, mensaje: str, correos: list[str]):
 
