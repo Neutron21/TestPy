@@ -1,3 +1,5 @@
+import base64
+import requests
 from email.mime.image import MIMEImage
 import os
 import smtplib
@@ -14,33 +16,28 @@ SMTP_USER = "web.app.no.reply@konnect.mx"
 SMTP_PASSWORD = "TiaCaquitas_007"
 SMTP_FROM_NAME = "KONNECT"
 SMTP_FROM_EMAIL = SMTP_USER
-BREVO_API_KEY = "TU_API_KEY_BREVO"
-BREVO_URL = "https://api.brevo.com/v3/smtp/email"
+BREVO_API_KEY = os.getenv("BREVO_KEY") 
+BREVO_URL = os.getenv("BREVO_LINK")
 
-def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
+def enviar_correo(request: ReqMail, mensaje_html: str, correos: list[str]):
     destinatario = [request.emailUser]
 
     # Eliminar duplicados con el set y agregamos correo del usuario logueado
     correos_totales = list(set(correos + destinatario))
     print(f"--> CorreosTotales: {correos_totales}")
     
-    msg = MIMEMultipart("related")  # 👈 para permitir imágenes embebidas
-
-    msg['From'] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
-    msg['To'] = ", ".join(destinatario)
-    msg['Cc'] = ", ".join(correos)
-    msg['Reply-To'] = "Konnect <kfigueroa@konecct.com.mx>"
     tipo_solicitud = "Cliente" if request.isNew else "Actualización"
-    msg['Subject'] = f"{tipo_solicitud}: {request.cliente} {request.rfc}"
-
-    # Crear la parte HTML del mensaje
-    msg_alternative = MIMEMultipart("alternative")
-    msg.attach(msg_alternative)
-
-    msg_alternative.attach(MIMEText(mensaje, 'html'))
-
+    subject = f"{tipo_solicitud}: {request.cliente} {request.rfc}"
+    # Cargar firma (inline)
     firma_path = os.path.join(os.path.dirname(__file__), "static", "firma.png")
-
+    
+    try:
+        with open(firma_path, "rb") as img:
+            firma_b64 = base64.b64encode(img.read()).decode()
+    except FileNotFoundError:
+        logger.error(f"Firma no encontrada: {firma_path}")
+        firma_b64 = None
+  
     # Armar payload
     data = {
         "sender": {
@@ -52,22 +49,25 @@ def enviar_correo(request: ReqMail, mensaje: str, correos: list[str]):
         "subject": subject,
         "htmlContent": mensaje_html,
     }
+    # Adjuntar firma inline
+    if firma_b64:
+        data["inlineImages"] = [{
+            "name": "firma.png",
+            "content": firma_b64
+        }]
+
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
     
     try:
-        with open(firma_path, 'rb') as img_file:
-            img = MIMEImage(img_file.read())
-            img.add_header('Content-ID', '<firma>')
-            img.add_header('Content-Disposition', 'inline', filename="firma.png")
-            msg.attach(img)
-    except FileNotFoundError:
-        return f"Error: No se encontró la imagen de firma en {firma_path}"
-
-    try:
-
-
+        res = requests.post(BREVO_URL, json=data, headers=headers)
+        logger.info(f"Brevo response: ({res.status_code}) {res.text}")
     except Exception as e:
-        logger.error(f"Request: {request}")
-        logger.error(f"❌ Error al enviar el correo FN(enviar_correo): {str(e)}")
+        logger.error(f"Request: {data}")
+        logger.error(f"❌ Error al enviar el correo: {str(e)}")
 
 def notificacion_if(cliente: str, mensaje: str, correos: list[str]):
 
