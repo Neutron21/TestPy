@@ -64,3 +64,24 @@ async def get_producto_by_financiera(financiera_id: int, session: SessionDep):
         productos_con_tipo_persona.append(dto)
 
     return productos_con_tipo_persona
+
+@router.get("/producto/{producto_id}/plazos")
+async def obtener_plazos(producto_id: int, session: SessionDep):
+
+    producto = session.get(Productos, producto_id)
+
+    if not producto:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Producto no encontrado"
+        )
+
+    if not producto.plazo:
+        return {"plazos": []}
+
+    raw_plazos = producto.plazo.split(",")
+    print(raw_plazos)
+   
+
+    return {"plazos": raw_plazos}
+
