@@ -13,6 +13,8 @@ from typing import Optional
 
 
 
+
+
 # Una buena práctica en arquitecturas limpias es usar ORM para la capa de acceso a datos y DTO
 # para la comunicación con la API, evitando exponer modelos de la base de datos directamente. 🚀
 def mexico_timestamp():
@@ -50,13 +52,13 @@ class ProductosDTO(SQLModel):
     id_categoria: int = Field(foreign_key="categorias.id")
     id_subCategoria: int = Field(foreign_key="subCategorias.id")
 
-class ProductosTipoPersonaDTO(ProductosDTO):
-    id: int
-    tipo_persona: List[str] = Field(default_factory=list)
+# class ProductosTipoPersonaDTO(ProductosDTO):
+#     id: int
+#     tipo_persona: List[str] = Field(default_factory=list)
 
-class Productos(ProductosDTO,table=True):
-    pass
-    id: int | None = Field(default=None, primary_key=True)  # Permite que la BD genere el ID
+# class Productos(ProductosDTO,table=True):
+#     pass
+#     id: int | None = Field(default=None, primary_key=True)  # Permite que la BD genere el ID
  
 class ProductoFormatoTipoPersona(SQLModel, table=True):
     __tablename__ = "producto_formato_tipo_persona"
@@ -149,7 +151,7 @@ class CotizacionDTO (SQLModel):
     tipo_persona: str = Field(nullable=False)  
     nombre: str = Field(max_length=100, nullable=False)
     rfc: str = Field(max_length=100, nullable=False)
-    plazo: int = Field(nullable=False)
+    plazo: str = Field(max_length=100, nullable=False)
     edad: int = Field(nullable=False)
     monto: float = Field(nullable=False)  
     ingresos: float = Field(nullable=False)
@@ -217,7 +219,7 @@ class BodyMail(BaseModel):
     tipoPersona: str
     antiguedadEmpresa: int
     edad: int
-    plazo: int
+    plazo: str
     celular: Optional[str] = None
     destinoCredito: str
 
@@ -359,4 +361,15 @@ class PaginatedTransactionsResponse(SQLModel):
 
 class utils(BaseModel):
     numeros: List[int]
+
+
+class ProductosTipoPersonaDTO(ProductosDTO):
+    id: int
+    tipo_persona: List[str] = Field(default_factory=list)
+
+class Productos(ProductosDTO, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    plazo: Optional[str] = None
+
+
 

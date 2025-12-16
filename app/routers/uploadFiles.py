@@ -25,7 +25,7 @@ async def get_lista_docs(idCotizacion: int):
 
         archivos = os.listdir(carpeta_adjuntos)
 
-        extensiones_validas = re.compile(r'\.(pdf|rar|zip|jpg|png)$', re.IGNORECASE)
+        extensiones_validas = re.compile(r'\.(pdf|rar|zip|jpg|png|doc|docx|xls|xlsx|ppt|pptx)$', re.IGNORECASE)
 
         adjuntos_validos = [
             archivo for archivo in archivos
