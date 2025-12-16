@@ -35,14 +35,7 @@ def enviar_correo(request: ReqMail, mensaje_html: str, correos: list[str]):
     tipo_solicitud = "Cliente" if request.isNew else "Actualización"
     subject = f"{tipo_solicitud}: {request.cliente} {request.rfc}"
 
-    firma_path = os.path.join(os.path.dirname(__file__), "static", "firma.png")
-   
-    try:
-        with open(firma_path, "rb") as img:
-            firma_b64 = base64.b64encode(img.read()).decode()
-    except FileNotFoundError:
-        logger.error(f"Firma no encontrada: {firma_path}")
-        firma_b64 = None
+    firma_b64 = fillFirma()
     # Armar payload
     data = {
         "sender": {
