@@ -3,5 +3,4 @@
  pymysql == 1.1.1
  pyjwt == 2.10.1
  firebase-admin == 6.7.0
- python-multipart == 25.1.1
  requests == 2.32.3
