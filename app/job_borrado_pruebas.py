@@ -5,7 +5,9 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
 # 🔹 Carga las variables del entorno de producción
-load_dotenv("../.env")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ENV_PATH = os.path.join(BASE_DIR, "..", ".env")
+load_dotenv(ENV_PATH)
 
 # 🔹 Configuración de la conexión a la BD
 DB_HOST = os.getenv("SQL_HOST")
