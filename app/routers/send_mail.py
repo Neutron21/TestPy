@@ -1,7 +1,7 @@
 import base64
 import os
 from typing import List
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Body
 from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios, Productos
 from sqlmodel import select, text
 from app.db import SessionDep
@@ -91,8 +91,8 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         if request.isNew and cotizacion.id_financiera == 1:
             correosKonfio = ["maria.mendoza@konfio.mx", "luis.ramirez@konfio.mx"]
         
-        # correos = list(set(correosIF + correosKonfio + correos_superiores + ["ara.castro@konnect.mx", "gerencia.operativa@konnect.mx"]))
-        correos = list(set(correosIF + correosKonfio + ["gerencia.operativa@konnect.mx"]))
+        correos = list(set(correosIF + correosKonfio + correos_superiores + ["ara.castro@konnect.mx", "gerencia.operativa@konnect.mx"]))
+        # correos = list(set(correosIF + correosKonfio + ["gerencia.operativa@konnect.mx"]))
         print(f"--> Correos: {correos}")
 
         if request.isNew:
@@ -108,15 +108,16 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         print(f"Valor recibido de isLink: {withLink}")
 
         background_tasks.add_task(enviar_correo, bodyMail, html_content, correos)  
+        # enviar_correo(bodyMail, html_content, correos)  
 
         return {"mensaje": "Solicitud recibida, el correo se está enviando en segundo plano."}
   except Exception as e :
-        logger.error(f"Request: {request}")
+        logger.error(f"Request :( {request}")
         logger.error(f"❌ Error al preparar  correo: {str(e)}")
         return {"mensaje": {str(e)}}
 
 @router.post("/comentario-if")
-async def enviar_mail(idCotizacion: int, session: SessionDep):
+async def enviar_mail(session: SessionDep, idCotizacion: int = Body(..., embed=True)): 
 
     query_cotizacion =  select(Cotizacion).where(Cotizacion.id_cotizacion == idCotizacion)
     cotizacion = session.exec(query_cotizacion).first()
