@@ -3,6 +3,7 @@ import shutil
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
+from app.utils.logger_config import logger
 
 # 🔹 Cargar variables de entorno (PATH ABSOLUTO)
 load_dotenv("/root/TestPy/.env")
