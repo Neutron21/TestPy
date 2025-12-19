@@ -3,11 +3,12 @@ import shutil
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
+from app.utils.logger_config import logger
 
 # 🔹 Carga las variables del entorno de producción
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ENV_PATH = os.path.join(BASE_DIR, "..", ".env")
-load_dotenv(ENV_PATH)
+# BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# ENV_PATH = os.path.join(BASE_DIR, "..", ".env")
+load_dotenv("/root/TestPy/.env")
 
 # 🔹 Configuración de la conexión a la BD
 DB_HOST = os.getenv("SQL_HOST")
@@ -15,6 +16,9 @@ DB_USER = os.getenv("SQL_USER")
 DB_PASSWORD = os.getenv("SQL_PASS", "").replace("'", "")  
 DB_NAME = os.getenv("SQL_DB_NAME")
 DB_PORT = os.getenv("SQL_PORT", 3306)
+
+if not DB_HOST:
+    raise RuntimeError("DB_HOST no está definido")
 
 DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 engine = create_engine(DATABASE_URL)
@@ -36,7 +40,9 @@ def obtener_ids_prueba():
         ids = [str(row.id_cotizacion) for row in result]
         print("🔎 IDs encontrados:", ids)
         return ids
-
+    except Exception as e:
+        session.rollback()
+        logger.error(f"❌ Error obtener_ids_prueba: {str(e)}")
     finally:
         session.close()
 
@@ -76,7 +82,8 @@ def borrar_cotizaciones_prueba():
 
     except Exception as e:
         session.rollback()
-        print("❌ Error MySQL:", e)
+        logger.error(f"❌ Error MySQL: {str(e)}")
+
 
     finally:
         session.close()
