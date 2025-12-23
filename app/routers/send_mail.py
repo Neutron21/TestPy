@@ -5,9 +5,11 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Body
 from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios, Productos
 from sqlmodel import select, text
 from app.db import SessionDep
-from utils.email import enviar_correo, notificacion_if
+from utils.email import enviar_correo, notificacion_if,enviar_correo_dispersion
 from app.utils.logger_config import logger
 from jinja2 import Environment, FileSystemLoader
+from fastapi import BackgroundTasks
+
 
 router = APIRouter(tags=["SendMails"])
 
@@ -138,3 +140,36 @@ async def enviar_mail(session: SessionDep, idCotizacion: int = Body(..., embed=T
 
     resultado = notificacion_if(cotizacion.nombre, html_content, correos) 
     return {"mensaje": resultado}
+
+
+@router.post("/cotizaciones/correo-dispersion")
+def correo_dispersion(data: dict, session: SessionDep, background_tasks: BackgroundTasks):
+
+    id_cotizacion = data.get("idCotizacion")
+    if not id_cotizacion:
+        raise HTTPException(status_code=400, detail="idCotizacion requerido")
+
+    cotizacion = session.get(Cotizacion, id_cotizacion)
+    if not cotizacion:
+        raise HTTPException(status_code=404, detail="Cotización no encontrada")
+
+    # Validar que esté en Dispersión
+    if cotizacion.estatus != 7:
+        raise HTTPException(status_code=400, detail="La cotización no está en estatus Dispersión")
+
+    # Obtener lista de correos dinámicos
+    correos = ["victor.hugo.silva01@gmail.com"]
+    # Ejemplo: agregar usuario y jefes
+    # from tu módulo donde está obtener_jefes
+    # correos_superiores = obtener_jefes(cotizacion.id_user, session)
+    # correos.append(cotizacion.id_usuario)
+    # correos.extend(correos_superiores)
+    # correos = list(set(correos))
+
+    # Enviar correo en segundo plano
+    background_tasks.add_task(enviar_correo_dispersion, cotizacion, correos)
+
+    logger.info(f"Correo de dispersión solicitado para Cotizacion ID: {id_cotizacion}, correos: {correos}")
+
+    return {"ok": True, "message": "Correo de dispersión solicitado correctamente"}
+

@@ -103,3 +103,52 @@ def notificacion_if(cliente: str, mensaje_html: str, correos: list[str]):
         logger.error(f"Request: {cliente} -- ")
         logger.error(f"❌ Error al enviar el correo FN(notificacion_if): {str(e)}")
         return f"Error al enviar el correo: {str(e)}"
+    
+
+
+def enviar_correo_dispersion(cotizacion, correos: list[str]):
+    """
+    Envía un correo notificando que la cotización ha llegado a dispersión.
+    cotizacion: instancia de Cotizacion
+    correos: lista de emails a los que se enviará
+    """
+
+    firma_b64 = fillFirma()
+
+    # Construir mensaje HTML simple (puedes usar plantilla Jinja2 si quieres)
+    mensaje_html = f"""
+    <p>La cotización <strong>{cotizacion.id_cotizacion}</strong> ha llegado al estatus <strong>Dispersión</strong>.</p>
+    <p>Cliente: {cotizacion.nombre}</p>
+    <p>Monto: ${cotizacion.monto:,.2f}</p>
+    """
+
+    data = {
+        "sender": {
+            "email": "web.app.no.reply@konnect.mx",
+            "name": "Konnect"
+        },
+        "to": [{"email": e} for e in correos],
+        "subject": f"Dispersión Cotización {cotizacion.id_cotizacion} - {cotizacion.nombre}",
+        "htmlContent": mensaje_html,
+        "attachment": [
+            {
+                "name": "firma.png",
+                "content": firma_b64
+            }
+        ]
+    }
+
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+
+    try:
+        res = requests.post(BREVO_URL, json=data, headers=headers)
+        print(f"Brevo response: ({res.status_code}) {res.text}")
+        logger.info(f"Correo de dispersión enviado a {correos}, status: {res.status_code}")
+        return "Correo de dispersión enviado con éxito."
+    except Exception as e:
+        logger.error(f"Cotización {cotizacion.id_cotizacion} -- Error al enviar correo dispersión: {str(e)}")
+        return f"Error al enviar correo dispersión: {str(e)}"

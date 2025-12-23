@@ -6,6 +6,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import time
 import firebase_admin
 from fastapi import FastAPI, Request
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
 from firebase_admin import auth, credentials
@@ -13,6 +14,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import procesos 
 from app.utils.logger_config import logger
 from app.routers import sedes
+from app.routers import dispersion
+
+
 
 
 from app.db import create_all_tables
@@ -77,6 +81,9 @@ app.include_router(utms.router)
 app.include_router(viabilidad.router)
 app.include_router(sedes.router)
 app.include_router(borrar.router)
+app.include_router(dispersion.router)
+
+
 
 
 
