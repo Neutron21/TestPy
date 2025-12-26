@@ -162,12 +162,15 @@ def correo_dispersion(
             detail="La cotización no está en estatus Dispersión"
         )
 
-    correos = ["victor.hugo.silva01@gmail.com"]
+    correos = ["kfigueroa@konnect.mx","ara.castro@konnect.mx",
+               "gerencia.operativa@konnect.mx","gerencia.corporativa@konnect.mx"]
 
     request = dict(
         folioKonnect=id_cotizacion,
         cliente=cotizacion.nombre
     )
+    print(f"PLANTILLA: {request}")
+
 
     print(f"CORREOS: {correos}")
     print(f"Enviar mail de la cotización: {id_cotizacion}")

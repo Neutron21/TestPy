@@ -14,7 +14,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import procesos 
 from app.utils.logger_config import logger
 from app.routers import sedes
-from app.routers import dispersion
 
 
 
@@ -81,7 +80,6 @@ app.include_router(utms.router)
 app.include_router(viabilidad.router)
 app.include_router(sedes.router)
 app.include_router(borrar.router)
-app.include_router(dispersion.router)
 
 
 
