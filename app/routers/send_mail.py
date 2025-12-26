@@ -142,8 +142,11 @@ async def enviar_mail(session: SessionDep, idCotizacion: int = Body(..., embed=T
     return {"mensaje": resultado}
 
 
-@router.post("/cotizaciones/correo-dispersion")
-def correo_dispersion(data: dict, session: SessionDep, background_tasks: BackgroundTasks):
+@router.post("/correo-dispersion")
+def correo_dispersion(
+    data: dict,
+    session: SessionDep,
+):
 
     id_cotizacion = data.get("idCotizacion")
     if not id_cotizacion:
@@ -153,23 +156,35 @@ def correo_dispersion(data: dict, session: SessionDep, background_tasks: Backgro
     if not cotizacion:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
 
-    # Validar que esté en Dispersión
     if cotizacion.estatus != 7:
-        raise HTTPException(status_code=400, detail="La cotización no está en estatus Dispersión")
+        raise HTTPException(
+            status_code=400,
+            detail="La cotización no está en estatus Dispersión"
+        )
 
-    # Obtener lista de correos dinámicos
     correos = ["victor.hugo.silva01@gmail.com"]
-    # Ejemplo: agregar usuario y jefes
-    # from tu módulo donde está obtener_jefes
-    # correos_superiores = obtener_jefes(cotizacion.id_user, session)
-    # correos.append(cotizacion.id_usuario)
-    # correos.extend(correos_superiores)
-    # correos = list(set(correos))
 
-    # Enviar correo en segundo plano
-    background_tasks.add_task(enviar_correo_dispersion, cotizacion, correos)
+    request = dict(
+        folioKonnect=id_cotizacion,
+        cliente=cotizacion.nombre
+    )
 
-    logger.info(f"Correo de dispersión solicitado para Cotizacion ID: {id_cotizacion}, correos: {correos}")
+    print(f"CORREOS: {correos}")
+    print(f"Enviar mail de la cotización: {id_cotizacion}")
 
-    return {"ok": True, "message": "Correo de dispersión solicitado correctamente"}
+    template = env.get_template("dispersion.html")
+    html_content = template.render(**request)
+
+    enviar_correo_dispersion(
+        cotizacion,
+        html_content,
+        correos
+    )
+
+    return {
+        "ok": True,
+        "message": "Correo de dispersión enviado correctamente"
+    }
+
+
 
