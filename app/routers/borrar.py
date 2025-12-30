@@ -51,8 +51,7 @@ def borrar_cotizaciones_prueba(session):
 @router.post("/cotizaciones/borrar-pruebas")
 def borrar_pruebas(request: Request, session: SessionDep):
     # 🔐 Seguridad
-    token = request.headers.get("X-Cron-Token")
-
+    token = request.headers.get("x-cron-token")
     if not token:
         raise HTTPException(status_code=400, detail="Token requerido")
 
