@@ -103,3 +103,47 @@ def notificacion_if(cliente: str, mensaje_html: str, correos: list[str]):
         logger.error(f"Request: {cliente} -- ")
         logger.error(f"❌ Error al enviar el correo FN(notificacion_if): {str(e)}")
         return f"Error al enviar el correo: {str(e)}"
+    
+
+
+def enviar_correo_dispersion(cotizacion, mensaje_html, correos):
+    logger.info("🚀 ENTRO A enviar_correo_dispersion")
+
+
+    BREVO_API_KEY = os.getenv("BREVO_KEY")
+    BREVO_URL = os.getenv("BREVO_LINK")
+
+    if not BREVO_API_KEY:
+        logger.error("❌ BREVO_KEY no configurada")
+        return
+
+    firma_b64 = fillFirma()
+
+    data = {
+        "sender": {
+            "email": "web.app.no.reply@konnect.mx",
+            "name": "Konnect"
+        },
+        "to": [{"email": e} for e in correos],
+        "subject": f"Dispersión Cotización {cotizacion.id_cotizacion} - {cotizacion.nombre}",
+        "htmlContent": mensaje_html,
+        "attachment": [
+            {
+                "name": "firma.png",
+                "content": firma_b64
+            }
+        ]
+    }
+
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+
+    res = requests.post(BREVO_URL, json=data, headers=headers)
+    print(f"Brevo response: ({res.status_code}) {res.text}")
+    return "Correo enviado con éxito."
+
+
+

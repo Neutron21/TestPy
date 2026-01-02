@@ -5,9 +5,11 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Body
 from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios, Productos
 from sqlmodel import select, text
 from app.db import SessionDep
-from utils.email import enviar_correo, notificacion_if
+from utils.email import enviar_correo, notificacion_if,enviar_correo_dispersion
 from app.utils.logger_config import logger
 from jinja2 import Environment, FileSystemLoader
+from fastapi import BackgroundTasks
+
 
 router = APIRouter(tags=["SendMails"])
 
@@ -138,3 +140,54 @@ async def enviar_mail(session: SessionDep, idCotizacion: int = Body(..., embed=T
 
     resultado = notificacion_if(cotizacion.nombre, html_content, correos) 
     return {"mensaje": resultado}
+
+
+@router.post("/correo-dispersion")
+def correo_dispersion(
+    data: dict,
+    session: SessionDep,
+):
+
+    id_cotizacion = data.get("idCotizacion")
+    if not id_cotizacion:
+        raise HTTPException(status_code=400, detail="idCotizacion requerido")
+
+    cotizacion = session.get(Cotizacion, id_cotizacion)
+    if not cotizacion:
+        raise HTTPException(status_code=404, detail="Cotización no encontrada")
+
+    if cotizacion.estatus != 7:
+        raise HTTPException(
+            status_code=400,
+            detail="La cotización no está en estatus Dispersión"
+        )
+
+    correos = ["kfigueroa@konnect.mx","ara.castro@konnect.mx",
+               "gerencia.operativa@konnect.mx","gerencia.corporativa@konnect.mx"]
+
+    request = dict(
+        folioKonnect=id_cotizacion,
+        cliente=cotizacion.nombre
+    )
+    print(f"PLANTILLA: {request}")
+
+
+    print(f"CORREOS: {correos}")
+    print(f"Enviar mail de la cotización: {id_cotizacion}")
+
+    template = env.get_template("dispersion.html")
+    html_content = template.render(**request)
+
+    enviar_correo_dispersion(
+        cotizacion,
+        html_content,
+        correos
+    )
+
+    return {
+        "ok": True,
+        "message": "Correo de dispersión enviado correctamente"
+    }
+
+
+
