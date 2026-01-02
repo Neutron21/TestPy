@@ -188,6 +188,3 @@ def correo_dispersion(
         "ok": True,
         "message": "Correo de dispersión enviado correctamente"
     }
-
-
-
