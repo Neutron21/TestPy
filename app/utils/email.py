@@ -144,6 +144,3 @@ def enviar_correo_dispersion(cotizacion, mensaje_html, correos):
     res = requests.post(BREVO_URL, json=data, headers=headers)
     print(f"Brevo response: ({res.status_code}) {res.text}")
     return "Correo enviado con éxito."
-
-
-
