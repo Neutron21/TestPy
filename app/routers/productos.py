@@ -3,6 +3,8 @@ from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.db import SessionDep
 from app.models import Tp_producto_checklist, Productos, ProductosDTO, ProductosTipoPersonaDTO
+from sqlmodel import select
+
 
 router = APIRouter(tags=["Productos"])
 
@@ -84,4 +86,18 @@ async def obtener_plazos(producto_id: int, session: SessionDep):
    
 
     return {"plazos": raw_plazos}
+@router.get("/producto/{producto_id}/nombre")
+def get_producto_nombre(producto_id: int, session: SessionDep):
+
+    stmt = select(Productos.nombre).where(Productos.id == producto_id)
+    nombre = session.exec(stmt).first()
+
+    if not nombre:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Producto no encontrado"
+        )
+
+    return {"nombre": nombre}
+
 
