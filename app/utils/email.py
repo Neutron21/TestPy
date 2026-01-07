@@ -10,6 +10,7 @@ import time
 from app.utils.logger_config import logger
 from app.models import ReqMail
 
+
 BREVO_API_KEY = os.getenv("BREVO_KEY") 
 BREVO_URL = os.getenv("BREVO_LINK")
 
@@ -144,3 +145,31 @@ def enviar_correo_dispersion(cotizacion, mensaje_html, correos):
     res = requests.post(BREVO_URL, json=data, headers=headers)
     print(f"Brevo response: ({res.status_code}) {res.text}")
     return "Correo enviado con éxito."
+
+def enviar_correo_informativo(html_content: str, correos: list[str], subject: str, imagen_b64: str):
+
+    data = {
+        "sender": {
+            "email": "web.app.no.reply@konnect.mx",
+            "name": "Konnect"
+        },
+        "to": [{"email": e} for e in correos],
+        "subject": subject,
+        "htmlContent": html_content,
+        "attachment": [
+            {
+                "name": "firma.png",
+                "content": imagen_b64,
+                "contentId": "firma"   
+            }
+        ]
+    }
+
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+
+    res = requests.post(BREVO_URL, json=data, headers=headers)
+    print(f"Brevo response: ({res.status_code}) {res.text}")

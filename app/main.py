@@ -14,6 +14,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import procesos 
 from app.utils.logger_config import logger
 from app.routers import sedes
+from fastapi.staticfiles import StaticFiles
+
 
 
 
@@ -36,6 +38,15 @@ app = FastAPI(
     description="API protegida con JWT de Firebase",
     version="1.0"
 )
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app.mount(
+    "/static",
+    StaticFiles(directory=os.path.join(BASE_DIR, "utils", "static"), html=False),
+    name="static"
+)
+
+
 
 original_openapi = app.openapi
 # 🔹 Función personalizada para OpenAPI con seguridad JWT
