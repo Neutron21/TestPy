@@ -1,7 +1,7 @@
 import base64
 import os
-from typing import List
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Body
+from typing import List, Optional
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Body, Request
 from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios, Productos
 from sqlmodel import select, text
 from app.db import SessionDep
@@ -10,7 +10,6 @@ from app.utils.logger_config import logger
 from jinja2 import Environment, FileSystemLoader
 from datetime import datetime
 import os
-
 
 
 router = APIRouter(tags=["SendMails"])
@@ -163,15 +162,16 @@ def correo_dispersion(data: dict, session: SessionDep):
     return {"ok": True, "message": "Correo de dispersión enviado correctamente"}
 
 
-
-
-import base64
-import os
-from typing import Optional
-from fastapi import HTTPException
-
 @router.post("/recordatorio-estatus")
-async def enviar_correo_recordatorio(session: SessionDep , tipo: Optional[int] = None):
+async def enviar_correo_recordatorio(session: SessionDep, tipo: Optional[int],background_tasks: BackgroundTasks, request: Request,):
+    # 🔐 Seguridad
+    token = request.headers.get("x-cron-token")
+    if not token:
+        raise HTTPException(status_code=400, detail="X Token requerido")
+
+    if token != os.getenv("CRON_SECRET"):
+        raise HTTPException(status_code=401, detail="X Token inválido")
+    
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     if tipo == 1:
@@ -195,25 +195,13 @@ async def enviar_correo_recordatorio(session: SessionDep , tipo: Optional[int] =
     template = env.get_template("recordatorios.html")
     html_content = template.render()
 
-    query_usuarios = select(Usuarios.email).where(Usuarios.nivel <= 3)
-    correos = session.exec(query_usuarios).all()
-
+    # query_usuarios = select(Usuarios.email).where(Usuarios.nivel <= 3)
+    # correos = session.exec(query_usuarios).all()
+    correos = ["ij.innovaciones@gmail.com"]
+   
     print("Correos que recibirán el recordatorio:", correos)
 
-
-    enviar_correo_informativo(
-        html_content=html_content,
-        correos= correos,
-        subject=subject,
-        imagen_b64=imagen_b64
-    )
-
-    return {"mensaje": "Correo enviado correctamente"}
-
-                #  "ivanju21@gmail.com",
-                #  "kfigueroa@konnect.mx",
-                #  "ara.castro@konnect.mx",
-                #  "info@konnect.mx"
-
-
+    background_tasks.add_task(enviar_correo_informativo, html_content, correos, subject, imagen_b64)
+   
+    return {"mensaje": "Proceso de envío iniciado"}
 

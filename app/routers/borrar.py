@@ -53,10 +53,10 @@ def borrar_pruebas(request: Request, session: SessionDep):
     # 🔐 Seguridad
     token = request.headers.get("x-cron-token")
     if not token:
-        raise HTTPException(status_code=400, detail="Token requerido")
+        raise HTTPException(status_code=400, detail="X Token requerido")
 
     if token != os.getenv("CRON_SECRET"):
-        raise HTTPException(status_code=401, detail="Token inválido")
+        raise HTTPException(status_code=401, detail="X Token inválido")
 
     # 🔎 1. Obtener IDs
     ids = obtener_ids_prueba(session)

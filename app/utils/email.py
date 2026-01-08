@@ -147,29 +147,48 @@ def enviar_correo_dispersion(cotizacion, mensaje_html, correos):
     return "Correo enviado con éxito."
 
 def enviar_correo_informativo(html_content: str, correos: list[str], subject: str, imagen_b64: str):
+    headers = {
+            "accept": "application/json",
+            "api-key": BREVO_API_KEY,
+            "content-type": "application/json"
+        }
+    resultados = []
 
-    data = {
+    data_base = {
         "sender": {
             "email": "web.app.no.reply@konnect.mx",
             "name": "Konnect"
         },
-        "to": [{"email": e} for e in correos],
         "subject": subject,
         "htmlContent": html_content,
         "attachment": [
             {
                 "name": "firma.png",
                 "content": imagen_b64,
-                "contentId": "firma"   
+                "contentId": "firma"
             }
         ]
     }
+    for mail in correos:
+        try:
+            data = data_base.copy() # Copiamos el objeto base para no mutarlo
+            data["to"] = [{"email": mail}]
 
-    headers = {
-        "accept": "application/json",
-        "api-key": BREVO_API_KEY,
-        "content-type": "application/json"
-    }
+            res = requests.post(BREVO_URL, json=data, headers=headers,timeout=(3,10)) 
+            # 3 Segundos para conectar, 10 para esperar respusta
+            resultados.append({
+                "email": mail,
+                "status": res.status_code,
+                "response": res.text
+            })
+        except  Exception as e:
+            # ❗ Este correo falló, los demás siguen
+            resultados.append({
+                "email": mail,
+                "ok": False,
+                "error": str(e)
+            })
+            logger.error(f"emial: {mail}, error: {str(e)}")
 
-    res = requests.post(BREVO_URL, json=data, headers=headers)
-    print(f"Brevo response: ({res.status_code}) {res.text}")
+    print(f"{resultados}")       
+    return resultados
