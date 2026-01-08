@@ -195,13 +195,11 @@ async def enviar_correo_recordatorio(session: SessionDep, tipo: Optional[int],ba
     template = env.get_template("recordatorios.html")
     html_content = template.render()
 
-    # query_usuarios = select(Usuarios.email).where(Usuarios.nivel <= 3)
-    # correos = session.exec(query_usuarios).all()
-    correos = ["ij.innovaciones@gmail.com"]
+    query_usuarios = select(Usuarios.email).where(Usuarios.nivel <= 3)
+    correos = session.exec(query_usuarios).all()
    
     print("Correos que recibirán el recordatorio:", correos)
 
     background_tasks.add_task(enviar_correo_informativo, html_content, correos, subject, imagen_b64)
    
     return {"mensaje": "Proceso de envío iniciado"}
-
