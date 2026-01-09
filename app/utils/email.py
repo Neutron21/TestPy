@@ -106,7 +106,6 @@ def notificacion_if(cliente: str, mensaje_html: str, correos: list[str]):
         return f"Error al enviar el correo: {str(e)}"
     
 
-
 def enviar_correo_dispersion(cotizacion, mensaje_html, correos):
     logger.info("🚀 ENTRO A enviar_correo_dispersion")
 
@@ -163,9 +162,9 @@ def enviar_correo_informativo(html_content: str, correos: list[str], subject: st
         "htmlContent": html_content,
         "attachment": [
             {
-                "name": "firma.png",
+                "name": "imagen_recordatorio.png",
                 "content": imagen_b64,
-                "contentId": "firma"
+                "contentId": "imagen_recordatorio"
             }
         ]
     }

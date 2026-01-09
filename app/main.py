@@ -17,9 +17,6 @@ from app.routers import sedes
 from fastapi.staticfiles import StaticFiles
 
 
-
-
-
 from app.db import create_all_tables
 from .routers import ( checklist, membresias, utms, documentos,viabilidad,
     financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, send_mail, uploadFiles, utils, brokers, procesos,sedes,borrar)

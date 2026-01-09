@@ -197,6 +197,7 @@ async def enviar_correo_recordatorio(session: SessionDep, tipo: Optional[int],ba
 
     query_usuarios = select(Usuarios.email).where(Usuarios.nivel <= 3)
     correos = session.exec(query_usuarios).all()
+
    
     print("Correos que recibirán el recordatorio:", correos)
 
