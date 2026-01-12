@@ -12,9 +12,6 @@ from sqlmodel import SQLModel, Field
 from typing import Optional
 
 
-
-
-
 # Una buena práctica en arquitecturas limpias es usar ORM para la capa de acceso a datos y DTO
 # para la comunicación con la API, evitando exponer modelos de la base de datos directamente. 🚀
 def mexico_timestamp():
@@ -29,7 +26,8 @@ class FinancierasDTO(SQLModel):
     nombre: str = Field(default=None)
     tipo: str = Field(min_length=1, max_length=1)
     fase: int = Field(default=None)
-    # img: str = Field(default=None)
+    img: str = Field(default=None)
+    id_membresia: int = Field(foreign_key="membresias.id")
 
 class Financieras(FinancierasDTO,table=True):
         pass
@@ -52,13 +50,6 @@ class ProductosDTO(SQLModel):
     id_categoria: int = Field(foreign_key="categorias.id")
     id_subCategoria: int = Field(foreign_key="subCategorias.id")
 
-# class ProductosTipoPersonaDTO(ProductosDTO):
-#     id: int
-#     tipo_persona: List[str] = Field(default_factory=list)
-
-# class Productos(ProductosDTO,table=True):
-#     pass
-#     id: int | None = Field(default=None, primary_key=True)  # Permite que la BD genere el ID
  
 class ProductoFormatoTipoPersona(SQLModel, table=True):
     __tablename__ = "producto_formato_tipo_persona"

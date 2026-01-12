@@ -1,6 +1,8 @@
 import os
 import sys
 
+# from cursoFastApi.app.routers import subCategorias
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import time
@@ -18,7 +20,7 @@ from fastapi.staticfiles import StaticFiles
 
 
 from app.db import create_all_tables
-from .routers import ( checklist, membresias, utms, documentos,viabilidad,
+from .routers import ( checklist, membresias, utms, documentos,viabilidad, subCategorias,
     financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, send_mail, uploadFiles, utils, brokers, procesos,sedes,borrar)
 from dotenv import load_dotenv
 
@@ -80,13 +82,14 @@ app.include_router(membresias.router)
 app.include_router(producto_formato.router)
 app.include_router(productos.router)
 app.include_router(procesos.router)
-app.include_router(send_mail.router)
 app.include_router(uploadFiles.router)
 app.include_router(usuarios.router)
 app.include_router(utils.router)
 app.include_router(utms.router)
 app.include_router(viabilidad.router)
 app.include_router(sedes.router)
+app.include_router(send_mail.router)
+app.include_router(subCategorias.router)
 app.include_router(borrar.router)
 
 
