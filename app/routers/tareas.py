@@ -58,6 +58,9 @@ def borrar_cotizaciones_prueba(session):
 
 # 🔐 Seguridad
 def validar_cron_token(x_cron_token: str = Header(None)):
+
+    if not os.getenv("CRON_SECRET"):
+        raise HTTPException(status_code=500, detail="Error de configuración en el servidor")
     if not x_cron_token:
         raise HTTPException(status_code=400, detail="X Token requerido")
 
@@ -66,7 +69,7 @@ def validar_cron_token(x_cron_token: str = Header(None)):
 
 # 🚀 ENDPOINT PRINCIPAL
 @router.post("/cotizaciones/borrar-pruebas")
-def borrar_pruebas(request: Request, session: SessionDep, _ = Depends(validar_cron_token)):
+def borrar_pruebas(session: SessionDep, _ = Depends(validar_cron_token)):
     
     # 🔎 1. Obtener IDs
     ids = obtener_ids_prueba(session)
@@ -93,14 +96,7 @@ def borrar_pruebas(request: Request, session: SessionDep, _ = Depends(validar_cr
     }
 
 @router.post("/recordatorio-estatus")
-async def enviar_correo_recordatorio(session: SessionDep, tipo: Optional[int],background_tasks: BackgroundTasks, request: Request,):
-    # 🔐 Seguridad
-    token = request.headers.get("x-cron-token")
-    if not token:
-        raise HTTPException(status_code=400, detail="X Token requerido")
-
-    if token != os.getenv("CRON_SECRET"):
-        raise HTTPException(status_code=401, detail="X Token inválido")
+async def enviar_correo_recordatorio(session: SessionDep, tipo: Optional[int],background_tasks: BackgroundTasks, _ = Depends(validar_cron_token)):
     
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
