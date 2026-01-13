@@ -1,14 +1,13 @@
 import base64
 import os
-from typing import List, Optional
+from typing import List
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Body, Request
 from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios, Productos
 from sqlmodel import select, text
 from app.db import SessionDep
-from utils.email import enviar_correo, notificacion_if, enviar_correo_dispersion, enviar_correo_informativo
+from utils.email import enviar_correo, notificacion_if, enviar_correo_dispersion
 from app.utils.logger_config import logger
 from jinja2 import Environment, FileSystemLoader
-from datetime import datetime
 import os
 
 
@@ -160,47 +159,3 @@ def correo_dispersion(data: dict, session: SessionDep):
     enviar_correo_dispersion(cotizacion, html_content, correos)
 
     return {"ok": True, "message": "Correo de dispersión enviado correctamente"}
-
-
-@router.post("/recordatorio-estatus")
-async def enviar_correo_recordatorio(session: SessionDep, tipo: Optional[int],background_tasks: BackgroundTasks, request: Request,):
-    # 🔐 Seguridad
-    token = request.headers.get("x-cron-token")
-    if not token:
-        raise HTTPException(status_code=400, detail="X Token requerido")
-
-    if token != os.getenv("CRON_SECRET"):
-        raise HTTPException(status_code=401, detail="X Token inválido")
-    
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-    if tipo == 1:
-        image_name = "orden.jpg"
-        subject = "📌 ACTUALIZA TUS ESTATUS"
-    elif tipo == 2:
-        image_name = "estatus.jpg"
-        subject = "🗓️ VIERNES DE ESTATUS"
-    elif tipo == 3:
-        image_name = "viernes.jpg"
-        subject = "⏰ NO LO OLVIDES"
-  
-    img_path = os.path.join(BASE_DIR, "utils", "static", image_name)
-
-    if not os.path.exists(img_path):
-        raise HTTPException(status_code=404, detail=f"No existe la imagen: {img_path}")
-
-    with open(img_path, "rb") as f:
-        imagen_b64 = base64.b64encode(f.read()).decode("utf-8")
-
-    template = env.get_template("recordatorios.html")
-    html_content = template.render()
-
-    query_usuarios = select(Usuarios.email).where(Usuarios.nivel <= 3)
-    correos = session.exec(query_usuarios).all()
-
-   
-    print("Correos que recibirán el recordatorio:", correos)
-
-    background_tasks.add_task(enviar_correo_informativo, html_content, correos, subject, imagen_b64)
-   
-    return {"mensaje": "Proceso de envío iniciado"}
