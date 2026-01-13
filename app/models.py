@@ -40,6 +40,7 @@ class Categorias(SQLModel):
 class SubCategorias(SQLModel):
     __tablename__ = "subCategorias"
     id: int = Field(primary_key=True)
+    id_categoria: int = Field(foreign_key="categorias.id")
     nombre: str = Field(default=None)
 
 class ProductosDTO(SQLModel):

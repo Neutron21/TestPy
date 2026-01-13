@@ -1,23 +1,24 @@
 from fastapi import APIRouter, HTTPException, status
-from sqlmodel import select
+from sqlmodel import text
 from app.db import SessionDep
-from app.models import Comentarios, ComentariosDTO, Cotizacion, MontoUpdateDTO
+from app.models import SubCategorias
 
-router = APIRouter(tags=["subCategorias"])
+router = APIRouter(tags=["SubCategorias"])
 
-@router.get("/subCategorias/{id_membresia}", response_model=list[Comentarios])
-async def obtener_comentarios(subCategorias: int, session: SessionDep):
-    query = select(Comentarios).where(Comentarios.subCategorias == subCategorias)
-    comentarios = session.exec(query).all() 
-    print(f"comentarios: {comentarios}")
-    # if not comentarios:
-    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay comentarios para esta cotización")
-    return comentarios 
+@router.get("/subCategorias/{id_membresia}", response_model=list[SubCategorias])
+async def get_subCategorias_by_Membership(id_membresia: int, session: SessionDep):
+    
+    query = text("""
+            SELECT DISTINCT sc.*
+                FROM subCategorias sc
+                JOIN productos p 
+                    ON p.id_subcategoria = sc.id
+                JOIN financieras f 
+                    ON f.id = p.institucion_id
+                WHERE 
+                    f.fase != 0
+                    AND f.id_membresia <= :id_membresia;
+        """)
+    result = session.execute(query, {"id_membresia": id_membresia})
+    return result.mappings().all()
 
-@router.post("/subCategorias/ifs", response_model=Comentarios) 
-async def create_new_coment(coment_request: ComentariosDTO, session: SessionDep):
-    coment_data = Comentarios(**coment_request.model_dump(exclude_unset=True))  # exclude_unset=True previen inyeccion de campos NO definidos
-    session.add(coment_data)  
-    session.commit() 
-    session.refresh(coment_data) 
-    return coment_data  
