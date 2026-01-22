@@ -32,7 +32,23 @@ def obtener_jefes(user_id: int, session) -> List[Usuarios]:
     result = session.exec(query.params(user_id=user_id)).all()
     return [row[0] for row in result]
 
+def obtener_mails_ifs(cotizacion: Cotizacion, session) -> List[str]:
 
+    query_producto = select(Productos).where(Productos.id == cotizacion.producto)
+    producto = session.exec(query_producto).first()
+
+    if cotizacion.id_financiera == 14:
+            query_correos = select(Correos.correo).where(
+                (Correos.id_financiera == cotizacion.id_financiera) &
+                (Correos.v_mail == 1) &
+                (Correos.categoria_id == producto.id_categoria)
+            )
+    else:
+            query_correos = select(Correos.correo).where(
+                (Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1)
+            )
+    correosIF = session.exec(query_correos).all()
+    return correosIF
 
 @router.post("/enviar-correo")
 async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: BackgroundTasks):
@@ -45,17 +61,6 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         query_producto = select(Productos).where(Productos.id == cotizacion.producto)
         producto = session.exec(query_producto).first()
 
-        if cotizacion.id_financiera == 14:
-            query_correos = select(Correos.correo).where(
-                (Correos.id_financiera == cotizacion.id_financiera) &
-                (Correos.v_mail == 1) &
-                (Correos.categoria_id == producto.id_categoria)
-            )
-        else:
-            query_correos = select(Correos.correo).where(
-                (Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1)
-            )
-
         query_broker = select(Brokers.nombre).where(Brokers.id == cotizacion.broker)
         query_sede = select(Sedes.nombre).where(Sedes.id == cotizacion.sede)
         query_fin = select(Financieras).where(Financieras.id == cotizacion.id_financiera)
@@ -63,7 +68,7 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         correos_superiores = obtener_jefes(cotizacion.id_user, session)
         usuario = session.exec(query_usuario).first()
 
-        correosIF = session.exec(query_correos).all()
+        correosIF = obtener_mails_ifs(cotizacion, session)
         broker = session.exec(query_broker).first()
         sede = session.exec(query_sede).first()
         financiera = session.exec(query_fin).first()
@@ -146,13 +151,12 @@ def correo_dispersion(data: dict, session: SessionDep):
 
     if cotizacion.estatus != 7:
         raise HTTPException(status_code=400, detail="La cotización no está en estatus Dispersión")
-
-    correos = [
-        "kfigueroa@konnect.mx", "ara.castro@konnect.mx",
-        "gerencia.operativa@konnect.mx", "gerencia.corporativa@konnect.mx" 
-    ]
-
+    correosIfs = obtener_mails_ifs(cotizacion, session)
+    correos = list(set(correosIfs + [ "kfigueroa@konnect.mx", "ara.castro@konnect.mx",
+        "gerencia.operativa@konnect.mx", "gerencia.corporativa@konnect.mx" ]))
+  
     request = dict(folioKonnect=id_cotizacion, cliente=cotizacion.nombre)
+    
     template = env.get_template("dispersion.html")
     html_content = template.render(**request)
 
