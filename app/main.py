@@ -87,7 +87,6 @@ app.include_router(utils.router)
 app.include_router(utms.router)
 app.include_router(viabilidad.router)
 app.include_router(sedes.router)
-app.include_router(send_mail.router)
 # app.include_router(subCategorias.router)
 app.include_router(tareas.router)
 

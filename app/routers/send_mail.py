@@ -8,7 +8,6 @@ from app.db import SessionDep
 from utils.email import enviar_correo, notificacion_if, enviar_correo_dispersion
 from app.utils.logger_config import logger
 from jinja2 import Environment, FileSystemLoader
-import os
 
 
 router = APIRouter(tags=["SendMails"])
@@ -122,7 +121,7 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
 
 
 @router.post("/comentario-if")
-async def enviar_mail(session: SessionDep, idCotizacion: int = Body(..., embed=True)):
+async def send_comentario(session: SessionDep, idCotizacion: int = Body(..., embed=True)):
     query_cotizacion = select(Cotizacion).where(Cotizacion.id_cotizacion == idCotizacion)
     cotizacion = session.exec(query_cotizacion).first()
     if not cotizacion:
@@ -140,7 +139,7 @@ async def enviar_mail(session: SessionDep, idCotizacion: int = Body(..., embed=T
 
 
 @router.post("/correo-dispersion")
-def correo_dispersion(data: dict, session: SessionDep):
+def mail_dispersion(data: dict, session: SessionDep):
     id_cotizacion = data.get("idCotizacion")
     if not id_cotizacion:
         raise HTTPException(status_code=400, detail="idCotizacion requerido")
