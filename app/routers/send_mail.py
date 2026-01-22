@@ -149,7 +149,7 @@ def correo_dispersion(data: dict, session: SessionDep):
 
     correos = [
         "kfigueroa@konnect.mx", "ara.castro@konnect.mx",
-        "gerencia.operativa@konnect.mx", "gerencia.corporativa@konnect.mx"
+        "gerencia.operativa@konnect.mx", "gerencia.corporativa@konnect.mx" 
     ]
 
     request = dict(folioKonnect=id_cotizacion, cliente=cotizacion.nombre)
