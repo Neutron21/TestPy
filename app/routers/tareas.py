@@ -68,7 +68,7 @@ def validar_cron_token(x_cron_token: str = Header(None)):
         raise HTTPException(status_code=401, detail="X Token inválido")
 
 # 🚀 ENDPOINT PRINCIPAL
-@router.post("/cotizaciones/borrar-pruebas")
+@router.delete("/cotizaciones/borrar-pruebas")
 def borrar_pruebas(session: SessionDep, _ = Depends(validar_cron_token)):
     
     # 🔎 1. Obtener IDs
