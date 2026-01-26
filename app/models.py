@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from typing import List, Optional
 from zoneinfo import ZoneInfo
@@ -163,7 +163,7 @@ class CotizacionDTO (SQLModel):
     sede: Optional[int] = Field(default=None, nullable=True) # aun no se recibe del front
     destinoCredito: str = Field(max_length=250, nullable=False)
     custom_prod: Optional[str] = Field(default=None, nullable=True)
-    fecha_pago: Optional[str] = Field(default=None)
+    fecha_pago: Optional[date] = Field(default=None)
 
 
 
@@ -172,7 +172,7 @@ class Cotizacion (CotizacionDTO, table=True ):
     timestamp: datetime | None = Field(default_factory=mexico_timestamp, nullable=False)
     id_cotizacion: int | None = Field(default=None, primary_key=True, nullable=False)
     id_user: int = Field(foreign_key="usuarios.id", nullable=False)
-    fecha_pago: Optional[str] = Field(default=None)
+    fecha_pago: Optional[date] = Field(default=None)
 
 
 class ComentariosDTO(SQLModel):
