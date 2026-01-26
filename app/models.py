@@ -182,7 +182,7 @@ class ComentariosDTO(SQLModel):
 
 class FechaPagoDTO(BaseModel):
     id_cotizacion: int
-    fecha_pago: str
+    fecha_pago: date
 
 
 class Comentarios(ComentariosDTO, table=True):
