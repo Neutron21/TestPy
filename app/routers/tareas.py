@@ -7,6 +7,13 @@ import os
 import shutil
 import base64
 
+from datetime import date
+from fastapi import APIRouter
+from sqlmodel import select
+from app.db import SessionDep
+from app.models import Cotizacion
+
+
 from app.db import SessionDep
 from app.models import Usuarios
 from utils.email import enviar_correo_informativo
@@ -129,3 +136,31 @@ async def enviar_correo_recordatorio(session: SessionDep, tipo: Optional[int],ba
     background_tasks.add_task(enviar_correo_informativo, html_content, correos, subject, imagen_b64)
    
     return {"mensaje": "Proceso de envío iniciado"}
+
+@router.get("/cotizacion/utils/fecha-pago-vencida")
+async def cotizaciones_fecha_pago_vencida(session: SessionDep):
+    hoy = date.today()
+
+    rows = session.exec(
+        select(
+            Cotizacion.id_cotizacion,
+            Cotizacion.fecha_pago,
+            Cotizacion.estatus
+        ).where(
+            Cotizacion.estatus == 11,
+            Cotizacion.fecha_pago.is_not(None),
+            Cotizacion.fecha_pago <= hoy
+        )
+    ).all()
+
+    return {
+        "total": len(rows),
+        "cotizaciones": [
+            {
+                "id_cotizacion": r.id_cotizacion,
+                "fecha_pago": r.fecha_pago,
+            }
+            for r in rows
+        ]
+    }
+

@@ -213,29 +213,3 @@ async def update_fecha_pago(
             status_code=500, 
             detail="Error de integridad: el sistema intentó tocar la tabla comentarios"
         )
-@router.get("/cotizacion/utils/fecha-pago-vencida")
-async def cotizaciones_fecha_pago_vencida(session: SessionDep):
-    hoy = date.today()
-
-    rows = session.exec(
-        select(
-            Cotizacion.id_cotizacion,
-            Cotizacion.fecha_pago,
-            Cotizacion.estatus
-        ).where(
-            Cotizacion.estatus == 11,
-            Cotizacion.fecha_pago.is_not(None),
-            Cotizacion.fecha_pago <= hoy
-        )
-    ).all()
-
-    return {
-        "total": len(rows),
-        "cotizaciones": [
-            {
-                "id_cotizacion": r.id_cotizacion,
-                "fecha_pago": r.fecha_pago,
-            }
-            for r in rows
-        ]
-    }
