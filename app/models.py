@@ -167,6 +167,7 @@ class CotizacionDTO (SQLModel):
 
 
 
+
 class Cotizacion (CotizacionDTO, table=True ):   
     pass 
     timestamp: datetime | None = Field(default_factory=mexico_timestamp, nullable=False)

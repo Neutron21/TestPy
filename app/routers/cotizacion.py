@@ -6,6 +6,12 @@ from app.db import SessionDep
 from app.models import Cotizacion, CotizacionDTO, EstatusUpdate, FechaPagoDTO, MontoUpdate
 import base64
 from sqlmodel import update
+from datetime import date
+from fastapi import APIRouter
+from sqlmodel import select
+from app.db import SessionDep
+from app.models import Cotizacion
+
 
 from app.routers import comentarios
 
@@ -186,21 +192,15 @@ async def update_fecha_pago(
     session: SessionDep
 ):
     try:
-        # 1. Limpiamos la sesión de cualquier objeto 'comentarios' fallido previo
         session.expunge_all()
-
-        # 2. Ejecutamos un UPDATE directo a la tabla cotizacion
-        # Esto NO hace un INSERT, solo modifica la columna que necesitas
         statement = (
             update(Cotizacion)
             .where(Cotizacion.id_cotizacion == data.id_cotizacion)
             .values(fecha_pago=data.fecha_pago)
         )
-        
         result = session.exec(statement)
         session.commit()
 
-        # 3. Verificamos si se encontró la cotización
         if result.rowcount == 0:
             raise HTTPException(status_code=404, detail="Cotización no encontrada")
 
@@ -213,3 +213,29 @@ async def update_fecha_pago(
             status_code=500, 
             detail="Error de integridad: el sistema intentó tocar la tabla comentarios"
         )
+@router.get("/cotizacion/utils/fecha-pago-vencida")
+async def cotizaciones_fecha_pago_vencida(session: SessionDep):
+    hoy = date.today()
+
+    rows = session.exec(
+        select(
+            Cotizacion.id_cotizacion,
+            Cotizacion.fecha_pago,
+            Cotizacion.estatus
+        ).where(
+            Cotizacion.estatus == 11,
+            Cotizacion.fecha_pago.is_not(None),
+            Cotizacion.fecha_pago <= hoy
+        )
+    ).all()
+
+    return {
+        "total": len(rows),
+        "cotizaciones": [
+            {
+                "id_cotizacion": r.id_cotizacion,
+                "fecha_pago": r.fecha_pago,
+            }
+            for r in rows
+        ]
+    }
