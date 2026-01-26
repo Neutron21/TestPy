@@ -26,6 +26,12 @@ def fillFirma():
     
     return firma_b64
 
+def excel_a_base64():
+    file_path = os.path.join(os.path.dirname(__file__), "attachment", "Formato_validacion.xlsx")
+
+    with open(file_path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
+
 def enviar_correo(request: ReqMail, mensaje_html: str, correos: list[str]):
     destinatario = [request.emailUser]
 
@@ -109,7 +115,6 @@ def notificacion_if(cliente: str, mensaje_html: str, correos: list[str]):
 def enviar_correo_dispersion(cotizacion, mensaje_html, correos):
     logger.info("🚀 ENTRO A enviar_correo_dispersion")
 
-
     BREVO_API_KEY = os.getenv("BREVO_KEY")
     BREVO_URL = os.getenv("BREVO_LINK")
 
@@ -118,6 +123,7 @@ def enviar_correo_dispersion(cotizacion, mensaje_html, correos):
         return
 
     firma_b64 = fillFirma()
+    excel_base64 = excel_a_base64()
 
     data = {
         "sender": {
@@ -128,6 +134,10 @@ def enviar_correo_dispersion(cotizacion, mensaje_html, correos):
         "subject": f"Dispersión Cotización {cotizacion.id_cotizacion} - {cotizacion.nombre}",
         "htmlContent": mensaje_html,
         "attachment": [
+            {
+                "content": excel_base64,
+                "name": "Formato_validacion.xlsx"
+            },
             {
                 "name": "firma.png",
                 "content": firma_b64
