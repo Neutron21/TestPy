@@ -163,7 +163,7 @@ class CotizacionDTO (SQLModel):
     sede: Optional[int] = Field(default=None, nullable=True) # aun no se recibe del front
     destinoCredito: str = Field(max_length=250, nullable=False)
     custom_prod: Optional[str] = Field(default=None, nullable=True)
-    fecha_pago: Optional[str] = Field(default=None)
+    # fecha_pago: Optional[str] = Field(default=None)
 
 
 
