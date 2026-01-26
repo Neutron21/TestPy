@@ -21,3 +21,6 @@ async def create_new_coment(coment_request: ComentariosDTO, session: SessionDep)
     session.commit() 
     session.refresh(coment_data) 
     return coment_data  
+    
+
+

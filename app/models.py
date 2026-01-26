@@ -15,6 +15,7 @@ from typing import Optional
 
 
 
+
 # Una buena práctica en arquitecturas limpias es usar ORM para la capa de acceso a datos y DTO
 # para la comunicación con la API, evitando exponer modelos de la base de datos directamente. 🚀
 def mexico_timestamp():
@@ -162,17 +163,26 @@ class CotizacionDTO (SQLModel):
     sede: Optional[int] = Field(default=None, nullable=True) # aun no se recibe del front
     destinoCredito: str = Field(max_length=250, nullable=False)
     custom_prod: Optional[str] = Field(default=None, nullable=True)
+    fecha_pago: Optional[str] = Field(default=None)
+
+
 
 class Cotizacion (CotizacionDTO, table=True ):   
     pass 
     timestamp: datetime | None = Field(default_factory=mexico_timestamp, nullable=False)
     id_cotizacion: int | None = Field(default=None, primary_key=True, nullable=False)
     id_user: int = Field(foreign_key="usuarios.id", nullable=False)
+    fecha_pago: Optional[str] = Field(default=None)
+
 
 class ComentariosDTO(SQLModel):
     id_cotizacion: int = Field(default=None)
     id_usuario: str = Field(default=None)
     comentarios: str = Field(default=None)
+
+class FechaPagoDTO(BaseModel):
+    id_cotizacion: int
+    fecha_pago: str
 
 
 class Comentarios(ComentariosDTO, table=True):
