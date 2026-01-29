@@ -12,12 +12,6 @@ from sqlmodel import SQLModel, Field
 from typing import Optional
 from pydantic import BaseModel
 
-
-
-
-
-
-
 # Una buena práctica en arquitecturas limpias es usar ORM para la capa de acceso a datos y DTO
 # para la comunicación con la API, evitando exponer modelos de la base de datos directamente. 🚀
 def mexico_timestamp():
