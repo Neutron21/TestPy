@@ -11,7 +11,7 @@ from datetime import date
 from fastapi import APIRouter
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import Cotizacion
+from app.models import Correos, Cotizacion
 
 
 from app.db import SessionDep
@@ -137,6 +137,12 @@ async def enviar_correo_recordatorio(session: SessionDep, tipo: Optional[int],ba
    
     return {"mensaje": "Proceso de envío iniciado"}
 
+from datetime import date
+
+from datetime import date
+
+from datetime import date
+
 @router.get("/cotizacion/utils/fecha-pago-vencida")
 async def cotizaciones_fecha_pago_vencida(session: SessionDep):
     hoy = date.today()
@@ -145,22 +151,42 @@ async def cotizaciones_fecha_pago_vencida(session: SessionDep):
         select(
             Cotizacion.id_cotizacion,
             Cotizacion.fecha_pago,
-            Cotizacion.estatus
-        ).where(
+            Cotizacion.id_financiera,
+            Cotizacion.producto,
+            Cotizacion.monto,
+            Correos.correo
+        )
+        .join(
+            Correos,
+            Correos.id_financiera == Cotizacion.id_financiera
+        )
+        .where(
             Cotizacion.estatus == 11,
             Cotizacion.fecha_pago.is_not(None),
             Cotizacion.fecha_pago <= hoy
         )
     ).all()
 
-    return {
-        "total": len(rows),
-        "cotizaciones": [
-            {
+    cotizaciones = {}
+
+    for r in rows:
+        if r.id_cotizacion not in cotizaciones:
+            cotizaciones[r.id_cotizacion] = {
                 "id_cotizacion": r.id_cotizacion,
                 "fecha_pago": r.fecha_pago,
+                "id_financiera": r.id_financiera,
+                "producto": r.producto,
+                "monto": r.monto,
+                "correos": []
             }
-            for r in rows
-        ]
+
+        # evitar correos duplicados
+        if r.correo not in cotizaciones[r.id_cotizacion]["correos"]:
+            cotizaciones[r.id_cotizacion]["correos"].append(r.correo)
+
+    return {
+        "total": len(cotizaciones),
+        "cotizaciones": list(cotizaciones.values())
     }
+
 
