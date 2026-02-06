@@ -6,6 +6,7 @@ practica de fastapi con python
     'source ../ivan-venv/bin/activate'
     'source desarollo/bin/activate'
     'deactivate' para desactivar el venv
+    export GOOGLE_APPLICATION_CREDENTIALS="/Users/ivanjuarez/Documents/Proyectos/TestPy/opt/keys/konecct-broker-a60c62e5b08c.json"
 
 # Una vez activado el env se procede a correr el proyecto
 # El cual se encuntra en la carpeta 'project', con el siguiente comando:

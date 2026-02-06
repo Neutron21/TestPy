@@ -17,6 +17,7 @@ from app.models import Correos, Cotizacion
 from app.db import SessionDep
 from app.models import Usuarios
 from utils.email import enviar_correo_informativo
+from google.cloud import bigquery
 
 router = APIRouter(tags=["Tareas"])
 
@@ -190,3 +191,13 @@ async def cotizaciones_fecha_pago_vencida(session: SessionDep):
     }
 
 
+@router.get("/dashboard")
+async def update_dashboard(session: SessionDep):
+    client = bigquery.Client()
+    query = """
+    SELECT CURRENT_TIMESTAMP() AS now
+    """
+    result = client.query(query)
+
+    for row in result:
+        print("Conectado a BigQuery:", row.now)
