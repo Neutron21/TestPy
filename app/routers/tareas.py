@@ -13,9 +13,9 @@ from sqlmodel import select
 from app.db import SessionDep
 from app.models import Correos, Cotizacion
 
-
 from app.db import SessionDep
 from app.models import Usuarios
+from app.routers.bigQuery.dashboard import sync_brokers, sync_cotizacion, sync_financieras, sync_sedes, sync_usuarios
 from utils.email import enviar_correo_informativo
 from google.cloud import bigquery
 
@@ -192,12 +192,16 @@ async def cotizaciones_fecha_pago_vencida(session: SessionDep):
 
 
 @router.get("/dashboard")
-async def update_dashboard(session: SessionDep):
-    client = bigquery.Client()
-    query = """
-    SELECT CURRENT_TIMESTAMP() AS now
-    """
-    result = client.query(query)
+async def sync_all(session: SessionDep):
+    results = {}
 
-    for row in result:
-        print("Conectado a BigQuery:", row.now)
+    results["brokers"] = sync_brokers(session)
+    results["cotizacion"] = sync_cotizacion(session)
+    results["financieras"] = sync_financieras(session)
+    results["sedes"] = sync_sedes(session)
+    results["usuarios"] = sync_usuarios(session)
+
+    return {
+        "status": "ok",
+        "synced": results
+    }
