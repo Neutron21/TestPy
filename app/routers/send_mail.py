@@ -8,6 +8,8 @@ from app.db import SessionDep
 from utils.email import enviar_correo, notificacion_if, enviar_correo_dispersion
 from app.utils.logger_config import logger
 from jinja2 import Environment, FileSystemLoader
+from app.models import Productos
+
 
 
 router = APIRouter(tags=["SendMails"])
@@ -147,14 +149,20 @@ def mail_dispersion(data: dict, session: SessionDep):
     cotizacion = session.get(Cotizacion, id_cotizacion)
     if not cotizacion:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
+    producto = session.get(Productos, cotizacion.producto)
+    if not producto:
+       raise HTTPException(status_code=404, detail="Producto no encontrado")
 
     if cotizacion.estatus != 7:
         raise HTTPException(status_code=400, detail="La cotización no está en estatus Dispersión")
     correosIfs = obtener_mails_ifs(cotizacion, session)
-    correos = list(set(correosIfs + [ "kfigueroa@konnect.mx", "ara.castro@konnect.mx",
-        "gerencia.operativa@konnect.mx", "gerencia.corporativa@konnect.mx" ]))
+    correos = list(set(correosIfs + [ 
+        # "kfigueroa@konnect.mx", "ara.castro@konnect.mx",
+        # "gerencia.operativa@konnect.mx", "gerencia.corporativa@konnect.mx" 
+        "victor.hugo.silva01@gmail.com"
+        ]))
   
-    request = dict(folioKonnect=id_cotizacion, cliente=cotizacion.nombre)
+    request = dict(folioKonnect=id_cotizacion, cliente=cotizacion.nombre, producto=producto.nombre)
     
     template = env.get_template("dispersion.html")
     html_content = template.render(**request)
