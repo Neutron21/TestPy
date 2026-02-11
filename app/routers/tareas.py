@@ -15,7 +15,8 @@ from app.models import Correos, Cotizacion
 
 from app.db import SessionDep
 from app.models import Usuarios
-from app.routers.bigQuery.dashboard import sync_brokers, sync_cotizacion, sync_financieras, sync_sedes, sync_usuarios
+from app.routers.bigQuery.dashboard import ( sync_brokers, sync_categorias, sync_cotizacion, sync_estatus_tramites, sync_financieras,
+                                             sync_productos, sync_sedes, sync_subCategorias, sync_usuarios)
 from utils.email import enviar_correo_informativo
 from google.cloud import bigquery
 
@@ -192,15 +193,25 @@ async def cotizaciones_fecha_pago_vencida(session: SessionDep):
 
 
 @router.get("/dashboard")
-async def sync_all(session: SessionDep):
+async def sync_all(session: SessionDep, background_tasks: BackgroundTasks):
+    
+    background_tasks.add_task(syncAllDashboard, session)
+    return {
+        "Estatus": "Sincronizaicon iniciada"
+    }
+def syncAllDashboard(session):
     results = {}
 
     results["brokers"] = sync_brokers(session)
     results["cotizacion"] = sync_cotizacion(session)
+    results["categorias"] = sync_categorias(session)
+    results["estatus_tramites"] = sync_estatus_tramites(session)
     results["financieras"] = sync_financieras(session)
+    results["productos"] = sync_productos(session)
     results["sedes"] = sync_sedes(session)
+    results["subCategorias"] = sync_subCategorias(session)
     results["usuarios"] = sync_usuarios(session)
-
+    print(results)
     return {
         "status": "ok",
         "synced": results

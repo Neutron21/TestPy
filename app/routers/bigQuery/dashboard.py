@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from app.db import SessionDep
-from app.routers.bigQuery.service_mysql import get_brokers_mysql, get_cotizacion_mysql, get_financieras_mysql, get_sedes_mysql, get_usuarios_mysql
+from app.routers.bigQuery.service_mysql import (get_brokers_mysql, get_cotizacion_mysql, get_estatus_tramites_mysql, 
+                                                get_financieras_mysql, get_productos_mysql, get_sedes_mysql, get_usuarios_mysql,
+                                                get_categorias_mysql, get_subCategorias_mysql)
 from app.routers.bigQuery.service_bQ import (
     truncate_table,
     insert_rows
@@ -20,6 +22,30 @@ def sync_brokers(session: SessionDep):
     # return { "status": "ok", "rows_synced": len(brokers) }
     return len(brokers) 
 
+# @router.post("/brokers")  
+def sync_categorias(session: SessionDep):
+    categorias = get_categorias_mysql(session)
+
+    if not categorias:
+        raise HTTPException(400, "No hay categorias para sincronizar")
+    truncate_table("analytics_konnect", "categorias")
+    insert_rows("analytics_konnect", "categorias", categorias)
+
+    # return { "status": "ok", "rows_synced": len(categorias) }
+    return len(categorias) 
+
+# @router.post("/estatus_tramites")
+def sync_estatus_tramites(session: SessionDep):
+    estatus_tramites = get_estatus_tramites_mysql(session)
+
+    if not estatus_tramites:
+        raise HTTPException(400, "No hay estatus_tramites para sincronizar")
+    truncate_table("analytics_konnect", "estatus_tramites")
+    insert_rows("analytics_konnect", "estatus_tramites", estatus_tramites)
+
+    # return { "status": "ok", "rows_synced": len(estatus_tramites) }
+    return len(estatus_tramites) 
+
 # @router.post("/cotizacion")
 def sync_cotizacion(session: SessionDep):
     cotizacion = get_cotizacion_mysql(session)
@@ -31,6 +57,19 @@ def sync_cotizacion(session: SessionDep):
 
     # return { "status": "ok", "rows_synced": len(cotizacion) }
     return len(cotizacion) 
+
+# @router.post("/estatus_tramites")
+def sync_productos(session: SessionDep):
+    productos = get_productos_mysql(session)
+
+    if not productos:
+        raise HTTPException(400, "No hay productos para sincronizar")
+    truncate_table("analytics_konnect", "productos")
+    insert_rows("analytics_konnect", "productos", productos)
+
+    # return { "status": "ok", "rows_synced": len(productos) }
+    return len(productos) 
+
 
 # @router.post("/financieras")
 def sync_financieras(session: SessionDep):
@@ -55,6 +94,18 @@ def sync_sedes(session: SessionDep):
 
     # return {"status": "ok", "rows_synced": len(sedes)}
     return len(sedes) 
+
+# @router.post("/brokers")  
+def sync_subCategorias(session: SessionDep):
+    subCategorias = get_subCategorias_mysql(session)
+
+    if not subCategorias:
+        raise HTTPException(400, "No hay subCategorias para sincronizar")
+    truncate_table("analytics_konnect", "subCategorias")
+    insert_rows("analytics_konnect", "subCategorias", subCategorias)
+
+    # return { "status": "ok", "rows_synced": len(subCategorias) }
+    return len(subCategorias) 
 
 # @router.post("/usuarios")
 def sync_usuarios(session: SessionDep):

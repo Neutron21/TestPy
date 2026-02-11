@@ -23,6 +23,15 @@ def get_brokers_mysql(session):
     )
     return [dict(row._mapping) for row in result]
 
+def get_categorias_mysql(session):
+    result = session.execute(
+        text("""
+            SELECT id, nombre
+            FROM categorias
+        """)
+    )
+    return [dict(row._mapping) for row in result]
+
 def get_cotizacion_mysql(session):
     result = session.execute(
         text("""
@@ -34,6 +43,16 @@ def get_cotizacion_mysql(session):
     )
     return [serialize_row(dict(row._mapping)) for row in result]
 
+def get_estatus_tramites_mysql(session):
+    result = session.execute(
+        text("""
+            SELECT id, name
+            FROM estatus_tramites
+        """)
+    )
+    return [dict(row._mapping) for row in result]
+
+
 def get_financieras_mysql(session):
     result = session.execute(
         text("""
@@ -43,11 +62,29 @@ def get_financieras_mysql(session):
     )
     return [dict(row._mapping) for row in result]
 
+def get_productos_mysql(session):
+    result = session.execute(
+        text("""
+            SELECT id, nombre, institucion_id, id_categoria, id_subCategoria, plazo
+            FROM productos
+        """)
+    )
+    return [dict(row._mapping) for row in result]
+
 def get_sedes_mysql(session):
     result = session.execute(
         text("""
             SELECT id, nombre
             FROM sedes
+        """)
+    )
+    return [dict(row._mapping) for row in result]
+
+def get_subCategorias_mysql(session):
+    result = session.execute(
+        text("""
+            SELECT id, id_categoria, nombre
+            FROM subCategorias
         """)
     )
     return [dict(row._mapping) for row in result]
