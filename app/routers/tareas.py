@@ -18,7 +18,6 @@ from app.models import Usuarios
 from app.routers.bigQuery.dashboard import ( sync_brokers, sync_categorias, sync_cotizacion, sync_estatus_tramites, sync_financieras,
                                              sync_productos, sync_sedes, sync_subCategorias, sync_usuarios)
 from utils.email import enviar_correo_informativo
-from google.cloud import bigquery
 
 router = APIRouter(tags=["Tareas"])
 
