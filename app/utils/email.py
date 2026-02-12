@@ -135,7 +135,7 @@ def enviar_correo_dispersion(cotizacion, mensaje_html, correos):
             "name": "Konnect"
         },
         "to": [{"email": e} for e in correos],
-        "subject": f"Dispersión Cotización {cotizacion.id_cotizacion} - {cotizacion.nombre}",
+        "subject": f"Dispersión Cotización {cotizacion.id_cotizacion} - {cotizacion.nombre} - {cotizacion.producto}",
         "htmlContent": mensaje_html,
         "attachment": [
             {
