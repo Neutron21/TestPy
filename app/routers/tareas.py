@@ -75,6 +75,15 @@ def validar_cron_token(x_cron_token: str = Header(None)):
     if x_cron_token != os.getenv("CRON_SECRET"):
         raise HTTPException(status_code=401, detail="X Token inválido")
 
+def validar_cron_token_bq(x_cron_token: str = Header(None)):
+
+    if not os.getenv("CRON_SECRET_BQ"):
+        raise HTTPException(status_code=500, detail="Error de configuración en el servidor")
+    if not x_cron_token:
+        raise HTTPException(status_code=400, detail="X Token requerido")
+
+    if x_cron_token != os.getenv("CRON_SECRET_BQ"):
+        raise HTTPException(status_code=401, detail="X Token inválido")
 # 🚀 ENDPOINT PRINCIPAL
 @router.delete("/cotizaciones/borrar-pruebas")
 def borrar_pruebas(session: SessionDep, _ = Depends(validar_cron_token)):
@@ -191,13 +200,14 @@ async def cotizaciones_fecha_pago_vencida(session: SessionDep):
     }
 
 
-@router.get("/dashboard")
-async def sync_all(session: SessionDep, background_tasks: BackgroundTasks):
+@router.post("/dashboard")
+async def sync_all(session: SessionDep, background_tasks: BackgroundTasks, _ = Depends(validar_cron_token_bq)):
     
     background_tasks.add_task(syncAllDashboard, session)
     return {
         "Estatus": "Sincronizaicon iniciada"
     }
+
 def syncAllDashboard(session):
     results = {}
 
