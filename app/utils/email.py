@@ -49,6 +49,9 @@ def enviar_correo(request: ReqMail, mensaje_html: str, correos: list[str]):
             "email": "web.app.no.reply@konnect.mx",
             "name": "Konnect"
         },
+        "replyTo": {
+            "email": request.emailUser
+        },
         "to": [{"email": e} for e in destinatario],
         "cc": [{"email": e} for e in correos],
         "subject": subject,
@@ -86,6 +89,7 @@ def notificacion_if(cliente: str, mensaje_html: str, correos: list[str]):
             "email": "web.app.no.reply@konnect.mx",
             "name": "Konnect"
         },
+    
         "to": [{"email": e} for e in correos],
         "subject": f"La IF comento sobre el cliente {cliente}",
         "htmlContent": mensaje_html,
@@ -131,7 +135,7 @@ def enviar_correo_dispersion(cotizacion, mensaje_html, correos):
             "name": "Konnect"
         },
         "to": [{"email": e} for e in correos],
-        "subject": f"Dispersión Cotización {cotizacion.id_cotizacion} - {cotizacion.nombre}",
+        "subject": f"Dispersión Cotización {cotizacion.id_cotizacion} - {cotizacion.nombre} - {cotizacion.producto}",
         "htmlContent": mensaje_html,
         "attachment": [
             {

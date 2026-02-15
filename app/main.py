@@ -13,7 +13,7 @@ from firebase_admin import auth, credentials
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import procesos 
 from app.utils.logger_config import logger
-from app.routers import sedes
+
 from fastapi.staticfiles import StaticFiles
 from app.routers import productos_desc
 
@@ -22,7 +22,8 @@ from app.routers import productos_desc
 from app.db import create_all_tables
 from .routers import ( checklist, membresias, tareas, utms, documentos,viabilidad, 
     financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, 
-    send_mail, uploadFiles, utils, brokers, procesos,sedes)
+    send_mail, uploadFiles, utils, brokers, procesos, sedes)
+
 from dotenv import load_dotenv
 
 
@@ -91,7 +92,6 @@ app.include_router(utils.router)
 app.include_router(utms.router)
 app.include_router(viabilidad.router)
 app.include_router(sedes.router)
-# app.include_router(subCategorias.router)
 app.include_router(tareas.router)
 app.include_router(brokers.router)
 app.include_router(productos_desc.router)

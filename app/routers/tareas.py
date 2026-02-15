@@ -11,11 +11,12 @@ from datetime import date
 from fastapi import APIRouter
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import Cotizacion
-
+from app.models import Correos, Cotizacion
 
 from app.db import SessionDep
 from app.models import Usuarios
+from app.routers.bigQuery.dashboard import ( sync_brokers, sync_categorias, sync_cotizacion, sync_estatus_tramites, sync_financieras,
+                                             sync_productos, sync_sedes, sync_subCategorias, sync_usuarios)
 from utils.email import enviar_correo_informativo
 
 router = APIRouter(tags=["Tareas"])
@@ -74,6 +75,15 @@ def validar_cron_token(x_cron_token: str = Header(None)):
     if x_cron_token != os.getenv("CRON_SECRET"):
         raise HTTPException(status_code=401, detail="X Token inválido")
 
+def validar_cron_token_bq(x_cron_token: str = Header(None)):
+
+    if not os.getenv("CRON_SECRET_BQ"):
+        raise HTTPException(status_code=500, detail="Error de configuración en el servidor")
+    if not x_cron_token:
+        raise HTTPException(status_code=400, detail="X Token requerido")
+
+    if x_cron_token != os.getenv("CRON_SECRET_BQ"):
+        raise HTTPException(status_code=401, detail="X Token inválido")
 # 🚀 ENDPOINT PRINCIPAL
 @router.delete("/cotizaciones/borrar-pruebas")
 def borrar_pruebas(session: SessionDep, _ = Depends(validar_cron_token)):
@@ -137,6 +147,12 @@ async def enviar_correo_recordatorio(session: SessionDep, tipo: Optional[int],ba
    
     return {"mensaje": "Proceso de envío iniciado"}
 
+from datetime import date
+
+from datetime import date
+
+from datetime import date
+
 @router.get("/cotizacion/utils/fecha-pago-vencida")
 async def cotizaciones_fecha_pago_vencida(session: SessionDep):
     hoy = date.today()
@@ -145,22 +161,67 @@ async def cotizaciones_fecha_pago_vencida(session: SessionDep):
         select(
             Cotizacion.id_cotizacion,
             Cotizacion.fecha_pago,
-            Cotizacion.estatus
-        ).where(
+            Cotizacion.id_financiera,
+            Cotizacion.producto,
+            Cotizacion.monto,
+            Correos.correo
+        )
+        .join(
+            Correos,
+            Correos.id_financiera == Cotizacion.id_financiera
+        )
+        .where(
             Cotizacion.estatus == 11,
             Cotizacion.fecha_pago.is_not(None),
             Cotizacion.fecha_pago <= hoy
         )
     ).all()
 
-    return {
-        "total": len(rows),
-        "cotizaciones": [
-            {
+    cotizaciones = {}
+
+    for r in rows:
+        if r.id_cotizacion not in cotizaciones:
+            cotizaciones[r.id_cotizacion] = {
                 "id_cotizacion": r.id_cotizacion,
                 "fecha_pago": r.fecha_pago,
+                "id_financiera": r.id_financiera,
+                "producto": r.producto,
+                "monto": r.monto,
+                "correos": []
             }
-            for r in rows
-        ]
+
+        # evitar correos duplicados
+        if r.correo not in cotizaciones[r.id_cotizacion]["correos"]:
+            cotizaciones[r.id_cotizacion]["correos"].append(r.correo)
+
+    return {
+        "total": len(cotizaciones),
+        "cotizaciones": list(cotizaciones.values())
     }
 
+
+@router.post("/dashboard")
+async def sync_all(session: SessionDep, background_tasks: BackgroundTasks, _ = Depends(validar_cron_token_bq)):
+    
+    background_tasks.add_task(syncAllDashboard, session)
+    return {
+        "Estatus": "Sincronizaicon iniciada"
+    }
+
+def syncAllDashboard(session):
+    results = {}
+
+    results["brokers"] = sync_brokers(session)
+    results["cotizacion"] = sync_cotizacion(session)
+    results["categorias"] = sync_categorias(session)
+    results["estatus_tramites"] = sync_estatus_tramites(session)
+    results["financieras"] = sync_financieras(session)
+    results["productos"] = sync_productos(session)
+    results["sedes"] = sync_sedes(session)
+    results["subCategorias"] = sync_subCategorias(session)
+    results["usuarios"] = sync_usuarios(session)
+    print(results)
+    return {
+        "status": "ok",
+        "synced": results
+    }
