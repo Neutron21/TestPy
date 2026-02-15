@@ -2,8 +2,8 @@ from itertools import product
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import Tp_producto_checklist, Productos, ProductosDTO, ProductosTipoPersonaDTO
-from sqlmodel import select
+from app.models import ProductoParametros, Tp_producto_checklist, Productos, ProductosDTO, ProductosTipoPersonaDTO
+
 
 
 router = APIRouter(tags=["Productos"])
@@ -99,5 +99,3 @@ def get_producto_nombre(producto_id: int, session: SessionDep):
         )
 
     return {"nombre": nombre}
-
-

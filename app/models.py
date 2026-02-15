@@ -370,6 +370,30 @@ class utils(BaseModel):
     numeros: List[int]
 
 
+class ProductoParametros(SQLModel, table=True):
+    __tablename__ = "producto_desc"
+
+    id: int | None = Field(default=None, primary_key=True)
+    id_producto: int = Field(foreign_key="productos.id")
+
+    param: str
+    value: str
+    orden: int
+
+
+class ParametroResponse(BaseModel):
+    param: str
+    value: str
+    orden: int
+
+
+class ProductoResponse(BaseModel):
+    id: int
+    nombre: str
+    parametros: list[ParametroResponse]
+
+
+
 class ProductosTipoPersonaDTO(ProductosDTO):
     id: int
     tipo_persona: List[str] = Field(default_factory=list)
