@@ -11,7 +11,7 @@ from datetime import date
 from fastapi import APIRouter
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import Correos, Cotizacion
+from app.models import Correos, Cotizacion, Productos
 
 from app.db import SessionDep
 from app.models import Usuarios
@@ -162,9 +162,14 @@ async def cotizaciones_fecha_pago_vencida(session: SessionDep):
             Cotizacion.id_cotizacion,
             Cotizacion.fecha_pago,
             Cotizacion.id_financiera,
+            Productos.nombre.label("producto"),
             Cotizacion.producto,
             Cotizacion.monto,
             Correos.correo
+        )
+        .join(
+            Productos,
+            Productos.id == Cotizacion.producto
         )
         .join(
             Correos,
