@@ -386,13 +386,16 @@ class ParametroResponse(BaseModel):
     value: str
     orden: int
 
+    class Config:
+        from_attributes = True
 
 class ProductoResponse(BaseModel):
     id: int
     nombre: str
     parametros: list[ParametroResponse]
 
-
+    class Config:
+        from_attributes = True
 
 class ProductosTipoPersonaDTO(ProductosDTO):
     id: int
