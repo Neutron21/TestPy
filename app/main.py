@@ -15,8 +15,6 @@ from app.routers import procesos
 from app.utils.logger_config import logger
 
 from fastapi.staticfiles import StaticFiles
-from app.routers import productos_desc
-
 
 
 from app.db import create_all_tables
@@ -94,7 +92,6 @@ app.include_router(viabilidad.router)
 app.include_router(sedes.router)
 app.include_router(tareas.router)
 app.include_router(brokers.router)
-app.include_router(productos_desc.router)
 
 
 

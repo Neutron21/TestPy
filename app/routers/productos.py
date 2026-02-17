@@ -2,7 +2,7 @@ from itertools import product
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import ProductoParametros, Tp_producto_checklist, Productos, ProductosDTO, ProductosTipoPersonaDTO
+from app.models import ProductoParametros, ProductoResponse, Tp_producto_checklist, Productos, ProductosDTO, ProductosTipoPersonaDTO
 
 
 
@@ -35,6 +35,26 @@ async def get_producto_by_financiera(financiera_id: int, session: SessionDep):
     productos_db = session.exec(query).all()
     print(productos_db) 
     return productos_db
+
+@router.get("/producto_detalle/{id_producto}", response_model=ProductoResponse)
+async def get_producto(id_producto: int, session: SessionDep):
+
+    producto = session.get(Productos, id_producto)
+    if not producto:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+    parametros = session.exec(
+        select(ProductoParametros)
+        .where(ProductoParametros.id_producto == id_producto)
+        .order_by(ProductoParametros.orden)
+    ).all()
+
+    return ProductoResponse(
+        id=producto.id,
+        nombre=producto.nombre,
+        parametros=parametros 
+    )
+
 
 @router.get("/productos/tipoPersona/{financiera_id}", response_model=list[ProductosTipoPersonaDTO])
 async def get_producto_by_financiera(financiera_id: int, session: SessionDep):
@@ -86,16 +106,4 @@ async def obtener_plazos(producto_id: int, session: SessionDep):
    
 
     return {"plazos": raw_plazos}
-@router.get("/producto/{producto_id}/nombre")
-def get_producto_nombre(producto_id: int, session: SessionDep):
 
-    stmt = select(Productos.nombre).where(Productos.id == producto_id)
-    nombre = session.exec(stmt).first()
-
-    if not nombre:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Producto no encontrado"
-        )
-
-    return {"nombre": nombre}
