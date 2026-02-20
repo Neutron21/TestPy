@@ -288,6 +288,7 @@ class Utms(SQLModel, table=True):
     tipo_persona: Optional[str] = Field(default=None)
     url: str
 
+
 # MODELOS DE EJEMPLO
 class StatusEnum(str, Enum):
     ACTIVE = "active"
