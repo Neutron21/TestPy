@@ -5,7 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Body, Request
 from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios, Productos
 from sqlmodel import select, text
 from app.db import SessionDep
-from utils.email import enviar_correo, notificacion_if, enviar_correo_dispersion
+from utils.email import enviar_correo, enviar_correo_informativo, enviar_correo_simple, notificacion_if, enviar_correo_dispersion
 from app.utils.logger_config import logger
 from jinja2 import Environment, FileSystemLoader
 from app.models import Productos
@@ -169,3 +169,55 @@ def mail_dispersion(data: dict, session: SessionDep):
     enviar_correo_dispersion(cotizacion, html_content, correos)
 
     return {"ok": True, "message": "Correo de dispersión enviado correctamente"}
+
+@router.post("/correo-nuevo-usuario/{user_id}")
+def enviar_correo_nuevo_usuario(
+    user_id: int,
+    session: SessionDep,
+    background_tasks: BackgroundTasks
+):
+
+    usuario = session.get(Usuarios, user_id)
+
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # 🔥 SOLO enviar si NO tiene financiera
+    if usuario.id_financiera is not None:
+        return {
+            "ok": True,
+            "mensaje": "Tiene financiera asignada, no se envía correo"
+        }
+
+    broker = session.get(Brokers, usuario.id_broker) if usuario.id_broker else None
+    sede = session.get(Sedes, usuario.id_sede) if usuario.id_sede else None
+
+    lista_correos = [
+        "victor.hugo.silva01@gmail.com"
+    ]
+
+    template = env.get_template("usuario.html")
+
+    html_content = template.render(
+        nombre=usuario.nombre,
+        email=usuario.email,
+        telefono=usuario.celular,
+        broker=broker.nombre if broker else "N/A",
+        sede=sede.nombre if sede else "N/A",
+        financiera="Sin financiera"
+    )
+
+    print("📩 Enviando correo para usuario:", usuario.id)
+
+    background_tasks.add_task(
+        enviar_correo_simple,
+        html_content,
+        lista_correos,
+        f"🆕 Nuevo Usuario - {usuario.nombre}"
+    )
+
+    return {
+        "ok": True,
+        "mensaje": "Correo enviado correctamente"
+    }
+    

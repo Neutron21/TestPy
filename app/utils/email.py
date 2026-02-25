@@ -205,3 +205,45 @@ def enviar_correo_informativo(html_content: str, correos: list[str], subject: st
 
     print(f"{resultados}")       
     return resultados
+
+def enviar_correo_simple(html_content: str, correos: list[str], subject: str):
+
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+
+    resultados = []
+
+    data_base = {
+        "sender": {
+            "email": "web.app.no.reply@konnect.mx",
+            "name": "Konnect"
+        },
+        "subject": subject,
+        "htmlContent": html_content
+    }
+
+    for mail in correos:
+        try:
+            data = data_base.copy()
+            data["to"] = [{"email": mail}]
+
+            res = requests.post(BREVO_URL, json=data, headers=headers, timeout=(3,10))
+
+            resultados.append({
+                "email": mail,
+                "status": res.status_code,
+                "response": res.text
+            })
+
+        except Exception as e:
+            resultados.append({
+                "email": mail,
+                "ok": False,
+                "error": str(e)
+            })
+
+    print(resultados)
+    return resultados

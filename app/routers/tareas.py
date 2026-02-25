@@ -11,7 +11,7 @@ from datetime import date
 from fastapi import APIRouter
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import Correos, Cotizacion, Productos
+from app.models import Correos, CorreosPagos, Cotizacion, Productos
 
 from app.db import SessionDep
 from app.models import Usuarios
@@ -163,17 +163,16 @@ async def cotizaciones_fecha_pago_vencida(session: SessionDep):
             Cotizacion.fecha_pago,
             Cotizacion.id_financiera,
             Productos.nombre.label("producto"),
-            Cotizacion.producto,
             Cotizacion.monto,
-            Correos.correo
+            CorreosPagos.correo
         )
         .join(
             Productos,
             Productos.id == Cotizacion.producto
         )
-        .join(
-            Correos,
-            Correos.id_financiera == Cotizacion.id_financiera
+        .outerjoin(   # 👈 ESTO ES LA CLAVE
+            CorreosPagos,
+            CorreosPagos.id_financiera == Cotizacion.id_financiera
         )
         .where(
             Cotizacion.estatus == 11,
@@ -195,9 +194,10 @@ async def cotizaciones_fecha_pago_vencida(session: SessionDep):
                 "correos": []
             }
 
-        # evitar correos duplicados
-        if r.correo not in cotizaciones[r.id_cotizacion]["correos"]:
-            cotizaciones[r.id_cotizacion]["correos"].append(r.correo)
+        # Solo agregar si existe correo (porque puede venir None)
+        if r.correo:
+            if r.correo not in cotizaciones[r.id_cotizacion]["correos"]:
+                cotizaciones[r.id_cotizacion]["correos"].append(r.correo)
 
     return {
         "total": len(cotizaciones),

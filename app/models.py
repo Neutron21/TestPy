@@ -181,6 +181,16 @@ class FechaPagoDTO(BaseModel):
     id_cotizacion: int
     fecha_pago: date
 
+class CorreosPagos(SQLModel, table=True):
+    __tablename__ = "correos_pagos"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    id_financiera: int = Field(foreign_key="financieras.id", index=True)
+
+    nombre_contacto: str
+    telefono: int
+    correo: str    
+
 
 class Comentarios(ComentariosDTO, table=True):
     pass
