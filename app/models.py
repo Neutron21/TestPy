@@ -298,6 +298,7 @@ class Utms(SQLModel, table=True):
     tipo_persona: Optional[str] = Field(default=None)
     url: str
 
+
 # MODELOS DE EJEMPLO
 class StatusEnum(str, Enum):
     ACTIVE = "active"
@@ -379,6 +380,33 @@ class PaginatedTransactionsResponse(SQLModel):
 class utils(BaseModel):
     numeros: List[int]
 
+
+class ProductoParametros(SQLModel, table=True):
+    __tablename__ = "producto_desc"
+
+    id: int | None = Field(default=None, primary_key=True)
+    id_producto: int = Field(foreign_key="productos.id")
+
+    param: str
+    value: str
+    orden: int
+
+
+class ParametroResponse(BaseModel):
+    param: str
+    value: str
+    orden: int
+
+    class Config:
+        from_attributes = True
+
+class ProductoResponse(BaseModel):
+    id: int
+    nombre: str
+    parametros: list[ParametroResponse]
+
+    class Config:
+        from_attributes = True
 
 class ProductosTipoPersonaDTO(ProductosDTO):
     id: int

@@ -7,6 +7,8 @@ practica de fastapi con python
     'source desarollo/bin/activate'
     'deactivate' para desactivar el venv
 
+    .\ivan-venv\Scripts\Activate
+
 
 # Una vez activado el env se procede a correr el proyecto
 # El cual se encuntra en la carpeta 'project', con el siguiente comando:

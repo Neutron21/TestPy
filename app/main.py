@@ -16,13 +16,12 @@ from app.utils.logger_config import logger
 
 from fastapi.staticfiles import StaticFiles
 
-
-from app.db import create_all_tables
 from .routers import ( checklist, membresias, tareas, utms, documentos,viabilidad, 
     financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, 
     send_mail, uploadFiles, utils, brokers, procesos, sedes)
-
+from .routers.pagos import (pagos)
 from dotenv import load_dotenv
+
 
 
 load_dotenv()
@@ -79,6 +78,7 @@ app.include_router(estatus_tramites.router)
 app.include_router(financieras.router)
 app.include_router(formatos.router)
 app.include_router(membresias.router)
+app.include_router(pagos.router)
 app.include_router(producto_formato.router)
 app.include_router(productos.router)
 app.include_router(procesos.router)
@@ -90,6 +90,7 @@ app.include_router(utms.router)
 app.include_router(viabilidad.router)
 app.include_router(sedes.router)
 app.include_router(tareas.router)
+app.include_router(brokers.router)
 
 
 
