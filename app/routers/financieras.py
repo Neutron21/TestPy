@@ -18,6 +18,12 @@ async def list_financieras(session: SessionDep):
     financieras = session.exec(query).all()
     return financieras
 
+@router.get("/financieras/activas", response_model=list[Financieras])
+async def list_financieras_activas(session: SessionDep):
+    query = select(Financieras).where(Financieras.fase.in_([1,2])).order_by(Financieras.fase, Financieras.nombre)
+    financieras = session.exec(query).all()
+    return financieras
+
 @router.get("/financieras/tipo/{tipo}", response_model=List[Financieras])
 async def get_financieras_by_tipo(tipo: str, session: SessionDep):
     query = select(Financieras).where(Financieras.tipo == tipo)
