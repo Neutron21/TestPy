@@ -182,7 +182,7 @@ def enviar_correo_nuevo_usuario(
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    # 🔥 SOLO enviar si NO tiene financiera
+    # 🔥 SOLO enviar si es "Sin financiera"
     if usuario.id_financiera is not None:
         return {
             "ok": True,
@@ -192,9 +192,20 @@ def enviar_correo_nuevo_usuario(
     broker = session.get(Brokers, usuario.id_broker) if usuario.id_broker else None
     sede = session.get(Sedes, usuario.id_sede) if usuario.id_sede else None
 
-    lista_correos = [
-        "victor.hugo.silva01@gmail.com"
-    ]
+    # 🔥 Obtener correos de financieras 32, 11, 12 y 37
+    financieras_destino = [32, 11, 12, 37]
+
+    correos_financieras = session.query(Usuarios.email).filter(
+        Usuarios.id_financiera.in_(financieras_destino)
+    ).all()
+
+    lista_correos = [correo[0] for correo in correos_financieras]
+
+    if not lista_correos:
+        return {
+            "ok": False,
+            "mensaje": "No se encontraron correos para las financieras destino"
+        }
 
     template = env.get_template("usuario.html")
 
