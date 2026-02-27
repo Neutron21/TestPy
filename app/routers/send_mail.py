@@ -194,6 +194,7 @@ def enviar_correo_nuevo_usuario(
 
     # 🔥 Obtener correos de financieras 32, 11, 12 y 37
     financieras_destino = [32, 11, 12, 37]
+    lista_correos.append("victor.hugo.silva01@gmail.com","ara.castro@konnect.mx","kfigueroa@konnect.mx")
 
     correos_financieras = session.query(Usuarios.email).filter(
         Usuarios.id_financiera.in_(financieras_destino)
