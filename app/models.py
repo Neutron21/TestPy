@@ -27,6 +27,10 @@ class FinancierasDTO(SQLModel):
     tipo: str = Field(min_length=1, max_length=1)
     fase: int = Field(default=None)
     liga_carpeta: str = Field(default=None)
+    url: str = Field (default=None)
+    img: str = Field (default=None)
+
+
 
 class Financieras(FinancierasDTO,table=True):
         pass
