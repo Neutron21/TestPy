@@ -193,15 +193,20 @@ def enviar_correo_nuevo_usuario(
     sede = session.get(Sedes, usuario.id_sede) if usuario.id_sede else None
 
     # 🔥 Obtener correos de financieras 32, 11, 12 y 37
-    financieras_destino = [32, 11, 12, 37]
+    financieras_utm_custom = [32, 11, 12, 37]
 
     correos_financieras = session.query(Usuarios.email).filter(
-        Usuarios.id_financiera.in_(financieras_destino)
+        Usuarios.id_financiera.in_(financieras_utm_custom)
     ).all()
 
     correos_db = [correo[0] for correo in correos_financieras]
-
-    correos_fijos = [
+    
+    if not correos_db:
+        return {
+            "ok": False,
+            "mensaje": "No se encontraron correos para enviar"
+        }
+    correos_konnect = [
         "victor.hugo.silva01@gmail.com",
         "ara.castro@konnect.mx",
         "kfigueroa@konnect.mx"
@@ -210,15 +215,9 @@ def enviar_correo_nuevo_usuario(
     # 🔥 Lista final sin duplicados, sin None y sin vacíos
     lista_correos = list({
         correo.strip()
-        for correo in (correos_db + correos_fijos)
+        for correo in (correos_db + correos_konnect)
         if correo and correo.strip()
     })
-
-    if not lista_correos:
-        return {
-            "ok": False,
-            "mensaje": "No se encontraron correos para enviar"
-        }
 
     template = env.get_template("usuario.html")
 
