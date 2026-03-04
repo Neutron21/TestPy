@@ -194,18 +194,30 @@ def enviar_correo_nuevo_usuario(
 
     # 🔥 Obtener correos de financieras 32, 11, 12 y 37
     financieras_destino = [32, 11, 12, 37]
-    lista_correos.append("victor.hugo.silva01@gmail.com","ara.castro@konnect.mx","kfigueroa@konnect.mx")
 
     correos_financieras = session.query(Usuarios.email).filter(
         Usuarios.id_financiera.in_(financieras_destino)
     ).all()
 
-    lista_correos = [correo[0] for correo in correos_financieras]
+    correos_db = [correo[0] for correo in correos_financieras]
+
+    correos_fijos = [
+        "victor.hugo.silva01@gmail.com",
+        "ara.castro@konnect.mx",
+        "kfigueroa@konnect.mx"
+    ]
+
+    # 🔥 Lista final sin duplicados, sin None y sin vacíos
+    lista_correos = list({
+        correo.strip()
+        for correo in (correos_db + correos_fijos)
+        if correo and correo.strip()
+    })
 
     if not lista_correos:
         return {
             "ok": False,
-            "mensaje": "No se encontraron correos para las financieras destino"
+            "mensaje": "No se encontraron correos para enviar"
         }
 
     template = env.get_template("usuario.html")
@@ -220,6 +232,7 @@ def enviar_correo_nuevo_usuario(
     )
 
     print("📩 Enviando correo para usuario:", usuario.id)
+    print("📨 Destinatarios:", lista_correos)
 
     background_tasks.add_task(
         enviar_correo_simple,
@@ -230,6 +243,7 @@ def enviar_correo_nuevo_usuario(
 
     return {
         "ok": True,
-        "mensaje": "Correo enviado correctamente"
+        "mensaje": "Correo enviado correctamente",
+        "destinatarios": lista_correos
     }
     
