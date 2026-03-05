@@ -94,6 +94,7 @@ class Usuarios(SQLModel, table=True):
     nivel: Optional[int] = None
     id_financiera: Optional[int] = Field(default=None, foreign_key="financieras.id")
     id_superior: Optional[int] = Field(default=None, foreign_key="usuarios.id")
+    created_at: Optional[datetime] = Field(default=None)
 
 
 class UsuarioSimple(BaseModel):
@@ -112,6 +113,7 @@ class UsuarioResponse(SQLModel):
     nivel: Optional[int]
     id_financiera: Optional[int]
     id_superior: Optional[int]
+    created_at: Optional[datetime]
 
 
 
