@@ -9,7 +9,7 @@ from sqlmodel import update
 from datetime import date
 from fastapi import APIRouter
 from sqlmodel import select
-from app.db import SessionDep
+
 from app.models import Cotizacion
 
 

@@ -1,21 +1,49 @@
 from fastapi import HTTPException
+from sqlmodel import select
+
+from app.routers.pagos.mng_pagos import porCreditosColocados, porMontoProducto
+from app.models import Cotizacion, Pagos, Usuarios
+from app.db import SessionDep
 
 
+CALCULOS = {
+    1: porMontoProducto,
+    10: porCreditosColocados,
+    32: porMontoProducto,
+    34: porMontoProducto,
+}
+no_product = [10]
+def manager_func(id_cotizacion: int, session: SessionDep):
 
+    print(f'Recibiendo cotizacion: {id_cotizacion}')
 
-# FINANCIERAS = {
-#     1: konfio.calcular_pago,
-#     10: finsus.calcular_pago,
-#     32: clara.calcular_pago,
-#     34: fluxo.calcular_pago,
-# }
+    query_cot = select(Cotizacion).where(Cotizacion.id_cotizacion == id_cotizacion)
+    cot_result = session.exec(query_cot).first()
+    print(f"Cotizacion: {cot_result}")
 
-def manager_func(id_financiera: int):
-
-    print(f'Recibiendo idFinanciera: {id_financiera}')
+    if not cot_result:
+            raise HTTPException(status_code=404, detail="Cotización no encontrada")
     
-    # funcion = FINANCIERAS.get(id_financiera)
+    id_financiera = cot_result.id_financiera
 
-    # if not funcion:
-    #     raise HTTPException(status_code=406, detail="Institución no soportada")
-    # return funcion()
+    if id_financiera in no_product:
+        query_pagos = select(Pagos).where(Pagos.id_financiera == id_financiera)
+    else :
+        query_pagos = select(Pagos).where(
+            (Pagos.id_financiera == id_financiera) & 
+            (Pagos.id_producto == cot_result.producto))
+        
+    pagos_result = session.exec(query_pagos).all()
+
+    print(f"Pagos: {pagos_result}")
+    
+    query_user = select(Usuarios).where(Usuarios.id == cot_result.id_user)
+    user_result = session.exec(query_user).first()
+    membresia = user_result.membresia
+
+    print(f"User: {user_result}")
+    funcion = CALCULOS.get(id_financiera)
+
+    if not funcion:
+        raise HTTPException(status_code=406, detail="Institución no soportada")
+    return funcion(id_financiera, cot_result.producto, membresia, pagos_result, cot_result.monto)
