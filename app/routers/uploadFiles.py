@@ -138,3 +138,28 @@ def descarga_formato(
         )
     else:
         raise HTTPException(status_code=404, detail="El archivo no existe.")
+    
+@router.get("/getFiles2/{idCotizacion}", response_model=List[str])
+async def get_lista_docs2(idCotizacion: int):
+    try:
+        id_b64 = base64.b64encode(str(idCotizacion).encode("utf-8")).decode("utf-8")
+
+        carpeta_adjuntos = os.path.join(main_path, id_b64)
+        print(carpeta_adjuntos)
+
+        if not os.path.isdir(carpeta_adjuntos):
+            return []  # Carpeta no existe, devolver array vacío
+
+        archivos = os.listdir(carpeta_adjuntos)
+
+        extensiones_validas = re.compile(r'\.(pdf|rar|zip|jpg|png|doc|docx|xls|xlsx|ppt|pptx)$', re.IGNORECASE)
+
+        adjuntos_validos = [
+            archivo for archivo in archivos
+            if os.path.isfile(os.path.join(carpeta_adjuntos, archivo)) and extensiones_validas.search(archivo)
+        ]
+
+        return adjuntos_validos
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Ocurrió un error: {str(e)}")   
