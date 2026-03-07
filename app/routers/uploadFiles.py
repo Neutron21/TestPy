@@ -140,7 +140,7 @@ def descarga_formato(
         raise HTTPException(status_code=404, detail="El archivo no existe.")
     
 @router.get("/getFilesExp/{idCotizacion}", response_model=List[str])
-async def get_files_cotizacion(idCotizacion: int):
+async def get_files_cotizacion(idCotizacion: str):
     try:
         id_b64 = base64.b64encode(str(idCotizacion).encode("utf-8")).decode("utf-8")
 
