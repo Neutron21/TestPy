@@ -88,8 +88,8 @@ def descargar_zip(numCotizacion: str = Query(..., description="Número de cotiza
         # Obtener archivos válidos
         archivos_validos = []
         for archivo in os.listdir(carpeta):
-            ruta = os.path.join(carpeta, archivo)
-            if os.path.isfile(ruta) and archivo.lower().endswith(('.pdf', '.rar', '.zip', '.jpg', '.png', 'docx','xlsx')):
+            ruta = os.path.join(carpeta, archivo)               
+            if os.path.isfile(ruta) and archivo.lower().endswith(('pdf', 'jpg', 'jpeg', 'png', 'zip', 'rar','docx','xlsx')):
                 archivos_validos.append(ruta)
 
         if not archivos_validos:
@@ -139,27 +139,46 @@ def descarga_formato(
     else:
         raise HTTPException(status_code=404, detail="El archivo no existe.")
     
-@router.get("/getFilesExp/{idCotizacion}", response_model=List[str])
-async def get_files_cotizacion(idCotizacion: str):
+@router.get("/getFilesExp/{numCotizacion}")
+async def get_files_cotizacion(numCotizacion: str):
     try:
-        id_b64 = base64.b64encode(str(idCotizacion).encode("utf-8")).decode("utf-8")
 
-        carpeta_adjuntos = os.path.join(main_path, id_b64)
-        print(carpeta_adjuntos)
+        cotizacion_decode = base64.b64decode(numCotizacion.encode()).decode()
+        carpeta = os.path.join(main_path, numCotizacion)
 
-        if not os.path.isdir(carpeta_adjuntos):
-            return []  # Carpeta no existe, devolver array vacío
+        if not os.path.isdir(carpeta):
+            raise HTTPException(status_code=404, detail="No se encontró la carpeta de la cotización.")
 
-        archivos = os.listdir(carpeta_adjuntos)
+        # Obtener archivos válidos
+        archivos_validos = []
+        for archivo in os.listdir(carpeta):
+            ruta = os.path.join(carpeta, archivo)               
+            if os.path.isfile(ruta) and archivo.lower().endswith(('pdf', 'jpg', 'jpeg', 'png', 'zip', 'rar','docx','xlsx')):
+                archivos_validos.append(ruta)
 
-        extensiones_validas = re.compile(r'\.(pdf|rar|zip|jpg|png|doc|docx|xls|xlsx|ppt|pptx)$', re.IGNORECASE)
+        if not archivos_validos:
+            raise HTTPException(status_code=404, detail="No hay archivos válidos para descargar.")
 
-        adjuntos_validos = [
-            archivo for archivo in archivos
-            if os.path.isfile(os.path.join(carpeta_adjuntos, archivo)) and extensiones_validas.search(archivo)
-        ]
+        # Crear archivo ZIP temporal
+        temp_dir = tempfile.gettempdir()
+        nombre_zip = f"cotizacion_{cotizacion_decode}.zip"
+        ruta_zip = os.path.join(temp_dir, nombre_zip)
 
-        return adjuntos_validos
+        with zipfile.ZipFile(ruta_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for ruta_archivo in archivos_validos:
+                zipf.write(ruta_archivo, arcname=os.path.basename(ruta_archivo))
+
+        # Preparar la respuesta con StreamingResponse
+        def iterfile():
+            with open(ruta_zip, mode="rb") as f:
+                yield from f
+            os.remove(ruta_zip)  # Eliminar archivo después de servir
+
+        return StreamingResponse(iterfile(), media_type="application/zip", headers={
+            "Content-Disposition": f'attachment; filename="{nombre_zip}"'
+        })
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Ocurrió un error: {str(e)}")   
+        logger.error(f"numCotizacion: {numCotizacion}")
+        logger.error(f"❌ Error al descargar zip: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
