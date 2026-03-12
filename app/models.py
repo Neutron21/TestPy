@@ -3,7 +3,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import List, Optional
 from zoneinfo import ZoneInfo
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, condecimal
 from sqlmodel import DECIMAL, SQLModel, Field
 from app.db import engine
 from pydantic import ConfigDict
@@ -11,7 +11,7 @@ from typing import List
 from sqlmodel import SQLModel, Field
 from typing import Optional
 
-
+Decimal_7_5 = condecimal(max_digits=7, decimal_places=5)
 # Una buena práctica en arquitecturas limpias es usar ORM para la capa de acceso a datos y DTO
 # para la comunicación con la API, evitando exponer modelos de la base de datos directamente. 🚀
 def mexico_timestamp():
@@ -353,6 +353,8 @@ class Pagos(SQLModel, table=True):
     regla:  str
 
     id_producto: Optional[int] = Field(foreign_key="productos.id")
+    m_max: Optional[int]
+    m_min: Optional[int]
 
     pago_a_konnect: Decimal = Field (DECIMAL(7, 5), nullable=False)
 
@@ -369,3 +371,17 @@ class Pagos(SQLModel, table=True):
     ganancia_platino: Decimal = Field (DECIMAL(7, 5), nullable=False)
     ganancia_diamante: Decimal = Field (DECIMAL(7, 5), nullable=False)
     ganancia_konnect: Decimal = Field (DECIMAL(7, 5), nullable=False)
+
+class ResponsePagos(BaseModel):
+
+    id_financiera: int
+    financiera: str
+    regla: str
+    id_producto: int
+    producto: str
+    membresia_broker: str
+    nombre_usuario: str
+    monto: Decimal_7_5 # type: ignore
+    pago_a_konnect: Decimal_7_5 # type: ignore
+    ganancia_broker: Decimal_7_5 # type: ignore
+    ganancia_konnect: Decimal_7_5 # type: ignore
