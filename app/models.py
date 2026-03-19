@@ -11,7 +11,7 @@ from typing import List
 from sqlmodel import SQLModel, Field
 from typing import Optional
 
-Decimal_7_5 = condecimal(max_digits=7, decimal_places=5)
+Decimal_7_5 = condecimal(max_digits=15, decimal_places=5)
 # Una buena práctica en arquitecturas limpias es usar ORM para la capa de acceso a datos y DTO
 # para la comunicación con la API, evitando exponer modelos de la base de datos directamente. 🚀
 def mexico_timestamp():
@@ -29,7 +29,6 @@ class FinancierasDTO(SQLModel):
     liga_carpeta: str = Field(default=None)
     url: str = Field (default=None)
     img: str = Field (default=None)
-
 
 
 class Financieras(FinancierasDTO,table=True):
@@ -80,7 +79,6 @@ class UsuarioDTO(BaseModel):
     id_financiera: Optional[int] = None
     id_superior: Optional[int] = None   # ← AHORA SÍ SE MANDA
     
-
 
 class Usuarios(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -373,7 +371,7 @@ class Pagos(SQLModel, table=True):
     ganancia_konnect: Decimal = Field (DECIMAL(7, 5), nullable=False)
 
 class ResponsePagos(BaseModel):
-
+    id_cotizacion: int
     id_financiera: int
     financiera: str
     regla: str
@@ -381,7 +379,7 @@ class ResponsePagos(BaseModel):
     producto: str
     membresia_broker: str
     nombre_usuario: str
-    monto: Decimal_7_5 # type: ignore
+    monto_credito: Decimal_7_5 # type: ignore
     pago_a_konnect: Decimal_7_5 # type: ignore
     ganancia_broker: Decimal_7_5 # type: ignore
     ganancia_konnect: Decimal_7_5 # type: ignore
