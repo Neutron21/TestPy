@@ -5,7 +5,7 @@ from app.routers.pagos.model.baseFinanciera import FINANCIERAS, MEMBRESIAS, Base
 from app.models import Cotizacion, Pagos, Productos, ResponsePagos, Usuarios
 
 
-class KonfioCalculator(BaseFinanciera):
+class FluxoCalculator(BaseFinanciera):
 
     def bussinesRules(self):
 
@@ -19,7 +19,7 @@ class KonfioCalculator(BaseFinanciera):
             (Pagos.m_max >= monto)
             )
         self.pagos_result = self.session.exec(query_pagos).first()
-        print(f"Pagos Result: {self.pagos_result}")
+        print(self.pagos_result)
 
         query_user = select(Usuarios).where(Usuarios.id == self.cotizacion.id_user)
         self.user_result = self.session.exec(query_user).first()
@@ -30,20 +30,11 @@ class KonfioCalculator(BaseFinanciera):
 
     def calculate(self):
         self.bussinesRules()
-        print("Calculando por monto colocado")
-        
-        calc_pago_konnect=self.cotizacion.monto * self.pagos_result.pago_a_konnect
+        print("Calculando por monto de producto")
 
-        match self.id_membresia:
-            case 1:
-                comision_broker = self.pagos_result.c_plata * self.cotizacion.monto
-            case 2:
-                comision_broker = self.pagos_result.c_oro * self.cotizacion.monto
-            case 3:
-                comision_broker = self.pagos_result.c_platino * self.cotizacion.monto
-            case 4:
-                comision_broker = self.pagos_result.c_diamante * self.cotizacion.monto
-        gan_konn = calc_pago_konnect - comision_broker
+        calc_pago_konnect=Decimal("100.0")
+        comision_broker=Decimal("200.0")
+        gan_konn=Decimal("400.0")
 
         # aquí va tu query de pagos
         # aquí aplicas tu lógica

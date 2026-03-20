@@ -4,17 +4,17 @@ from app.routers.pagos.model.baseFinanciera import BaseFinanciera, to_decimal_7_
 from app.models import Cotizacion, Pagos, ResponsePagos, Usuarios, Productos
 from app.routers.pagos.model.baseFinanciera import MEMBRESIAS, FINANCIERAS
 
-proceso_pago = 11
+proceso_pago = 9
 
 class FinsusCalculator(BaseFinanciera):
 
     def bussinesRules(self):
 
-        id_user = self.cotizacion.id_user
+        rfc_user = self.cotizacion.rfc
 
         query_creditos = select(func.count()).select_from(Cotizacion).where(
             (Cotizacion.id_financiera == self.cotizacion.id_financiera) &
-            (Cotizacion.id_user == id_user) &
+            (Cotizacion.rfc == rfc_user) &
             (Cotizacion.estatus == proceso_pago)
         )
 
