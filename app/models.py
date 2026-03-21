@@ -95,6 +95,7 @@ class Usuarios(SQLModel, table=True):
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(ZoneInfo("America/Mexico_City"))
     )
+    comisiones: str
 
 class UsuarioSimple(BaseModel):
     id: int

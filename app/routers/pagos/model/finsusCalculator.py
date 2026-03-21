@@ -15,7 +15,8 @@ class FinsusCalculator(BaseFinanciera):
         query_creditos = select(func.count()).select_from(Cotizacion).where(
             (Cotizacion.id_financiera == self.cotizacion.id_financiera) &
             (Cotizacion.rfc == rfc_user) &
-            (Cotizacion.estatus == proceso_pago)
+            (Cotizacion.estatus == proceso_pago) &
+            (Cotizacion.id_cotizacion != self.cotizacion.id_cotizacion)
         )
 
         creditos_ant = self.session.exec(query_creditos).first()
