@@ -9,7 +9,6 @@ class KonfioCalculator(BaseFinanciera):
 
     def bussinesRules(self):
 
-        id_user = self.cotizacion.id_user
         monto = self.cotizacion.monto
 
         query_pagos = select(Pagos).where(
@@ -30,7 +29,7 @@ class KonfioCalculator(BaseFinanciera):
 
     def calculate(self):
         self.bussinesRules()
-        print("Calculando por monto colocado")
+        print(f"Calculando {FINANCIERAS.get(self.cotizacion.id_financiera)} por monto de producto")
         
         calc_pago_konnect=self.cotizacion.monto * self.pagos_result.pago_a_konnect
 

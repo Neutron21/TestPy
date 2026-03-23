@@ -381,6 +381,9 @@ class ResponsePagos(BaseModel):
     membresia_broker: str
     nombre_usuario: str
     monto_credito: Decimal_7_5 # type: ignore
+    # porcentaje_pago_a_konnect: str
     pago_a_konnect: Decimal_7_5 # type: ignore
+    # comision_apertura: Optional[str]
     ganancia_broker: Decimal_7_5 # type: ignore
+    # porcentaje_ganancia_broker: str
     ganancia_konnect: Decimal_7_5 # type: ignore
