@@ -41,7 +41,7 @@ class FluxoCalculator(BaseFinanciera):
             id_cotizacion=self.cotizacion.id_cotizacion,
             id_financiera=self.cotizacion.id_financiera,
             financiera=FINANCIERAS.get(self.cotizacion.id_financiera),
-            regla="self.pagos_result.regla",
+            regla=self.pagos_result.regla,
             id_producto=self.cotizacion.producto,
             producto=self.producto_nombre,
             membresia_broker=MEMBRESIAS.get(self.id_membresia),
