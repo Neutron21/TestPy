@@ -59,7 +59,11 @@ async def create_usuario(usuario_data: UsuarioDTO, session: SessionDep):
         if usuario_dict.get(field) in [0, "0", "", "null", None]:
             usuario_dict[field] = None
 
-    usuario = Usuarios.model_validate(usuario_dict)
+    # 🔥 CAMBIO IMPORTANTE
+    usuario = Usuarios(
+        **usuario_dict,
+        comisiones="2026"
+    )
 
     session.add(usuario)
     session.commit()
