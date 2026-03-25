@@ -9,14 +9,11 @@ class FluxoCalculator(BaseFinanciera):
 
     def bussinesRules(self):
 
-        id_user = self.cotizacion.id_user
         monto = self.cotizacion.monto
 
         query_pagos = select(Pagos).where(
             (Pagos.id_financiera == self.cotizacion.id_financiera) &
-            (Pagos.id_producto == self.cotizacion.producto) &
-            (Pagos.m_min <= monto) &
-            (Pagos.m_max >= monto)
+            (Pagos.id_producto == self.cotizacion.producto)
             )
         self.pagos_result = self.session.exec(query_pagos).first()
         print(self.pagos_result)
@@ -30,9 +27,10 @@ class FluxoCalculator(BaseFinanciera):
 
     def calculate(self):
         self.bussinesRules()
-        print("Calculando por monto de producto")
+        print(f"Calculando {FINANCIERAS.get(self.cotizacion.id_financiera)} por monto de producto")
 
-        calc_pago_konnect=Decimal("100.0")
+        comision_pa = self.pagos_result.c_apertura * self.cotizacion.monto
+        calc_pago_konnect = self.pagos_result.pago_a_konnect * self.cotizacion.monto
         comision_broker=Decimal("200.0")
         gan_konn=Decimal("400.0")
 
@@ -43,7 +41,7 @@ class FluxoCalculator(BaseFinanciera):
             id_cotizacion=self.cotizacion.id_cotizacion,
             id_financiera=self.cotizacion.id_financiera,
             financiera=FINANCIERAS.get(self.cotizacion.id_financiera),
-            regla=self.pagos_result.regla,
+            regla="self.pagos_result.regla",
             id_producto=self.cotizacion.producto,
             producto=self.producto_nombre,
             membresia_broker=MEMBRESIAS.get(self.id_membresia),

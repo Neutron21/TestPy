@@ -45,6 +45,8 @@ class FinsusCalculator(BaseFinanciera):
     def calculate(self):
 
         self.bussinesRules()
+        print(f"Calculando {FINANCIERAS.get(self.cotizacion.id_financiera)} por monto de producto")
+        
         t_pago = next((p for p in self.pagos_result if p.m_min == self.regla), "None")
         print(f"ROW PAGO: {t_pago}")
         com_apertura = self.cotizacion.monto * t_pago.c_apertura
