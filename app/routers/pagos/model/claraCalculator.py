@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from sqlmodel import select
-from app.routers.pagos.model.baseFinanciera import FINANCIERAS, MEMBRESIAS, BaseFinanciera, to_decimal_7_5
+from app.routers.pagos.model.baseFinanciera import FINANCIERAS, MEMBRESIAS, BaseFinanciera, to_decimal_7_5, show_percent
 from app.models import Cotizacion, Pagos, Productos, ResponsePagos, Usuarios
 
 
@@ -49,7 +49,10 @@ class ClaraCalculator(BaseFinanciera):
             membresia_broker=MEMBRESIAS.get(self.id_membresia),
             nombre_usuario=self.user_result.nombre,
             monto_credito=self.cotizacion.monto,
+            porcentaje_pago_a_konnect = "str",
             pago_a_konnect=to_decimal_7_5(calc_pago_konnect),
-            ganancia_broker=to_decimal_7_5(comision_broker),
+            comision_apertura_porcentaje = "Optional[str]",
+            pago_broker=to_decimal_7_5(comision_broker),
+            porcentaje_pago_broker = "str",
             ganancia_konnect=to_decimal_7_5(gan_konn)
         )     

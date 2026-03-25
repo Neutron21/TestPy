@@ -3,21 +3,31 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from app.models import ResponsePagos
 
+iva_value = Decimal("0.16")
+
 class BaseFinanciera(ABC):
 
     def __init__(self, cotizacion, session):
         self.cotizacion = cotizacion
         self.session = session
-
+    
     @abstractmethod
-    def bussinesRules(self) :
+    def bussinesRules(self) : # Aquí aplicas tu lógica
         pass
 
     @abstractmethod
-    def calculate(self) -> ResponsePagos:
+    def calculate(self) -> ResponsePagos: # Aquí se calculan los pagos
         pass
+
 def to_decimal_7_5(value: Decimal) -> Decimal:
     return value.quantize(Decimal("0.00001"), rounding=ROUND_HALF_UP)
+
+def show_percent(value: Decimal) -> str:
+    percent = value * 100
+    return f"{str(percent.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))} %"
+
+def calc_IVA(value: Decimal) -> Decimal:
+    return value.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP) * iva_value
 
 FINANCIERAS = {
     1: "KONFIO",

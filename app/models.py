@@ -85,7 +85,7 @@ class Usuarios(SQLModel, table=True):
     nombre: str
     email: str
     rol: str
-    membresia: Optional[int] = None
+    membresia: Optional[int] = Field(default=None, foreign_key="membresias.id")
     id_broker: Optional[int] = Field(default=None, foreign_key="brokers.id")
     id_sede: Optional[int] = Field(default=None, foreign_key="sedes.id")
     celular: Optional[str] = None
@@ -381,9 +381,20 @@ class ResponsePagos(BaseModel):
     membresia_broker: str
     nombre_usuario: str
     monto_credito: Decimal_7_5 # type: ignore
-    # porcentaje_pago_a_konnect: str
+    
+    comision_apertura_porcentaje: Optional[str]
+    comision_apertura_pesos: Optional[str]
+    
+    porcentaje_pago_a_konnect: str
     pago_a_konnect: Decimal_7_5 # type: ignore
-    # comision_apertura: Optional[str]
-    ganancia_broker: Decimal_7_5 # type: ignore
-    # porcentaje_ganancia_broker: str
+    iva_pago_a_konnect: Decimal_7_5 # type: ignore
+    total_pago_a_konnect: Decimal_7_5 # type: ignore
+
+    pago_broker: Decimal_7_5 # type: ignore
+    iva_pago_broker: Decimal_7_5 # type: ignore
+    total_pago_broker: Decimal_7_5 # type: ignore
+    
+    porcentaje_pago_broker: str
     ganancia_konnect: Decimal_7_5 # type: ignore
+    iva_ganancia_konnect: Decimal_7_5 # type: ignore
+    total_ganancia_konnect: Decimal_7_5 # type: ignore
