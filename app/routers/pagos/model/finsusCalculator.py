@@ -1,6 +1,6 @@
 from sqlmodel import func, select
 
-from app.routers.pagos.model.baseFinanciera import BaseFinanciera, to_decimal_7_5, show_percent
+from app.routers.pagos.model.baseFinanciera import BaseFinanciera, to_decimal_7_5, show_percent, calc_IVA
 from app.models import Cotizacion, Pagos, ResponsePagos, Usuarios, Productos
 from app.routers.pagos.model.baseFinanciera import MEMBRESIAS, FINANCIERAS
 
@@ -83,11 +83,21 @@ class FinsusCalculator(BaseFinanciera):
             membresia_broker=MEMBRESIAS.get(self.id_membresia),
             nombre_usuario=self.user_result.nombre,
             monto_credito=self.cotizacion.monto,
-            porcentaje_pago_a_konnect = show_percent(t_pago.pago_a_konnect),
-            pago_a_konnect=to_decimal_7_5(calc_pago_konnect),
+            
             comision_apertura_porcentaje = show_percent(t_pago.c_apertura),
             comision_apertura_pesos = str(com_apertura),
+            
+            porcentaje_pago_a_konnect = show_percent(t_pago.pago_a_konnect),
+            pago_a_konnect=to_decimal_7_5(calc_pago_konnect),
+            iva_pago_a_konnect = calc_IVA(calc_pago_konnect),
+            total_pago_a_konnect = calc_pago_konnect + calc_IVA(calc_pago_konnect),
+            
             pago_broker=to_decimal_7_5(comision_broker),
+            iva_pago_broker = calc_IVA(comision_broker),
+            total_pago_broker = comision_broker + calc_IVA(comision_broker),
+            
             porcentaje_pago_broker = show_percent(porcentaje_broker),
-            ganancia_konnect=to_decimal_7_5(gan_konn)
+            ganancia_konnect=to_decimal_7_5(gan_konn),
+            iva_ganancia_konnect = calc_IVA(gan_konn),
+            total_ganancia_konnect = gan_konn + calc_IVA(gan_konn)
         )     

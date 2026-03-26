@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from fastapi import HTTPException
 from sqlmodel import select
 from app.routers.pagos.model.baseFinanciera import FINANCIERAS, MEMBRESIAS, BaseFinanciera, to_decimal_7_5, show_percent, calc_IVA
 from app.models import Cotizacion, Pagos, Productos, ResponsePagos, Usuarios
@@ -14,10 +15,15 @@ class KonfioCalculator(BaseFinanciera):
         query_pagos = select(Pagos).where(
             (Pagos.id_financiera == self.cotizacion.id_financiera) &
             (Pagos.id_producto == self.cotizacion.producto) &
+            (Pagos.notas == self.cotizacion.tipo_persona) &
             (Pagos.m_min <= monto) &
             (Pagos.m_max >= monto)
             )
+        
         self.pagos_result = self.session.exec(query_pagos).first()
+        if not self.pagos_result:
+            raise HTTPException(status_code=404, detail="Regla de pago no encontrada")
+        
         print(f"Pagos Result: {self.pagos_result}")
 
         query_user = select(Usuarios).where(Usuarios.id == self.cotizacion.id_user)
