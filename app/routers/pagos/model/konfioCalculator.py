@@ -12,14 +12,21 @@ class KonfioCalculator(BaseFinanciera):
 
         monto = self.cotizacion.monto
 
-        query_pagos = select(Pagos).where(
-            (Pagos.id_financiera == self.cotizacion.id_financiera) &
-            (Pagos.id_producto == self.cotizacion.producto) &
-            (Pagos.notas == self.cotizacion.tipo_persona) &
-            (Pagos.m_min <= monto) &
-            (Pagos.m_max >= monto)
+        if self.cotizacion.producto == 16:
+            query_pagos = select(Pagos).where(
+                (Pagos.id_financiera == self.cotizacion.id_financiera) &
+                (Pagos.id_producto == self.cotizacion.producto) &  
+                (Pagos.m_min <= monto) &
+                (Pagos.m_max >= monto)
+                )
+        if self.cotizacion.producto == 17:
+            query_pagos = select(Pagos).where(
+                (Pagos.id_financiera == self.cotizacion.id_financiera) &
+                (Pagos.id_producto == self.cotizacion.producto) &
+                (Pagos.notas == self.cotizacion.tipo_persona) &
+                (Pagos.m_min <= monto) &
+                (Pagos.m_max >= monto)
             )
-        
         self.pagos_result = self.session.exec(query_pagos).first()
         if not self.pagos_result:
             raise HTTPException(status_code=404, detail="Regla de pago no encontrada")
