@@ -52,13 +52,7 @@ class ProductosDTO(SQLModel):
     id_categoria: int = Field(foreign_key="categorias.id")
     id_subCategoria: int = Field(foreign_key="subCategorias.id")
 
-# class ProductosTipoPersonaDTO(ProductosDTO):
-#     id: int
-#     tipo_persona: List[str] = Field(default_factory=list)
 
-# class Productos(ProductosDTO,table=True):
-#     pass
-#     id: int | None = Field(default=None, primary_key=True)  # Permite que la BD genere el ID
  
 class ProductoFormatoTipoPersona(SQLModel, table=True):
     __tablename__ = "producto_formato_tipo_persona"
