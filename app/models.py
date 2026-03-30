@@ -385,11 +385,11 @@ class ResponsePagos(BaseModel):
     iva_pago_a_konnect: Decimal_7_5 # type: ignore
     total_pago_a_konnect: Decimal_7_5 # type: ignore
 
+    porcentaje_pago_broker: str
     pago_broker: Decimal_7_5 # type: ignore
     iva_pago_broker: Decimal_7_5 # type: ignore
     total_pago_broker: Decimal_7_5 # type: ignore
     
-    porcentaje_pago_broker: str
     ganancia_konnect: Decimal_7_5 # type: ignore
     iva_ganancia_konnect: Decimal_7_5 # type: ignore
     total_ganancia_konnect: Decimal_7_5 # type: ignore
