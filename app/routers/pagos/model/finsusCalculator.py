@@ -1,10 +1,10 @@
 from sqlmodel import func, select
 
-from app.routers.pagos.model.baseFinanciera import BaseFinanciera, to_decimal_7_5, show_percent, calc_IVA
+from app.routers.pagos.model.baseFinanciera import BaseFinanciera, status_pagado, to_decimal_7_5, show_percent, calc_IVA
 from app.models import Cotizacion, Pagos, ResponsePagos, Usuarios, Productos
 from app.routers.pagos.model.baseFinanciera import MEMBRESIAS, FINANCIERAS
 
-proceso_pago = 9
+
 
 class FinsusCalculator(BaseFinanciera):
 
@@ -15,7 +15,7 @@ class FinsusCalculator(BaseFinanciera):
         query_creditos = select(func.count()).select_from(Cotizacion).where(
             (Cotizacion.id_financiera == self.cotizacion.id_financiera) &
             (Cotizacion.rfc == rfc_user) &
-            (Cotizacion.estatus == proceso_pago) &
+            (Cotizacion.estatus == status_pagado) &
             (Cotizacion.id_cotizacion != self.cotizacion.id_cotizacion)
         )
 

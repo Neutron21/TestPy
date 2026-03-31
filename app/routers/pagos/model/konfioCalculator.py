@@ -1,8 +1,8 @@
 from decimal import Decimal
 
 from fastapi import HTTPException
-from sqlmodel import select
-from app.routers.pagos.model.baseFinanciera import FINANCIERAS, MEMBRESIAS, BaseFinanciera, to_decimal_7_5, show_percent, calc_IVA
+from sqlmodel import func, select
+from app.routers.pagos.model.baseFinanciera import FINANCIERAS, MEMBRESIAS, BaseFinanciera, status_pagado, to_decimal_7_5, show_percent, calc_IVA
 from app.models import Cotizacion, Pagos, Productos, ResponsePagos, Usuarios
 
 
@@ -11,15 +11,35 @@ class KonfioCalculator(BaseFinanciera):
     def bussinesRules(self):
 
         monto = self.cotizacion.monto
+        rfc_user = self.cotizacion.rfc
 
-        if self.cotizacion.producto == 16:
-            query_pagos = select(Pagos).where(
+        query_creditos = select(func.count()).select_from(Cotizacion).where(
+            (Cotizacion.id_financiera == self.cotizacion.id_financiera) &
+            (Cotizacion.rfc == rfc_user) &
+            (Cotizacion.estatus == status_pagado) &
+            (Cotizacion.producto == 16) &
+            (Cotizacion.id_cotizacion != self.cotizacion.id_cotizacion)
+        )
+
+        creditos_ant = self.session.exec(query_creditos).first()
+
+        if self.cotizacion.producto == 16: # Crédito Simple
+
+            if creditos_ant >= 1: # Refinanciamiento
+                query_pagos = select(Pagos).where(
                 (Pagos.id_financiera == self.cotizacion.id_financiera) &
                 (Pagos.id_producto == self.cotizacion.producto) &  
-                (Pagos.m_min <= monto) &
-                (Pagos.m_max >= monto)
+                (Pagos.notas == "1")
                 )
-        if self.cotizacion.producto == 17:
+            else:
+                query_pagos = select(Pagos).where(
+                    (Pagos.id_financiera == self.cotizacion.id_financiera) &
+                    (Pagos.id_producto == self.cotizacion.producto) &  
+                    (Pagos.m_min <= monto) &
+                    (Pagos.m_max >= monto)
+                    )
+                
+        if self.cotizacion.producto == 17: # TDC
             query_pagos = select(Pagos).where(
                 (Pagos.id_financiera == self.cotizacion.id_financiera) &
                 (Pagos.id_producto == self.cotizacion.producto) &
