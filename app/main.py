@@ -22,8 +22,6 @@ from .routers import ( checklist, membresias, tareas, utms, documentos,viabilida
 from .routers.pagos import (pagos)
 from dotenv import load_dotenv
 
-
-
 load_dotenv()
 
 cred = credentials.Certificate("app/serviceAccountKey.json")
@@ -43,8 +41,6 @@ app.mount(
     StaticFiles(directory=os.path.join(BASE_DIR, "utils", "static"), html=False),
     name="static"
 )
-
-
 
 original_openapi = app.openapi
 # 🔹 Función personalizada para OpenAPI con seguridad JWT
@@ -91,8 +87,6 @@ app.include_router(viabilidad.router)
 app.include_router(sedes.router)
 app.include_router(tareas.router)
 app.include_router(brokers.router)
-
-
 
 
 logger.info("API iniciada correctamente 🚀")
