@@ -94,9 +94,6 @@ class KonfioCalculator(BaseFinanciera):
             nombre_usuario=self.user_result.nombre,
             monto_credito=self.cotizacion.monto,
 
-            comision_apertura_porcentaje = show_percent(self.pagos_result.c_apertura),
-            comision_apertura_pesos = "0",
-
             porcentaje_pago_a_konnect = show_percent(self.pagos_result.pago_a_konnect),
             pago_a_konnect=to_decimal_7_5(calc_pago_konnect),
             iva_pago_a_konnect = calc_IVA(calc_pago_konnect),

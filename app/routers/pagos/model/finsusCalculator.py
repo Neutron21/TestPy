@@ -99,5 +99,6 @@ class FinsusCalculator(BaseFinanciera):
             
             ganancia_konnect=to_decimal_7_5(gan_konn),
             iva_ganancia_konnect = calc_IVA(gan_konn),
-            total_ganancia_konnect = gan_konn + calc_IVA(gan_konn)
+            total_ganancia_konnect = gan_konn + calc_IVA(gan_konn),
+            
         )     

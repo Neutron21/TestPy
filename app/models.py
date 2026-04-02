@@ -377,8 +377,8 @@ class ResponsePagos(BaseModel):
     nombre_usuario: str
     monto_credito: Decimal_7_5 # type: ignore
     
-    comision_apertura_porcentaje: Optional[str]
-    comision_apertura_pesos: Optional[str]
+    comision_apertura_porcentaje: Optional[str] = None
+    comision_apertura_pesos: Optional[str] = None
     
     porcentaje_pago_a_konnect: str
     pago_a_konnect: Decimal_7_5 # type: ignore
@@ -393,3 +393,6 @@ class ResponsePagos(BaseModel):
     ganancia_konnect: Decimal_7_5 # type: ignore
     iva_ganancia_konnect: Decimal_7_5 # type: ignore
     total_ganancia_konnect: Decimal_7_5 # type: ignore
+
+    lineas_broker: Optional[int] | None = None
+    lineas_konnect: Optional[int] | None = None
