@@ -6,7 +6,6 @@ from zoneinfo import ZoneInfo
 from pydantic import BaseModel, EmailStr, condecimal
 from sqlmodel import DECIMAL, SQLModel, Field
 from app.db import engine
-from pydantic import ConfigDict
 from typing import List
 from sqlmodel import SQLModel, Field
 from typing import Optional

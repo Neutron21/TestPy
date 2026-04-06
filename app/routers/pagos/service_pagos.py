@@ -12,7 +12,7 @@ from app.routers.pagos.model.claraCalculator import  ClaraCalculator
 CALCULOS = {
     1: KonfioCalculator, #✅ Pendinte TDCE
     10: FinsusCalculator, #✅
-    32: ClaraCalculator, #
+    32: ClaraCalculator, #✅
     34: FluxoCalculator, #✅
 }
 
