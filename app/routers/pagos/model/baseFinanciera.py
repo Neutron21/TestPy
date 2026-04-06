@@ -25,7 +25,7 @@ def to_decimal_7_5(value: Decimal) -> Decimal:
 
 def show_percent(value: Decimal) -> str:
     percent = value * 100
-    return f"{str(percent.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))} %"
+    return f"{str(percent.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP))} %"
 
 def calc_IVA(value: Decimal) -> Decimal:
     return value.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP) * iva_value

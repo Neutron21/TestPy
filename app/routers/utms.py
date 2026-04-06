@@ -2,7 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, status, Query
 from sqlmodel import text
 from app.db import SessionDep
-from app.models import Utms
+from app.models import Utms, UtmsCreate
 
 router = APIRouter(tags=["Utms"])
 
@@ -35,3 +35,19 @@ async def utms_by_tipo_user_id_If(session: SessionDep, idFin: int, idUsuario: Op
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utm no encontrada")
     print(result)
     return result
+
+@router.post("/utms", response_model=Utms, status_code=status.HTTP_201_CREATED)
+async def create_utm(session: SessionDep, utm: UtmsCreate):
+
+    nuevo = Utms(
+        id_usuario=utm.id_usuario,
+        id_financiera=utm.id_financiera,
+        tipo_persona=utm.tipo_persona,
+        url=utm.url
+    )
+
+    session.add(nuevo)
+    session.commit()
+    session.refresh(nuevo)
+
+    return nuevo
