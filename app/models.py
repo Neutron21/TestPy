@@ -90,6 +90,7 @@ class Usuarios(SQLModel, table=True):
     default_factory=lambda: datetime.now(ZoneInfo("America/Mexico_City"))
     )
     comisiones: str 
+    f_ultimo_pago: Optional[date] = None
 
 class UsuarioSimple(BaseModel):
     id: int
@@ -293,10 +294,16 @@ class Membresias(SQLModel, table=True):
      nombre: str
 
 class Utms(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
     id_usuario: Optional[int] = Field(default=None, foreign_key="usuarios.id")
     id_financiera: int = Field(foreign_key="financieras.id")
-    tipo_persona: Optional[str] = Field(default=None)
+    tipo_persona: Optional[str] = None
+    url: str
+
+class UtmsCreate(SQLModel):
+    id_usuario: Optional[int] = None
+    id_financiera: int
+    tipo_persona: Optional[str] = None
     url: str
 
 
