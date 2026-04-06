@@ -1,10 +1,10 @@
 from sqlmodel import func, select
 
-from app.routers.pagos.model.baseFinanciera import BaseFinanciera, to_decimal_7_5, show_percent, calc_IVA
+from app.routers.pagos.model.baseFinanciera import BaseFinanciera, status_pagado, to_decimal_7_5, show_percent, calc_IVA
 from app.models import Cotizacion, Pagos, ResponsePagos, Usuarios, Productos
 from app.routers.pagos.model.baseFinanciera import MEMBRESIAS, FINANCIERAS
 
-proceso_pago = 9
+
 
 class FinsusCalculator(BaseFinanciera):
 
@@ -15,7 +15,7 @@ class FinsusCalculator(BaseFinanciera):
         query_creditos = select(func.count()).select_from(Cotizacion).where(
             (Cotizacion.id_financiera == self.cotizacion.id_financiera) &
             (Cotizacion.rfc == rfc_user) &
-            (Cotizacion.estatus == proceso_pago) &
+            (Cotizacion.estatus == status_pagado) &
             (Cotizacion.id_cotizacion != self.cotizacion.id_cotizacion)
         )
 
@@ -92,12 +92,13 @@ class FinsusCalculator(BaseFinanciera):
             iva_pago_a_konnect = calc_IVA(calc_pago_konnect),
             total_pago_a_konnect = calc_pago_konnect + calc_IVA(calc_pago_konnect),
             
+            porcentaje_pago_broker = show_percent(porcentaje_broker),
             pago_broker=to_decimal_7_5(comision_broker),
             iva_pago_broker = calc_IVA(comision_broker),
             total_pago_broker = comision_broker + calc_IVA(comision_broker),
             
-            porcentaje_pago_broker = show_percent(porcentaje_broker),
             ganancia_konnect=to_decimal_7_5(gan_konn),
             iva_ganancia_konnect = calc_IVA(gan_konn),
-            total_ganancia_konnect = gan_konn + calc_IVA(gan_konn)
+            total_ganancia_konnect = gan_konn + calc_IVA(gan_konn),
+            
         )     

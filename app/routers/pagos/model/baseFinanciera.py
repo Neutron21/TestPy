@@ -4,6 +4,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from app.models import ResponsePagos
 
 iva_value = Decimal("0.16")
+status_pagado = 9
 
 class BaseFinanciera(ABC):
 

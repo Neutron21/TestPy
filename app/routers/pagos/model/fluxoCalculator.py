@@ -29,13 +29,25 @@ class FluxoCalculator(BaseFinanciera):
         self.bussinesRules()
         print(f"Calculando {FINANCIERAS.get(self.cotizacion.id_financiera)} por monto de producto")
 
-        comision_pa = self.pagos_result.c_apertura * self.cotizacion.monto
+        com_apertura = self.pagos_result.c_apertura * self.cotizacion.monto
         calc_pago_konnect = self.pagos_result.pago_a_konnect * self.cotizacion.monto
-        comision_broker=Decimal("200.0")
-        gan_konn=Decimal("400.0")
 
-        # aquí va tu query de pagos
-        # aquí aplicas tu lógica
+        t_pago = self.pagos_result
+        match self.id_membresia:
+            case 1:
+                porcentaje_broker = t_pago.c_plata
+                comision_broker = t_pago.c_plata * self.cotizacion.monto
+            case 2:
+                porcentaje_broker = t_pago.c_oro
+                comision_broker = t_pago.c_oro * self.cotizacion.monto
+            case 3:
+                porcentaje_broker = t_pago.c_platino
+                comision_broker = t_pago.c_platino * self.cotizacion.monto
+            case 4:
+                porcentaje_broker = t_pago.c_diamante
+                comision_broker = t_pago.c_diamante * self.cotizacion.monto
+
+        gan_konn = calc_pago_konnect - comision_broker
 
         return ResponsePagos(
             id_cotizacion=self.cotizacion.id_cotizacion,
@@ -48,19 +60,19 @@ class FluxoCalculator(BaseFinanciera):
             nombre_usuario=self.user_result.nombre,
             monto_credito=self.cotizacion.monto,
 
-            comision_apertura_porcentaje = "Optional[str]",
-            comision_apertura_pesos = "0",
+            comision_apertura_porcentaje = show_percent(self.pagos_result.c_apertura),
+            comision_apertura_pesos = str(com_apertura),
             
-            porcentaje_pago_a_konnect = "str",
+            porcentaje_pago_a_konnect = show_percent(self.pagos_result.pago_a_konnect) ,
             pago_a_konnect=to_decimal_7_5(calc_pago_konnect),
             iva_pago_a_konnect = calc_IVA(calc_pago_konnect),
             total_pago_a_konnect = calc_pago_konnect + calc_IVA(calc_pago_konnect),
             
+            porcentaje_pago_broker = show_percent(porcentaje_broker),
             pago_broker=to_decimal_7_5(comision_broker),
             iva_pago_broker = calc_IVA(comision_broker),
             total_pago_broker = comision_broker + calc_IVA(comision_broker),
             
-            porcentaje_pago_broker = show_percent(comision_broker),
             ganancia_konnect=to_decimal_7_5(gan_konn),
             iva_ganancia_konnect = calc_IVA(gan_konn),
             total_ganancia_konnect = gan_konn + calc_IVA(gan_konn)

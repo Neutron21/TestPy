@@ -6,7 +6,6 @@ from zoneinfo import ZoneInfo
 from pydantic import BaseModel, EmailStr, condecimal
 from sqlmodel import DECIMAL, SQLModel, Field
 from app.db import engine
-from pydantic import ConfigDict
 from typing import List
 from sqlmodel import SQLModel, Field
 from typing import Optional
@@ -384,19 +383,22 @@ class ResponsePagos(BaseModel):
     nombre_usuario: str
     monto_credito: Decimal_7_5 # type: ignore
     
-    comision_apertura_porcentaje: Optional[str]
-    comision_apertura_pesos: Optional[str]
+    comision_apertura_porcentaje: Optional[str] = None
+    comision_apertura_pesos: Optional[str] = None
     
     porcentaje_pago_a_konnect: str
     pago_a_konnect: Decimal_7_5 # type: ignore
     iva_pago_a_konnect: Decimal_7_5 # type: ignore
     total_pago_a_konnect: Decimal_7_5 # type: ignore
 
+    porcentaje_pago_broker: str
     pago_broker: Decimal_7_5 # type: ignore
     iva_pago_broker: Decimal_7_5 # type: ignore
     total_pago_broker: Decimal_7_5 # type: ignore
     
-    porcentaje_pago_broker: str
     ganancia_konnect: Decimal_7_5 # type: ignore
     iva_ganancia_konnect: Decimal_7_5 # type: ignore
     total_ganancia_konnect: Decimal_7_5 # type: ignore
+
+    lineas_broker: Optional[int] | None = None
+    lineas_konnect: Optional[int] | None = None

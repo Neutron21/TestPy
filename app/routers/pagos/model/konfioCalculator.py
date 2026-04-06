@@ -1,8 +1,8 @@
 from decimal import Decimal
 
 from fastapi import HTTPException
-from sqlmodel import select
-from app.routers.pagos.model.baseFinanciera import FINANCIERAS, MEMBRESIAS, BaseFinanciera, to_decimal_7_5, show_percent, calc_IVA
+from sqlmodel import func, select
+from app.routers.pagos.model.baseFinanciera import FINANCIERAS, MEMBRESIAS, BaseFinanciera, status_pagado, to_decimal_7_5, show_percent, calc_IVA
 from app.models import Cotizacion, Pagos, Productos, ResponsePagos, Usuarios
 
 
@@ -11,15 +11,35 @@ class KonfioCalculator(BaseFinanciera):
     def bussinesRules(self):
 
         monto = self.cotizacion.monto
+        rfc_user = self.cotizacion.rfc
 
-        if self.cotizacion.producto == 16:
-            query_pagos = select(Pagos).where(
+        query_creditos = select(func.count()).select_from(Cotizacion).where(
+            (Cotizacion.id_financiera == self.cotizacion.id_financiera) &
+            (Cotizacion.rfc == rfc_user) &
+            (Cotizacion.estatus == status_pagado) &
+            (Cotizacion.producto == 16) &
+            (Cotizacion.id_cotizacion != self.cotizacion.id_cotizacion)
+        )
+
+        creditos_ant = self.session.exec(query_creditos).first()
+
+        if self.cotizacion.producto == 16: # Crédito Simple
+
+            if creditos_ant >= 1: # Refinanciamiento
+                query_pagos = select(Pagos).where(
                 (Pagos.id_financiera == self.cotizacion.id_financiera) &
                 (Pagos.id_producto == self.cotizacion.producto) &  
-                (Pagos.m_min <= monto) &
-                (Pagos.m_max >= monto)
+                (Pagos.notas == "1")
                 )
-        if self.cotizacion.producto == 17:
+            else:
+                query_pagos = select(Pagos).where(
+                    (Pagos.id_financiera == self.cotizacion.id_financiera) &
+                    (Pagos.id_producto == self.cotizacion.producto) &  
+                    (Pagos.m_min <= monto) &
+                    (Pagos.m_max >= monto)
+                    )
+                
+        if self.cotizacion.producto == 17: # TDC
             query_pagos = select(Pagos).where(
                 (Pagos.id_financiera == self.cotizacion.id_financiera) &
                 (Pagos.id_producto == self.cotizacion.producto) &
@@ -74,19 +94,16 @@ class KonfioCalculator(BaseFinanciera):
             nombre_usuario=self.user_result.nombre,
             monto_credito=self.cotizacion.monto,
 
-            comision_apertura_porcentaje = show_percent(self.pagos_result.c_apertura),
-            comision_apertura_pesos = "0",
-
             porcentaje_pago_a_konnect = show_percent(self.pagos_result.pago_a_konnect),
             pago_a_konnect=to_decimal_7_5(calc_pago_konnect),
             iva_pago_a_konnect = calc_IVA(calc_pago_konnect),
             total_pago_a_konnect = calc_pago_konnect + calc_IVA(calc_pago_konnect),
 
+            porcentaje_pago_broker = show_percent(porcentaje_broker),
             pago_broker=to_decimal_7_5(comision_broker),
             iva_pago_broker = calc_IVA(comision_broker),
             total_pago_broker = comision_broker + calc_IVA(comision_broker),
 
-            porcentaje_pago_broker = show_percent(porcentaje_broker),
             ganancia_konnect=to_decimal_7_5(gan_konn),
             iva_ganancia_konnect = calc_IVA(gan_konn),
             total_ganancia_konnect = gan_konn + calc_IVA(gan_konn)
