@@ -247,3 +247,42 @@ def enviar_correo_simple(html_content: str, correos: list[str], subject: str):
 
     print(resultados)
     return resultados
+
+def send_mail_comment(request, correos, mensaje_html):
+    logger.info("🚀 ENTRO A send_mail_comment")
+
+    BREVO_API_KEY = os.getenv("BREVO_KEY")
+    BREVO_URL = os.getenv("BREVO_LINK")
+
+
+    if not BREVO_API_KEY:
+        logger.error("❌ BREVO_KEY no configurada")
+        return
+
+    firma_b64 = fillFirma()
+
+    data = {
+        "sender": {
+            "email": "web.app.no.reply@konnect.mx",
+            "name": "Konnect"
+        },
+        "to": [{"email": e} for e in correos],
+        "subject": f"Mensaje de Dirección {request.id_cotizacion} - {request.cliente}",
+        "htmlContent": mensaje_html,
+        "attachment": [
+            {
+                "name": "firma.png",
+                "content": firma_b64
+            }
+        ]
+    }
+
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+
+    res = requests.post(BREVO_URL, json=data, headers=headers)
+    print(f"Brevo response: ({res.status_code}) {res.text}")
+    return "Correo enviado con éxito."

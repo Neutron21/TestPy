@@ -1,0 +1,30 @@
+<!-- template.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+            color: black;
+        }
+        .footer {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <p>Direección Konnect te ha dejado un comentario, en tu folio Konnect {{folioKonnect}}</p>
+    <p>El cual corresponde a tu cliente: {{cliente}}</p>
+
+    <p>Gerencia Coorporativa dijo: {{mensaje}}</p>
+
+
+    <a href="https://konecct-broker.web.app/vista?id_cotizacion={{folioKonnect}}">Dirigete a la plataforma para darle seguimiento </a>
+    
+    <div class="footer">
+        <img src="cid:firma.png" alt="Firma de KONNECT" style="width: 300px; height: auto;">
+    </div>
+</body>
+</html>

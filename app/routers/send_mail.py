@@ -1,11 +1,12 @@
 import base64
 import os
+from types import SimpleNamespace
 from typing import List
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Body, Request
-from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios, Productos
+from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios, Productos, ReqMailComentarioDir
 from sqlmodel import select, text
 from app.db import SessionDep
-from utils.email import enviar_correo, enviar_correo_informativo, enviar_correo_simple, notificacion_if, enviar_correo_dispersion
+from utils.email import enviar_correo, enviar_correo_informativo, enviar_correo_simple, notificacion_if, enviar_correo_dispersion, send_mail_comment
 from app.utils.logger_config import logger
 from jinja2 import Environment, FileSystemLoader
 from app.models import Productos
@@ -246,3 +247,28 @@ def enviar_correo_nuevo_usuario(
         "destinatarios": lista_correos
     }
     
+@router.post("/comentario-direccion")
+def mail_comentario_direccion(data: ReqMailComentarioDir, session: SessionDep):
+   
+    cotizacion = session.get(Cotizacion, data.idCotizacion)
+    if not cotizacion:
+        raise HTTPException(status_code=404, detail="Cotización no encontrada")
+ 
+    print(f"BODY: {data}")
+    request_mail = SimpleNamespace(
+        id_cotizacion = data.idCotizacion,
+        cliente = cotizacion.nombre,
+        mensaje = data.message
+    )
+    # correos = obtener_jefes(cotizacion.id_user ,session)
+    correos = [cotizacion.id_usuario]
+    template = env.get_template("comentarioDir.html")
+
+    html_content = template.render(
+        cliente = cotizacion.nombre,
+        mensaje = data.message,
+        folioKonnect = data.idCotizacion
+    )
+    send_mail_comment(request_mail, correos, html_content)
+
+    return {"ok": True, "message": "Correo de dispersión enviado correctamente"}

@@ -212,9 +212,11 @@ class Correos(CorreosDTO ,table=True ):
 
 class ReqMail(BaseModel):
     isNew:  bool
-    # producto: str
-    # userName: str
     numCotizacion: int
+
+class ReqMailComentarioDir(BaseModel):
+    idCotizacion: int
+    message: str
 
 class BodyMail(BaseModel):
     OpCliente: str
