@@ -249,26 +249,36 @@ def enviar_correo_nuevo_usuario(
     
 @router.post("/comentario-direccion")
 def mail_comentario_direccion(data: ReqMailComentarioDir, session: SessionDep):
-   
+
     cotizacion = session.get(Cotizacion, data.idCotizacion)
     if not cotizacion:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
- 
-    print(f"BODY: {data}")
-    request_mail = SimpleNamespace(
-        id_cotizacion = data.idCotizacion,
-        cliente = cotizacion.nombre,
-        mensaje = data.message
-    )
-    # correos = obtener_jefes(cotizacion.id_user ,session)
-    correos = [cotizacion.id_usuario]
-    template = env.get_template("comentarioDir.html")
 
-    html_content = template.render(
-        cliente = cotizacion.nombre,
-        mensaje = data.message,
-        folioKonnect = data.idCotizacion
-    )
-    send_mail_comment(request_mail, correos, html_content)
+    try:
+        request_mail = SimpleNamespace(
+            id_cotizacion=data.idCotizacion,
+            cliente=cotizacion.nombre,
+            mensaje=data.message
+        )
 
-    return {"ok": True, "message": "Correo de dispersión enviado correctamente"}
+        correos = [cotizacion.id_usuario]
+
+        template = env.get_template("comentarioDir.html")
+        html_content = template.render(
+            cliente=cotizacion.nombre,
+            mensaje=data.message,
+            folioKonnect=data.idCotizacion
+        )
+
+        result = send_mail_comment(request_mail, correos, html_content)
+
+        if not result["ok"]:
+            raise HTTPException(status_code=500, detail=result["error"])
+
+        return result
+
+    except HTTPException:
+        raise  # 👈 importantísimo, no borrar, “Si ya es un error HTTP válido, déjalo pasar intacto”
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
