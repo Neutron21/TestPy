@@ -8,6 +8,8 @@ from app.models import (
     UsuarioSimple,
     Usuarios
 )
+from datetime import datetime, timedelta
+
 
 router = APIRouter(tags=["Usuarios"])
 
@@ -151,4 +153,50 @@ async def get_usuarios_superiores(session: SessionDep):
 
     return [{"id": r.id, "nombre": r.nombre} for r in rows]
 
+# ============================================================
+# Status de Usuarios 
+# ============================================================
+@router.get("/usuarios/payment-status")
+async def payment_status(id_user: int, session: SessionDep):
+
+    user = session.exec(
+        select(Usuarios).where(Usuarios.id == id_user)
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no existe")
+
+    if not user.f_ultimo_pago:
+        return {
+            "status": "no_payment"
+        }
+
+    # 👇 TODO como DATE
+    hoy = datetime.now().date()
+    ultimo_pago = user.f_ultimo_pago
+
+    fecha_vencimiento = ultimo_pago.replace(year=ultimo_pago.year + 1)
+    fecha_aviso = fecha_vencimiento - timedelta(days=30)
+
+    # 🔴 VENCIDO
+    if hoy >= fecha_vencimiento:
+        return {
+            "status": "expired",
+            "fecha_vencimiento": fecha_vencimiento
+        }
+
+    # 🟡 WARNING
+    if hoy >= fecha_aviso:
+        dias_restantes = (fecha_vencimiento - hoy).days
+
+        return {
+            "status": "warning",
+            "fecha_vencimiento": fecha_vencimiento,
+            "dias_restantes": dias_restantes
+        }
+
+    # 🟢 ACTIVO
+    return {
+        "status": "active"
+    }
 
