@@ -7,12 +7,14 @@ from app.routers.pagos.model.finsusCalculator import FinsusCalculator
 from app.routers.pagos.model.konfioCalculator import  KonfioCalculator
 from app.routers.pagos.model.fluxoCalculator import  FluxoCalculator
 from app.routers.pagos.model.claraCalculator import  ClaraCalculator
+from app.routers.pagos.model.jeevesCalculator import JeevesCalculator
     
 
 CALCULOS = {
     1: KonfioCalculator, #✅ Pendinte TDCE
     10: FinsusCalculator, #✅
-    32: ClaraCalculator, #✅
+    22: JeevesCalculator, #✅
+    32: ClaraCalculator, #✅ Dispersados por mes
     34: FluxoCalculator, #✅
 }
 
