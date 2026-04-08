@@ -5,6 +5,7 @@ from app.models import ResponsePagos
 
 iva_value = Decimal("0.16")
 status_pagado = 9
+status_dispersion = 7
 
 class BaseFinanciera(ABC):
 

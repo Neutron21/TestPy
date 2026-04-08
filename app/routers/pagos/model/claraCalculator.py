@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from sqlmodel import func, select
-from app.routers.pagos.model.baseFinanciera import FINANCIERAS, MEMBRESIAS, BaseFinanciera, status_pagado, to_decimal_7_5, show_percent, calc_IVA
+from app.routers.pagos.model.baseFinanciera import FINANCIERAS, MEMBRESIAS, BaseFinanciera, status_dispersion, to_decimal_7_5, show_percent, calc_IVA
 from app.models import Cotizacion, Pagos, Productos, ResponsePagos, Usuarios
 
 
@@ -12,14 +12,14 @@ class ClaraCalculator(BaseFinanciera):
         query_creditos_broker = select(func.count()).select_from(Cotizacion).where(
             (Cotizacion.id_financiera == self.cotizacion.id_financiera) &
             (Cotizacion.id_user == self.cotizacion.id_user) &
-            (Cotizacion.estatus == status_pagado) &
+            (Cotizacion.estatus == status_dispersion) &
             (Cotizacion.id_cotizacion != self.cotizacion.id_cotizacion)
         )
         self.lineas_broker = self.session.exec(query_creditos_broker).first()
 
         query_creditos_konnect = select(func.count()).select_from(Cotizacion).where(
             (Cotizacion.id_financiera == self.cotizacion.id_financiera) &
-            (Cotizacion.estatus == status_pagado) &
+            (Cotizacion.estatus == status_dispersion) &
             (Cotizacion.id_cotizacion != self.cotizacion.id_cotizacion) # Revisar
         )
         self.lineas_konnect = self.session.exec(query_creditos_konnect).first()
