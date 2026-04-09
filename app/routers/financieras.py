@@ -7,6 +7,8 @@ from grpc import Status
 from sqlmodel import select
 from app.db import SessionDep
 from app.models import Financieras, FinancierasDTO
+from app.models import Financieras, FinancierasDTO, Utms
+from sqlalchemy import text
 
 
 router = APIRouter(tags=["Financieras"])
@@ -47,6 +49,24 @@ async def create_financiera(financiera_data: FinancierasDTO, session: SessionDep
     session.commit() 
     session.refresh(financiera) 
     return financiera
+
+
+@router.get("/financieras/con-utms")
+async def get_financieras_con_utms(session: SessionDep):
+    # Definimos la consulta SQL cruda (Raw SQL)
+    query = text("""
+        SELECT DISTINCT u.id_financiera, f.nombre 
+        FROM financieras AS f
+        INNER JOIN utms AS u ON f.id = u.id_financiera
+        WHERE u.id_financiera IS NOT NULL
+    """)
+    
+    # Ejecutamos la consulta
+    result = session.exec(query).all()
+    
+    # Convertimos el resultado (lista de tuplas) a una lista de diccionarios
+    # row[0] es id_financiera, row[1] es el nombre
+    return [{"id_financiera": row[0], "nombre": row[1]} for row in result]
 
 
 
