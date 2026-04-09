@@ -10,6 +10,8 @@ from app.models import Financieras, FinancierasDTO
 from app.models import Financieras, FinancierasDTO, Utms
 from sqlalchemy import text
 
+from app.auth.security import crear_token, validar_token
+
 
 router = APIRouter(tags=["Financieras"])
 
@@ -58,17 +60,14 @@ async def get_financieras_con_utms(session: SessionDep):
         SELECT DISTINCT u.id_financiera, f.nombre 
         FROM financieras AS f
         INNER JOIN utms AS u ON f.id = u.id_financiera
-        WHERE u.id_financiera IS NOT NULL
+        WHERE u.id_financiera IS NOT NULL AND u.tipo_persona IS NULL
     """)
     
     # Ejecutamos la consulta
     result = session.exec(query).all()
+    # token = crear_token("uncorreo@gamil.com")
+    # validar_token(token)
     
     # Convertimos el resultado (lista de tuplas) a una lista de diccionarios
     # row[0] es id_financiera, row[1] es el nombre
     return [{"id_financiera": row[0], "nombre": row[1]} for row in result]
-
-
-
-
-
