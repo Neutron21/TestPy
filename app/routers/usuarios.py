@@ -165,6 +165,11 @@ async def payment_status(id_user: int, session: SessionDep):
 
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no existe")
+    
+    if user.id_financiera:
+       return {
+        "status": "active"
+        }
 
     if not user.f_ultimo_pago:
         return {
