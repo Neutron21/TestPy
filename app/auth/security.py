@@ -4,12 +4,12 @@ from fastapi import HTTPException
 import os
 
 UTM_SECRET_KEY = os.getenv("UTM_SECRET_KEY")
-OTRO_SECRET = os.getenv("OTRO_SECRET")
 ALGORITHM = "HS256"
 
 def crear_token(email: str):
     payload = {
         "email": email,
+        "name": "Juan Ramirez Melendez",
         "user": 3,
         "uso": "crear_utm",
         "exp": datetime.utcnow() + timedelta(hours=24)

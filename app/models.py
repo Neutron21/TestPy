@@ -306,6 +306,7 @@ class UtmsCreate(SQLModel):
     id_financiera: int
     tipo_persona: Optional[str] = None
     url: str
+    token: str
 
 
 class utils(BaseModel):
