@@ -196,11 +196,11 @@ def enviar_correo_nuevo_usuario(
     # 🔥 Obtener correos de financieras 32, 11, 12 y 37
     financieras_utm_custom = [32, 11, 12, 37]
 
-    correos_financieras = session.query(Usuarios.email).filter(
-        Usuarios.id_financiera.in_(financieras_utm_custom)
-    ).all()
-
+    correos_financieras = session.query(Correos.correo).where(
+                (Correos.id_financiera.in_(financieras_utm_custom)) & (Correos.v_mail == 1)
+                ).all()
     correos_db = [correo[0] for correo in correos_financieras]
+    print(f"CORREOS: {correos_db}")
     
     if not correos_db:
         return {
@@ -208,7 +208,8 @@ def enviar_correo_nuevo_usuario(
             "mensaje": "No se encontraron correos para enviar"
         }
     correos_konnect = [
-        "victor.hugo.silva01@gmail.com",
+        # "victor.hugo.silva01@gmail.com",
+        # "ij.innovaciones@gmail.com",
         "ara.castro@konnect.mx",
         "kfigueroa@konnect.mx"
     ]
