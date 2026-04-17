@@ -78,6 +78,7 @@ class Usuarios(SQLModel, table=True):
     nombre: str
     email: str
     rol: str
+    rfc: str
     membresia: Optional[int] = Field(default=None, foreign_key="membresias.id")
     id_broker: Optional[int] = Field(default=None, foreign_key="brokers.id")
     id_sede: Optional[int] = Field(default=None, foreign_key="sedes.id")

@@ -6,6 +6,8 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Body, Request
 from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios, Productos, ReqMailComentarioDir
 from sqlmodel import select, text
 from app.db import SessionDep
+from app.routers.financieras import getFinancierasUtms
+from app.auth.security import crear_token
 from utils.email import enviar_correo, enviar_correo_informativo, enviar_correo_simple, notificacion_if, enviar_correo_dispersion, send_mail_comment
 from app.utils.logger_config import logger
 from jinja2 import Environment, FileSystemLoader
@@ -178,7 +180,7 @@ def enviar_correo_nuevo_usuario(
     background_tasks: BackgroundTasks
 ):
 
-    usuario = session.get(Usuarios, user_id)
+    usuario = session.get(Usuarios, int(user_id))
 
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -193,8 +195,8 @@ def enviar_correo_nuevo_usuario(
     broker = session.get(Brokers, usuario.id_broker) if usuario.id_broker else None
     sede = session.get(Sedes, usuario.id_sede) if usuario.id_sede else None
 
-    # 🔥 Obtener correos de financieras 32, 11, 12 y 37
-    financieras_utm_custom = [32, 11, 12, 37]
+    # 🔥 Obtener correos de financieras con UTM personalizadas [1, 32, 11, 12, 37]
+    financieras_utm_custom = getFinancierasUtms(0,session)
 
     correos_financieras = session.query(Correos.correo).where(
                 (Correos.id_financiera.in_(financieras_utm_custom)) & (Correos.v_mail == 1)
@@ -208,8 +210,9 @@ def enviar_correo_nuevo_usuario(
             "mensaje": "No se encontraron correos para enviar"
         }
     correos_konnect = [
-        # "victor.hugo.silva01@gmail.com",
-        # "ij.innovaciones@gmail.com",
+        #"victor.hugo.silva01@gmail.com",
+        "ij.innovaciones@gmail.com",
+        "ernesto.veraza@clara.team", # este correo de Clara se agrega aqui ya que solo atiende peticiones de las utms no de cotizaciones
         "ara.castro@konnect.mx",
         "kfigueroa@konnect.mx"
     ]
@@ -220,7 +223,11 @@ def enviar_correo_nuevo_usuario(
         for correo in (correos_db + correos_konnect)
         if correo and correo.strip()
     })
-
+    token = crear_token({
+        "email": usuario.email,
+        "name": usuario.nombre,
+        "id_user": usuario.id
+    })
     template = env.get_template("usuario.html")
 
     html_content = template.render(
@@ -229,7 +236,8 @@ def enviar_correo_nuevo_usuario(
         telefono=usuario.celular,
         broker=broker.nombre if broker else "N/A",
         sede=sede.nombre if sede else "N/A",
-        financiera="Sin financiera"
+        financiera="Sin financiera",
+        token=token
     )
 
     print("📩 Enviando correo para usuario:", usuario.id)

@@ -6,11 +6,11 @@ import os
 UTM_SECRET_KEY = os.getenv("UTM_SECRET_KEY")
 ALGORITHM = "HS256"
 
-def crear_token(email: str):
+def crear_token(data_user: dict):
     payload = {
-        "email": email,
-        "name": "Juan Ramirez Melendez",
-        "user": 3,
+        "email": data_user["email"],
+        "name": data_user["name"],
+        "user": data_user["id_user"],
         "uso": "crear_utm",
         "exp": datetime.utcnow() + timedelta(hours=24)
     }

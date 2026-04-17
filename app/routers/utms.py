@@ -1,8 +1,8 @@
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, status, Query
-from sqlmodel import text
+from sqlmodel import select, text
 from app.db import SessionDep
-from app.models import Utms, UtmsCreate
+from app.models import Usuarios, Utms, UtmsCreate
 from app.auth.security import validar_token
 
 router = APIRouter(tags=["Utms"])
@@ -39,6 +39,14 @@ async def utms_by_tipo_user_id_If(session: SessionDep, idFin: int, idUsuario: Op
 
 @router.post("/utms-add", response_model=Utms, status_code=status.HTTP_201_CREATED)
 async def create_utm(session: SessionDep, utmRequest: UtmsCreate):
+
+    user = session.get(Usuarios, int(utmRequest.id_usuario))
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuario no existe"
+        )
 
     validar_token(utmRequest.token)
     nuevo = Utms(
