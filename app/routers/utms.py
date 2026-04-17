@@ -37,7 +37,7 @@ async def utms_by_tipo_user_id_If(session: SessionDep, idFin: int, idUsuario: Op
     print(result)
     return result
 
-@router.post("/utms", response_model=Utms, status_code=status.HTTP_201_CREATED)
+@router.post("/utms-add", response_model=Utms, status_code=status.HTTP_201_CREATED)
 async def create_utm(session: SessionDep, utmRequest: UtmsCreate):
 
     validar_token(utmRequest.token)

@@ -1,9 +1,29 @@
-<h2>Nuevo Usuario Registrado</h2>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.5;
+                color: black;
+            }
+            .footer {
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>Nuevo Usuario Registrado</h2>
 
-<p><strong>Nombre:</strong> {{ nombre }}</p>
-<p><strong>Correo:</strong> {{ email }}</p>
-<p><strong>Teléfono:</strong> {{ telefono }}</p>
-<p><strong>Broker Consultoria:</strong> {{ broker }}</p>
-<p><strong>Localidad:</strong> {{ sede }}</p>
-<hr>
-<p>Este es un mensaje automático del sistema.</p>
+        <p><strong>Nombre:</strong> {{ nombre }}</p>
+        <p><strong>Correo:</strong> {{ email }}</p>
+        <p><strong>Teléfono:</strong> {{ telefono }}</p>
+        <p><strong>Broker Consultoria:</strong> {{ broker }}</p>
+        <p><strong>Localidad:</strong> {{ sede }}</p>
+        <p>Podras configurar la UTM de nuestro nuevo socio en el siguiente link, mismo que estará habilitado durante las proximas 24hrs</p>
+        <a href="https://konecct-broker.web.app/utm?token={{folioKonnect}}" target="_blank">Da click aquí para registrar la UTM del socio Konnect </a>
+        <hr>
+        <p>Este es un mensaje automático del sistema.</p>
+    </body>
+</html>
