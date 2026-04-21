@@ -159,12 +159,15 @@ def mail_dispersion(data: dict, session: SessionDep):
     if cotizacion.estatus != 7:
         raise HTTPException(status_code=400, detail="La cotización no está en estatus Dispersión")
     correosIfs = obtener_mails_ifs(cotizacion, session)
-    correos = list(set(correosIfs + [ 
-        "kfigueroa@konnect.mx", "ara.castro@konnect.mx",
-        "gerencia.operativa@konnect.mx", "gerencia.corporativa@konnect.mx" 
-        ]))
+    # correos = list(set(correosIfs + [ 
+    #     "kfigueroa@konnect.mx", "ara.castro@konnect.mx",
+    #     "gerencia.operativa@konnect.mx", "gerencia.corporativa@konnect.mx" 
+    #     ]))
+    correos = ["victor.hugo.silva01@gmail.com"]
+    monto_formateado = "${:,.2f}".format(cotizacion.monto)
+
   
-    request = dict(folioKonnect=id_cotizacion, cliente=cotizacion.nombre, producto=producto.nombre)
+    request = dict(folioKonnect=id_cotizacion, cliente=cotizacion.nombre, producto=producto.nombre, monto=monto_formateado)
     
     template = env.get_template("dispersion.html")
     html_content = template.render(**request)
