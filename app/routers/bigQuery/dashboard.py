@@ -22,7 +22,7 @@ def sync_brokers(session: SessionDep):
     # return { "status": "ok", "rows_synced": len(brokers) }
     return len(brokers) 
 
-# @router.post("/brokers")  
+# @router.post("/categorias")  
 def sync_categorias(session: SessionDep):
     categorias = get_categorias_mysql(session)
 
