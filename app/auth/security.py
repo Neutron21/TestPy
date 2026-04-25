@@ -12,7 +12,7 @@ def crear_token(data_user: dict):
         "name": data_user["name"],
         "user": data_user["id_user"],
         "uso": "crear_utm",
-        "exp": datetime.utcnow() + timedelta(hours=24)
+        "exp": datetime.utcnow() + timedelta(hours=72)
     }
 
     token = jwt.encode(payload, UTM_SECRET_KEY, algorithm=ALGORITHM)
