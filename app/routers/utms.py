@@ -42,13 +42,24 @@ async def create_utm(session: SessionDep, utmRequest: UtmsCreate):
 
     user = session.get(Usuarios, int(utmRequest.id_usuario))
 
+    validar_token(utmRequest.token)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Usuario no existe"
         )
 
-    validar_token(utmRequest.token)
+    existing_utm = session.execute(
+        text("SELECT * FROM utms WHERE id_usuario = :id_usuario AND id_financiera = :id_financiera"),
+        {"id_usuario": utmRequest.id_usuario, "id_financiera": utmRequest.id_financiera}
+    ).first()
+
+    if existing_utm:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El usuario ya cuenta con una UTM para esta financiera"
+        )
+
     nuevo = Utms(
         id_usuario=utmRequest.id_usuario,
         id_financiera=utmRequest.id_financiera,

@@ -249,7 +249,7 @@ def enviar_correo_nuevo_usuario(
         enviar_correo_simple,
         html_content,
         lista_correos,
-        f"🆕 Nuevo Usuario - {usuario.nombre}"
+        f"Konnect 🆕 Nuevo Usuario - {usuario.nombre}"
     )
 
     return {
@@ -265,6 +265,10 @@ def mail_comentario_direccion(data: ReqMailComentarioDir, session: SessionDep):
     if not cotizacion:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
 
+    query_usuario = select(Usuarios).where(Usuarios.email == cotizacion.id_usuario)
+    correos_superiores = obtener_jefes(cotizacion.id_user, session)
+    usuario = session.exec(query_usuario).first()
+
     try:
         request_mail = SimpleNamespace(
             id_cotizacion=data.idCotizacion,
@@ -272,7 +276,10 @@ def mail_comentario_direccion(data: ReqMailComentarioDir, session: SessionDep):
             mensaje=data.message
         )
 
-        correos = [cotizacion.id_usuario]
+        if usuario.nivel == 1:
+            correos = correos_superiores
+        else:
+            correos = list(set([cotizacion.id_usuario] + correos_superiores))
 
         template = env.get_template("comentarioDir.html")
         html_content = template.render(

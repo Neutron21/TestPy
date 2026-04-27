@@ -13,7 +13,6 @@ from datetime import datetime, timedelta
 
 router = APIRouter(tags=["Usuarios"])
 
-
 # ============================================================
 # Obtener usuario por email → SOLO id y nombre
 # ============================================================
@@ -33,8 +32,6 @@ async def usuario_by_mail(email: str, session: SessionDep):
         )
 
     return user
-
-
 
 # ============================================================
 # Crear usuario →
@@ -204,4 +201,3 @@ async def payment_status(id_user: int, session: SessionDep):
     return {
         "status": "active"
     }
-
