@@ -29,7 +29,7 @@ class FinbeAbcCalculator(BaseFinanciera):
         print(f"t_pago: {t_pago}")
         com_apertura = self.cotizacion.monto * t_pago.c_apertura
         print(f"com_apertura: {t_pago.c_apertura}% de {self.cotizacion.monto} -> {com_apertura}")
-        calc_pago_konnect = t_pago.pago_a_konnect * com_apertura
+        calc_pago_konnect = t_pago.pago_a_konnect * self.cotizacion.monto
         print(f"Pago Konnect: {calc_pago_konnect}, {t_pago.pago_a_konnect} de {com_apertura}")
     
         match self.id_membresia:
