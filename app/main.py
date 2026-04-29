@@ -1,3 +1,5 @@
+from datetime import datetime
+from jwt import decode as jwt_decode
 import os
 import sys
 
@@ -106,7 +108,8 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         token = auth_header.split(" ")[1]
 
         try:
-            decoded_token = auth.verify_id_token(token)
+            decoded_token = auth.verify_id_token(token, clock_skew_seconds=300)
+
             firebase_project_id = os.getenv("ID_PROJECT")
             if decoded_token["aud"] != firebase_project_id:
                 raise ValueError("Token inválido para este proyecto")
@@ -114,7 +117,28 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             request.state.user = decoded_token
 
         except Exception as e:
-            return self.unauthorized(f"Token inválido: {str(e)}")
+
+            try:
+                decoded_unverified = jwt_decode(token, options={"verify_signature": False})
+
+                now = datetime.datetime.utcnow().timestamp()
+                iat = decoded_unverified.get("iat")
+                exp = decoded_unverified.get("exp")
+
+                if iat and iat > now + 5:
+                    logger.error(f"⏱️ Token del FUTURO detectado. iat: {iat}, now: {now}")
+                    return self.unauthorized("El reloj del dispositivo está adelantado")
+
+                if exp and exp < now:
+                    logger.error(f"⌛ Token EXPIRADO. exp: {exp}, now: {now}")
+                    return self.unauthorized("Sesión expirada, inicia sesión nuevamente")
+
+                logger.error(f"❌ Error desconocido en token: {str(e)}")
+                return self.unauthorized("Token inválido")
+
+            except Exception as decode_error:
+                logger.error(f"🔥 No se pudo decodificar el token: {str(decode_error)}")
+                return self.unauthorized("Token inválido. No se pudo decodificar")
 
         return await call_next(request)
 

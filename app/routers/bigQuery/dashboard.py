@@ -4,8 +4,10 @@ from app.routers.bigQuery.service_mysql import (get_brokers_mysql, get_cotizacio
                                                 get_financieras_mysql, get_productos_mysql, get_sedes_mysql, get_usuarios_mysql,
                                                 get_categorias_mysql, get_subCategorias_mysql)
 from app.routers.bigQuery.service_bQ import (
+    ensure_table,
     truncate_table,
-    insert_rows
+    insert_rows,
+    SCHEMAS
 )
 
 router = APIRouter(prefix="/sync/bigquery", tags=["BigQuery Sync"])
@@ -16,6 +18,7 @@ def sync_brokers(session: SessionDep):
 
     if not brokers:
         raise HTTPException(400, "No hay brokers para sincronizar")
+    ensure_table("analytics_konnect", "brokers", SCHEMAS["brokers"])
     truncate_table("analytics_konnect", "brokers")
     insert_rows("analytics_konnect", "brokers", brokers)
 
@@ -28,6 +31,7 @@ def sync_categorias(session: SessionDep):
 
     if not categorias:
         raise HTTPException(400, "No hay categorias para sincronizar")
+    ensure_table("analytics_konnect", "categorias", SCHEMAS["categorias"])
     truncate_table("analytics_konnect", "categorias")
     insert_rows("analytics_konnect", "categorias", categorias)
 
@@ -40,6 +44,7 @@ def sync_estatus_tramites(session: SessionDep):
 
     if not estatus_tramites:
         raise HTTPException(400, "No hay estatus_tramites para sincronizar")
+    ensure_table("analytics_konnect", "estatus_tramites", SCHEMAS["estatus_tramites"])
     truncate_table("analytics_konnect", "estatus_tramites")
     insert_rows("analytics_konnect", "estatus_tramites", estatus_tramites)
 
@@ -52,6 +57,7 @@ def sync_cotizacion(session: SessionDep):
 
     if not cotizacion:
         raise HTTPException(400, "No hay cotizacion para sincronizar")
+    ensure_table("analytics_konnect", "cotizacion", SCHEMAS["cotizacion"])
     truncate_table("analytics_konnect", "cotizacion")
     insert_rows("analytics_konnect", "cotizacion", cotizacion)
 
@@ -64,6 +70,7 @@ def sync_productos(session: SessionDep):
 
     if not productos:
         raise HTTPException(400, "No hay productos para sincronizar")
+    ensure_table("analytics_konnect", "productos", SCHEMAS["productos"])
     truncate_table("analytics_konnect", "productos")
     insert_rows("analytics_konnect", "productos", productos)
 
@@ -77,6 +84,7 @@ def sync_financieras(session: SessionDep):
 
     if not financieras:
         raise HTTPException(400, "No hay financieras para sincronizar")
+    ensure_table("analytics_konnect", "financieras", SCHEMAS["financieras"])
     truncate_table("analytics_konnect", "financieras")
     insert_rows("analytics_konnect", "financieras", financieras)
 
@@ -89,6 +97,7 @@ def sync_sedes(session: SessionDep):
 
     if not sedes:
         raise HTTPException(400, "No hay sedes para sincronizar")
+    ensure_table("analytics_konnect", "sedes", SCHEMAS["sedes"])
     truncate_table("analytics_konnect", "sedes")
     insert_rows("analytics_konnect", "sedes", sedes)
 
@@ -101,6 +110,7 @@ def sync_subCategorias(session: SessionDep):
 
     if not subCategorias:
         raise HTTPException(400, "No hay subCategorias para sincronizar")
+    ensure_table("analytics_konnect", "subCategorias", SCHEMAS["subCategorias"])
     truncate_table("analytics_konnect", "subCategorias")
     insert_rows("analytics_konnect", "subCategorias", subCategorias)
 
@@ -113,6 +123,7 @@ def sync_usuarios(session: SessionDep):
 
     if not usuarios:
         raise HTTPException(400, "No hay usuarios para sincronizar")
+    ensure_table("analytics_konnect", "usuarios", SCHEMAS["usuarios"])
     truncate_table("analytics_konnect", "usuarios")
     insert_rows("analytics_konnect", "usuarios", usuarios)
 
