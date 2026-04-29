@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Header
 from sqlalchemy import text
-from sqlmodel import select
+from sqlmodel import and_, select
 from jinja2 import Environment, FileSystemLoader
 import os
 import shutil
@@ -230,3 +230,21 @@ def syncAllDashboard(session):
         "status": "ok",
         "synced": results
     }
+from datetime import datetime, date
+from sqlalchemy import or_, extract, func
+
+async def obtener_usuarios_vencimiento(session: SessionDep):
+    hoy = date.today()
+    anio_actual = hoy.year
+    mes_actual = hoy.month
+
+    statement = select(Usuarios).where(
+        or_(
+            Usuarios.fecha_vencimiento < hoy,
+            and_(
+                extract('month', Usuarios.fecha_vencimiento) == mes_actual,
+                extract('year', Usuarios.fecha_vencimiento) == anio_actual
+            )
+        )
+    )
+    return session.exec(statement).all()

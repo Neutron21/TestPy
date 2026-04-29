@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+        .container {
+            padding: 20px;
+        }
+        .header-title {
+            color: #1a73e8;
+            border-bottom: 2px solid #1a73e8;
+            padding-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background-color: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .footer {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        .badge {
+            background-color: #1a73e8;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="header-title">Catálogo de Socios Konnect</h2>
+
+        <p>Hola,</p>
+        <p>Se comparte el listado actualizado de socios registrados en la plataforma.</p>
+
+        <p>Total de registros: <span class="badge">{{ total }}</span></p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Broker</th>
+                    <th>Sede</th>
+                    <th>Celular</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr>
+                    <td>{{ u.nombre }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.broker }}</td>
+                    <td>{{ u.sede }}</td>
+                    <td>{{ u.celular }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="footer">
+            <img src="data:image/png;base64,{{ imagen_b64 }}" 
+                 alt="Firma" 
+                 style="width: 300px;">
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            padding: 20px;
+        }
+        .header-title {
+            color: #1a73e8;
+            border-bottom: 2px solid #1a73e8;
+            padding-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #202124;
+            font-weight: bold;
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .status-vencido {
+            color: #d93025;
+            font-weight: bold;
+        }
+        .status-proximo {
+            color: #f29900;
+            font-weight: bold;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #1a73e8;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="header-title">Reporte de Cuentas: Vencidos y por Vencer</h2>
+        
+        <p>Hola,</p>
+        <p>Se adjunta el listado de usuarios que requieren atención para el periodo de <strong>{{ mes_reporte }}</strong>.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Usuario / Cliente</th>
+                    <th>Correo</th>
+                    <th>Vencimiento</th>
+                    <th>Estatus</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in usuarios %}
+                <tr>
+                    <td>{{ item.nombre }}</td>
+                    <td>{{ item.email }}</td>
+                    <td>{{ item.vencimiento }}</td>
+                    <td class="{{ 'status-vencido' if item.es_vencido else 'status-proximo' }}">
+                        {{ 'VENCIDO' if item.es_vencido else 'POR VENCER' }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p>Para más detalles y gestión de estas cuentas, por favor:</p>
+        
+        <a href="https://konecct-broker.web.app/" class="button" target="_blank">
+            Ir a la Plataforma Konnect
+        </a>
+        
+        <div class="footer">
+            <img src="data:image/png;base64,{{ imagen_b64 }}" alt="Firma de KONNECT" style="width: 300px; height: auto;">
+        </div>
+    </div>
+</body>
+</html>
