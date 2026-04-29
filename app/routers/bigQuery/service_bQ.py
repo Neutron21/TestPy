@@ -21,9 +21,12 @@ def truncate_table(dataset, table):
     client.query(query).result()
 
 def insert_rows(dataset, table, rows):
+    print(f"🔹 Insertando {len(rows)} filas en {dataset}.{table}...")
     table_ref = f"{dataset}.{table}"
     errors = client.insert_rows_json(table_ref, rows)
+    print(f"🔥 Filas insertadas en la tabla {table}")
     if errors:
+        print("❌ BigQuery insert error:", errors)
         raise RuntimeError(errors)
     
 SCHEMAS = {
@@ -65,10 +68,16 @@ SCHEMAS = {
     "financieras": [
         bigquery.SchemaField("id", "INT64"),
         bigquery.SchemaField("nombre", "STRING"),
+        bigquery.SchemaField("tipo", "STRING"),
+        bigquery.SchemaField("fase", "INT64"),
     ],
     "productos": [
         bigquery.SchemaField("id", "INT64"),
         bigquery.SchemaField("nombre", "STRING"),
+        bigquery.SchemaField("institucion_id", "INT64"),
+        bigquery.SchemaField("id_categoria", "INT64"),
+        bigquery.SchemaField("id_subCategoria", "INT64"),
+        bigquery.SchemaField("plazo", "STRING"),
     ],
     "sedes": [
         bigquery.SchemaField("id", "INT64"),
@@ -76,14 +85,14 @@ SCHEMAS = {
     ],
     "subCategorias": [
         bigquery.SchemaField("id", "INT64"),
+        bigquery.SchemaField("id_categoria", "INT64"),
         bigquery.SchemaField("nombre", "STRING"),
     ],
      "usuarios": [
-         bigquery.SchemaField("id", "INT64"),
+        bigquery.SchemaField("id", "INT64"),
         bigquery.SchemaField("nombre", "STRING"),
         bigquery.SchemaField("email", "STRING"),
         bigquery.SchemaField("rol", "STRING"),
-        bigquery.SchemaField("rfc", "STRING"),
         bigquery.SchemaField("id_broker", "INT64"),
         bigquery.SchemaField("id_sede", "INT64"),
         bigquery.SchemaField("membresia", "INT64"),
@@ -91,6 +100,5 @@ SCHEMAS = {
         bigquery.SchemaField("nivel", "INT64"),
         bigquery.SchemaField("id_superior", "INT64"),
         bigquery.SchemaField("id_financiera", "INT64"),
-        bigquery.SchemaField("comisiones", "STRING"),
     ],
 }
