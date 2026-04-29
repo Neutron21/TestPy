@@ -108,7 +108,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         token = auth_header.split(" ")[1]
 
         try:
-            decoded_token = auth.verify_id_token(token, clock_skew_seconds=300)
+            decoded_token = auth.verify_id_token(token, clock_skew_seconds=60)
 
             firebase_project_id = os.getenv("ID_PROJECT")
             if decoded_token["aud"] != firebase_project_id:
@@ -117,7 +117,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             request.state.user = decoded_token
 
         except Exception as e:
-
+            # return self.unauthorized(f"Token inválido: {str(e)}")
             try:
                 decoded_unverified = jwt_decode(token, options={"verify_signature": False})
 
