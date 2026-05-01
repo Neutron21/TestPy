@@ -121,17 +121,17 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             try:
                 decoded_unverified = jwt_decode(token, options={"verify_signature": False})
 
-                now = datetime.datetime.utcnow().timestamp()
+                now = datetime.utcnow().timestamp()
                 iat = decoded_unverified.get("iat")
                 exp = decoded_unverified.get("exp")
 
-                if iat and iat > now + 5:
+                if iat and iat > now + 1:
                     logger.error(f"⏱️ Token del FUTURO detectado. iat: {iat}, now: {now}")
                     return self.unauthorized("El reloj del dispositivo está adelantado")
 
                 if exp and exp < now:
                     logger.error(f"⌛ Token EXPIRADO. exp: {exp}, now: {now}")
-                    return self.unauthorized("Sesión expirada, inicia sesión nuevamente")
+                    return self.unauthorized("Session Expired, inicia sesión nuevamente")
 
                 logger.error(f"❌ Error desconocido en token: {str(e)}")
                 return self.unauthorized("Token inválido")
