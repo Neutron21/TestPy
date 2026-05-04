@@ -63,6 +63,7 @@ class ProductoFormatoTipoPersona(SQLModel, table=True):
 class UsuarioDTO(BaseModel):
     nombre: str
     email: str
+    rfc: Optional[str] = None
     rol: str
     membresia: Optional[int] = None
     id_broker: Optional[int] = None
