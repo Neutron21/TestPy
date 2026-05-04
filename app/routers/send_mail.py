@@ -344,7 +344,12 @@ async def reporte_vencimientos(
     if not datos_tabla:
         return {"message": "No hay cuentas vencidas ni por vencer este mes."}
 
-    lista_correos = ["victor.hugo.silva01@gmail.com"]
+    lista_correos = [
+        "victor.hugo.silva01@gmail.com",
+        "info@konnect.mx"," "
+        "ara.castro@konnect.mx",
+        "kfigueroa@konnect.mx"
+        ]
 
     img_path = os.path.join(ruta_base, "utils", "static", "firma.png")
     imagen_b64 = ""
@@ -370,7 +375,7 @@ async def reporte_vencimientos(
         enviar_correo_simple,
         html_content,
         lista_correos,
-        f"Konnect 📅 Reporte de Vencimientos - {mes_nombre}"
+        f"Konnect  Reporte de Vencimientos - {mes_nombre}"
     )
 
     print("📧 Enviado a:", lista_correos)
