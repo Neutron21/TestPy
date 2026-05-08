@@ -55,6 +55,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th>Nombre</th>
                     <th>Correo</th>
                     <th>Broker</th>
@@ -65,6 +66,7 @@
             <tbody>
                 {% for u in usuarios %}
                 <tr>
+                    <td>{{ u.id }}</td>
                     <td>{{ u.nombre }}</td>
                     <td>{{ u.email }}</td>
                     <td>{{ u.broker }}</td>

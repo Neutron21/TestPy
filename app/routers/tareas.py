@@ -238,6 +238,7 @@ async def reporte_socios(
 ):
     statement = text("""
         SELECT 
+            u.id,         
             u.nombre,
             u.email,
             b.nombre AS broker,
@@ -258,6 +259,7 @@ async def reporte_socios(
     datos_tabla = []
     for u in usuarios:
         datos_tabla.append({
+            "id": u[0],
             "nombre": u[0],
             "email": u[1],
             "broker": u[2],
@@ -272,9 +274,9 @@ async def reporte_socios(
 
     lista_correos = ["ij.innovaciones@gmail.com",
         "victor.hugo.silva01@gmail.com",
-        "info@konnect.mx", 
-        "ara.castro@konnect.mx",
-        "kfigueroa@konnect.mx"
+        # "info@konnect.mx", 
+        # "ara.castro@konnect.mx",
+        # "kfigueroa@konnect.mx"
         ]
 
     if not lista_correos:
