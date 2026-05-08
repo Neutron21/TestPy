@@ -428,9 +428,9 @@ async def reporte_socios(
     correos_query = text("SELECT correo FROM correos")
     correos = session.exec(correos_query).all()
 
-    # lista_correos = [c[0] for c in correos]
+    lista_correos = [c[0] for c in correos]
 
-    lista_correos = ["victor.hugo.silva01@gmail.com"]
+    # lista_correos = ["victor.hugo.silva01@gmail.com"]
 
     if not lista_correos:
         return {"message": "No hay correos destino."}

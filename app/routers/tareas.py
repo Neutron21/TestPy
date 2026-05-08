@@ -274,9 +274,9 @@ async def reporte_socios(
 
     lista_correos = ["ij.innovaciones@gmail.com",
         "victor.hugo.silva01@gmail.com",
-        # "info@konnect.mx", 
-        # "ara.castro@konnect.mx",
-        # "kfigueroa@konnect.mx"
+        "info@konnect.mx", 
+        "ara.castro@konnect.mx",
+        "kfigueroa@konnect.mx"
         ]
 
     if not lista_correos:
