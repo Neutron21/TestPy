@@ -9,7 +9,7 @@ from sqlmodel import and_, extract, or_, select, text
 from app.db import SessionDep
 from app.routers.financieras import getFinancierasUtms
 from app.auth.security import crear_token
-from app.routers.tareas import obtener_usuarios_vencimiento, validar_cron_token
+from app.routers.tareas import validar_cron_token
 from utils.email import enviar_correo, enviar_correo_informativo, enviar_correo_simple, notificacion_if, enviar_correo_dispersion, send_mail_comment
 from app.utils.logger_config import logger
 from jinja2 import Environment, FileSystemLoader
@@ -395,6 +395,7 @@ async def reporte_socios(
 ):
     statement = text("""
         SELECT 
+            id,         
             nombre,
             email,
             id_broker AS broker,
@@ -412,20 +413,24 @@ async def reporte_socios(
 
     datos_tabla = []
     for u in usuarios:
-        datos_tabla.append({
-            "nombre": u[0],
-            "email": u[1],
-            "broker": u[2],
-            "sede": u[3],
-            "celular": u[4]
-        })
+        datos_tabla = []
+
+        for u in usuarios:
+            datos_tabla.append({
+                "id": u[0],
+                "nombre": u[1],
+                "email": u[2],
+                "broker": u[3],
+                "sede": u[4],
+                "celular": u[5]
+            })
 
     correos_query = text("SELECT correo FROM correos")
     correos = session.exec(correos_query).all()
 
-    lista_correos = [c[0] for c in correos]
+    # lista_correos = [c[0] for c in correos]
 
-    # lista_correos = ["victor.hugo.silva01@gmail.com"]
+    lista_correos = ["victor.hugo.silva01@gmail.com"]
 
     if not lista_correos:
         return {"message": "No hay correos destino."}
