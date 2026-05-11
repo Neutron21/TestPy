@@ -292,3 +292,88 @@ def send_mail_comment(request, correos, mensaje_html):
     except Exception as e:
         logger.error(f"❌ Error enviando correo: {str(e)}")
         return {"ok": False, "error": str(e)}
+    
+import os
+import io
+import zipfile  
+import base64
+import requests
+import logging
+from dotenv import load_dotenv 
+
+logger = logging.getLogger(__name__)
+
+load_dotenv()
+
+BREVO_API_KEY = os.getenv("BREVO_KEY") 
+BREVO_URL = os.getenv("BREVO_LINK")
+main_path = os.getenv("RUTA_COTIZACIONES")
+
+def enviar_correo_con_expediente_zip(cotizacion, mensaje_html, correos, folder_name):
+    print(f"🚀 Iniciando tarea para Cotización: {cotizacion.id_cotizacion}")
+    
+    if not main_path:
+        print("❌ ERROR: RUTA_COTIZACIONES no definida en el .env")
+        logger.error("❌ ERROR: La variable RUTA_COTIZACIONES no está definida en el .env")
+        return
+
+    carpeta = os.path.join(main_path, folder_name)
+    print(f"📂 Buscando archivos en: {carpeta}")
+    
+    if not os.path.isdir(carpeta):
+        print(f"❌ Carpeta NO encontrada: {carpeta}")
+        return
+
+    try:
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            archivos_encontrados = os.listdir(carpeta)
+            agregados = 0
+            for archivo in archivos_encontrados:
+                ruta_archivo = os.path.join(carpeta, archivo)
+                if os.path.isfile(ruta_archivo) and archivo.lower().endswith(('pdf', 'jpg', 'jpeg', 'png', 'zip', 'rar', 'docx', 'xlsx')):
+                    zipf.write(ruta_archivo, arcname=archivo)
+                    agregados += 1
+            
+            if agregados == 0:
+                print("⚠️ Carpeta vacía o sin archivos válidos.")
+                return
+
+        buffer.seek(0)
+        zip_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        print(f"📦 ZIP generado con {agregados} archivos.")
+        
+    except Exception as e:
+        print(f"❌ Error al comprimir: {str(e)}")
+        return
+
+    firma_b64 = fillFirma()
+    
+    data = {
+        "sender": {"email": "web.app.no.reply@konnect.mx", "name": "Konnect"},
+        "to": [{"email": e} for e in correos],
+        "subject": f"Expediente Digital - Cotización {cotizacion.id_cotizacion} - {cotizacion.nombre}",
+        "htmlContent": mensaje_html,
+        "attachment": [
+            {
+                "content": zip_base64,
+                "name": f"Expediente_Cot_{cotizacion.id_cotizacion}.zip"
+            }
+        ]
+    }
+
+    if firma_b64:
+        data["attachment"].append({"name": "firma.png", "content": firma_b64})
+
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+
+    try:
+        print("📤 Enviando a Brevo...")
+        res = requests.post(BREVO_URL, json=data, headers=headers)
+        print(f"✅ Brevo response: ({res.status_code}) {res.text}")
+    except Exception as e:
+        print(f"❌ Fallo crítico al enviar: {str(e)}")

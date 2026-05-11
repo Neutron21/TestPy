@@ -10,7 +10,7 @@ from app.db import SessionDep
 from app.routers.financieras import getFinancierasUtms
 from app.auth.security import crear_token
 from app.routers.tareas import validar_cron_token
-from utils.email import enviar_correo, enviar_correo_informativo, enviar_correo_simple, notificacion_if, enviar_correo_dispersion, send_mail_comment
+from utils.email import enviar_correo, enviar_correo_con_expediente_zip, enviar_correo_informativo, enviar_correo_simple, notificacion_if, enviar_correo_dispersion, send_mail_comment
 from app.utils.logger_config import logger
 from jinja2 import Environment, FileSystemLoader
 from app.models import Productos
@@ -109,15 +109,21 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         if request.isNew and cotizacion.id_financiera == 1:
             correosKonfio = ["maria.mendoza@konfio.mx", "luis.ramirez@konfio.mx"]
 
-        correos = list(set(correosIF + correosKonfio + correos_superiores + ["ara.castro@konnect.mx", "gerencia.operativa@konnect.mx"]))
+        correos = list(set(correosIF + correosKonfio + correos_superiores + ["ara.castro@konnect.mx", "gerencia.operativa@konnect.mx","victor.hugo.silva01@gmail.com"]))
 
         template_name = "cotizacion.html" if request.isNew else "updateFiles.html"
-        withLink = financiera.tipo == 'M'
+        withLink = financiera.tipo == 'M' and (cotizacion.id_financiera != 39)
 
         template = env.get_template(template_name)
         html_content = template.render(**vars(bodyMail), isLink=withLink)
 
-        background_tasks.add_task(enviar_correo, bodyMail, html_content, correos)
+        if cotizacion.id_financiera == 39:
+        
+            background_tasks.add_task(enviar_correo_con_expediente_zip, cotizacion, html_content, correos, bodyMail.cotizacionB64)
+        
+        else:
+            background_tasks.add_task(enviar_correo, bodyMail, html_content, correos)
+
 
         return {"mensaje": "Solicitud recibida, el correo se está enviando en segundo plano."}
     except Exception as e:
