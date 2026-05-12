@@ -1,18 +1,25 @@
 import base64
+import io
+import logging
+import os
+import time
+import zipfile
 
 import requests
-from email.mime.image import MIMEImage
-import os
+from dotenv import load_dotenv
 
+from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import time
-from app.utils.logger_config import logger
-from app.models import ReqMail
 
+from app.models import ReqMail
+from app.utils.logger_config import logger
+
+load_dotenv()
 
 BREVO_API_KEY = os.getenv("BREVO_KEY") 
 BREVO_URL = os.getenv("BREVO_LINK")
+main_path = os.getenv("RUTA_COTIZACIONES")
 
 def fillFirma():
     firma_path = os.path.join(os.path.dirname(__file__), "static", "firma.png")
@@ -292,26 +299,10 @@ def send_mail_comment(request, correos, mensaje_html):
     except Exception as e:
         logger.error(f"❌ Error enviando correo: {str(e)}")
         return {"ok": False, "error": str(e)}
-    
-import os
-import io
-import zipfile  
-import base64
-import requests
-import logging
-from dotenv import load_dotenv 
-
-logger = logging.getLogger(__name__)
-
-load_dotenv()
-
-BREVO_API_KEY = os.getenv("BREVO_KEY") 
-BREVO_URL = os.getenv("BREVO_LINK")
-main_path = os.getenv("RUTA_COTIZACIONES")
 
 def enviar_correo_con_expediente_zip(cotizacion, mensaje_html, correos, folder_name):
     print(f"🚀 Iniciando tarea para Cotización: {cotizacion.id_cotizacion}")
-    
+    destinatario = [cotizacion.id_usuario]
     if not main_path:
         print("❌ ERROR: RUTA_COTIZACIONES no definida en el .env")
         logger.error("❌ ERROR: La variable RUTA_COTIZACIONES no está definida en el .env")
@@ -331,7 +322,7 @@ def enviar_correo_con_expediente_zip(cotizacion, mensaje_html, correos, folder_n
             agregados = 0
             for archivo in archivos_encontrados:
                 ruta_archivo = os.path.join(carpeta, archivo)
-                if os.path.isfile(ruta_archivo) and archivo.lower().endswith(('pdf', 'jpg', 'jpeg', 'png', 'zip', 'rar', 'docx', 'xlsx')):
+                if os.path.isfile(ruta_archivo) and archivo.lower().endswith(('pdf', 'jpg', 'jpeg', 'png', 'zip', 'rar', 'docx', 'xlsx','xls')):
                     zipf.write(ruta_archivo, arcname=archivo)
                     agregados += 1
             
@@ -351,13 +342,14 @@ def enviar_correo_con_expediente_zip(cotizacion, mensaje_html, correos, folder_n
     
     data = {
         "sender": {"email": "web.app.no.reply@konnect.mx", "name": "Konnect"},
-        "to": [{"email": e} for e in correos],
+        "to": [{"email": e} for e in destinatario],
+        "cc": [{"email": e} for e in correos],
         "subject": f"Expediente Digital - Cotización {cotizacion.id_cotizacion} - {cotizacion.nombre}",
         "htmlContent": mensaje_html,
         "attachment": [
             {
                 "content": zip_base64,
-                "name": f"Expediente_Cot_{cotizacion.id_cotizacion}.zip"
+                "name": f"Expediente_{cotizacion.id_cotizacion}.zip"
             }
         ]
     }

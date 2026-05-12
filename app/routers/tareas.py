@@ -249,6 +249,7 @@ async def reporte_socios(
         INNER JOIN sedes s on s.id = u.id_sede
         WHERE u.id_financiera IS NULL
         AND u.id NOT IN (1,2,9,14,15,23,42,43)
+        ORDER BY u.id
     """)
 
     usuarios = session.exec(statement).all()
@@ -260,11 +261,11 @@ async def reporte_socios(
     for u in usuarios:
         datos_tabla.append({
             "id": u[0],
-            "nombre": u[0],
-            "email": u[1],
-            "broker": u[2],
-            "sede": u[3],
-            "celular": u[4]
+            "nombre": u[1],
+            "email": u[2],
+            "broker": u[3],
+            "sede": u[4],
+            "celular": u[5]
         })
 
     correos_query = text("SELECT correo FROM correos")
@@ -273,7 +274,6 @@ async def reporte_socios(
     # lista_correos = [c[0] for c in correos]
 
     lista_correos = ["ij.innovaciones@gmail.com",
-        "victor.hugo.silva01@gmail.com",
         "info@konnect.mx", 
         "ara.castro@konnect.mx",
         "kfigueroa@konnect.mx"
@@ -355,7 +355,6 @@ async def reporte_vencimientos(
 
     lista_correos = [
         "ij.innovaciones@gmail.com",
-        "victor.hugo.silva01@gmail.com",
         "info@konnect.mx", 
         "ara.castro@konnect.mx",
         "kfigueroa@konnect.mx"

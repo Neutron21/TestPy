@@ -109,7 +109,7 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         if request.isNew and cotizacion.id_financiera == 1:
             correosKonfio = ["maria.mendoza@konfio.mx", "luis.ramirez@konfio.mx"]
 
-        correos = list(set(correosIF + correosKonfio + correos_superiores + ["ara.castro@konnect.mx", "gerencia.operativa@konnect.mx","victor.hugo.silva01@gmail.com"]))
+        correos = list(set(correosIF + correosKonfio + correos_superiores + ["ara.castro@konnect.mx", "gerencia.operativa@konnect.mx"]))
 
         template_name = "cotizacion.html" if request.isNew else "updateFiles.html"
         withLink = financiera.tipo == 'M' and (cotizacion.id_financiera != 39)
@@ -118,9 +118,7 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         html_content = template.render(**vars(bodyMail), isLink=withLink)
 
         if cotizacion.id_financiera == 39:
-        
             background_tasks.add_task(enviar_correo_con_expediente_zip, cotizacion, html_content, correos, bodyMail.cotizacionB64)
-        
         else:
             background_tasks.add_task(enviar_correo, bodyMail, html_content, correos)
 
@@ -130,7 +128,6 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         logger.error(f"Request :( {request}")
         logger.error(f"Error al preparar correo: {str(e)}")
         return {"mensaje": str(e)}
-
 
 
 @router.post("/comentario-if")
@@ -309,168 +306,3 @@ def mail_comentario_direccion(data: ReqMailComentarioDir, session: SessionDep):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
     
-from datetime import timedelta
-
-from datetime import date, timedelta
-from fastapi import Depends, BackgroundTasks, HTTPException
-
-@router.post("/reporte-vencimientos")
-async def reporte_vencimientos(
-    session: SessionDep, 
-    background_tasks: BackgroundTasks, 
-    _ = Depends(validar_cron_token)
-):
-    hoy = date.today()
-
-    # 🔹 Traer usuarios con fecha de pago
-    statement = select(Usuarios).where(Usuarios.f_ultimo_pago != None)
-    usuarios = session.exec(statement).all()
-
-    if not usuarios:
-        return {"message": "No hay usuarios con pagos registrados."}
-
-    datos_tabla = []
-
-    for u in usuarios:
-        # 🔥 calcular vencimiento (30 días después)
-        fecha_vencimiento = u.f_ultimo_pago + timedelta(days=30)
-
-        # 🔥 condición: vencidos o vencen este mes
-        if (
-            fecha_vencimiento < hoy or
-            (fecha_vencimiento.month == hoy.month and fecha_vencimiento.year == hoy.year)
-        ):
-            datos_tabla.append({
-                "nombre": u.nombre,
-                "email": u.email,
-                "vencimiento": fecha_vencimiento.strftime("%d/%m/%Y"),
-                "es_vencido": fecha_vencimiento < hoy
-            })
-
-    if not datos_tabla:
-        return {"message": "No hay cuentas vencidas ni por vencer este mes."}
-
-    lista_correos = [
-        "victor.hugo.silva01@gmail.com",
-        "info@konnect.mx"," "
-        "ara.castro@konnect.mx",
-        "kfigueroa@konnect.mx"
-        ]
-
-    img_path = os.path.join(ruta_base, "utils", "static", "firma.png")
-    imagen_b64 = ""
-    if os.path.exists(img_path):
-        with open(img_path, "rb") as f:
-            imagen_b64 = base64.b64encode(f.read()).decode("utf-8")
-
-    meses_es = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
-                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-    mes_nombre = meses_es[hoy.month - 1]
-
-    try:
-        template = env.get_template("reporte_vencidos.html")
-        html_content = template.render(
-            usuarios=datos_tabla,
-            mes_reporte=f"{mes_nombre} {hoy.year}",
-            imagen_b64=imagen_b64
-        )
-    except Exception as e:
-        return {"error_template": str(e)}
-
-    background_tasks.add_task(
-        enviar_correo_simple,
-        html_content,
-        lista_correos,
-        f"Konnect  Reporte de Vencimientos - {mes_nombre}"
-    )
-
-    print("📧 Enviado a:", lista_correos)
-    print("📊 Total registros:", len(datos_tabla))
-
-    return {
-        "status": "success",
-        "enviado_a": lista_correos,
-        "total_registros": len(datos_tabla),
-        "mes": mes_nombre
-    }
-@router.post("/reporte-socios")
-async def reporte_socios(
-    session: SessionDep,
-    background_tasks: BackgroundTasks,
-    _ = Depends(validar_cron_token)
-):
-    statement = text("""
-        SELECT 
-            id,         
-            nombre,
-            email,
-            id_broker AS broker,
-            id_sede AS sede,
-            celular
-        FROM usuarios
-        WHERE id_financiera IS NULL
-        AND id NOT IN (1,2,9,14,15,42,43)
-    """)
-
-    usuarios = session.exec(statement).all()
-
-    if not usuarios:
-        return {"message": "No hay usuarios para enviar."}
-
-    datos_tabla = []
-    for u in usuarios:
-        datos_tabla = []
-
-        for u in usuarios:
-            datos_tabla.append({
-                "id": u[0],
-                "nombre": u[1],
-                "email": u[2],
-                "broker": u[3],
-                "sede": u[4],
-                "celular": u[5]
-            })
-
-    correos_query = text("SELECT correo FROM correos")
-    correos = session.exec(correos_query).all()
-
-    lista_correos = [c[0] for c in correos]
-
-    # lista_correos = ["victor.hugo.silva01@gmail.com"]
-
-    if not lista_correos:
-        return {"message": "No hay correos destino."}
-
-    img_path = os.path.join(ruta_base, "utils", "static", "firma.png")
-    imagen_b64 = ""
-
-    if os.path.exists(img_path):
-        with open(img_path, "rb") as f:
-            imagen_b64 = base64.b64encode(f.read()).decode("utf-8")
-
-    try:
-        template = env.get_template("reporte_socios.html")
-        html_content = template.render(
-            usuarios=datos_tabla,
-            total=len(datos_tabla),
-            imagen_b64=imagen_b64
-        )
-    except Exception as e:
-        return {"error_template": str(e)}
-
- 
-    background_tasks.add_task(
-        enviar_correo_simple,
-        html_content,
-        lista_correos,
-        "Konnect 📊 Catálogo de Socios"
-    )
-
-    print("📧 Enviado a:", lista_correos)
-    print("📊 Total usuarios:", len(datos_tabla))
-
-    return {
-        "status": "success",
-        "enviado_a": lista_correos,
-        "total": len(datos_tabla)
-    }
