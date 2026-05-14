@@ -217,7 +217,7 @@ def enviar_correo_nuevo_usuario(
             "mensaje": "No se encontraron correos para enviar"
         }
     correos_konnect = [
-        #"victor.hugo.silva01@gmail.com",
+        "evolucion.talento@konnect.mx",
         "ij.innovaciones@gmail.com",
         "ernesto.veraza@clara.team", # este correo de Clara se agrega aqui ya que solo atiende peticiones de las utms no de cotizaciones
         "ara.castro@konnect.mx",

@@ -146,11 +146,6 @@ async def enviar_correo_recordatorio(session: SessionDep, tipo: Optional[int],ba
    
     return {"mensaje": "Proceso de envío iniciado"}
 
-from datetime import date
-
-from datetime import date
-
-from datetime import date
 
 @router.get("/cotizacion/utils/fecha-pago-vencida")
 async def cotizaciones_fecha_pago_vencida(session: SessionDep):
@@ -354,6 +349,7 @@ async def reporte_vencimientos(
         return {"message": "No hay cuentas vencidas ni por vencer este mes."}
 
     lista_correos = [
+        "evolucion.talento@konnect.mx",
         "ij.innovaciones@gmail.com",
         "info@konnect.mx", 
         "ara.castro@konnect.mx",
