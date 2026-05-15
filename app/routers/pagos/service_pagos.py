@@ -9,6 +9,7 @@ from app.routers.pagos.model.fluxoCalculator import  FluxoCalculator
 from app.routers.pagos.model.claraCalculator import  ClaraCalculator
 from app.routers.pagos.model.jeevesCalculator import JeevesCalculator
 from app.routers.pagos.model.finbeAbcCalculator import FinbeAbcCalculator
+from app.routers.pagos.model.finkargoCalculator import FinkargoCalculator
     
 
 CALCULOS = {
@@ -16,6 +17,7 @@ CALCULOS = {
     10: FinsusCalculator, #✅
     11: FinbeAbcCalculator, #✅
     22: JeevesCalculator, #✅
+    29: FinkargoCalculator, #✅
     32: ClaraCalculator, #✅ Dispersados por mes
     34: FluxoCalculator, #✅
 }
