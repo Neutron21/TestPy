@@ -16,7 +16,7 @@ from app.db import SessionDep
 from app.models import Usuarios
 from app.routers.bigQuery.dashboard import ( sync_brokers, sync_categorias, sync_cotizacion, sync_estatus_tramites, sync_financieras,
                                              sync_productos, sync_sedes, sync_subCategorias, sync_usuarios)
-from utils.email import enviar_correo_informativo, enviar_correo_simple
+from utils.email import enviar_correo_informativo, enviar_correo_simple, enviar_correo_pago_vencida, fillFirma
 
 router = APIRouter(tags=["Tareas"])
 
@@ -147,13 +147,15 @@ async def enviar_correo_recordatorio(session: SessionDep, tipo: Optional[int],ba
     return {"mensaje": "Proceso de envío iniciado"}
 
 
-@router.get("/cotizacion/utils/fecha-pago-vencida")
+@router.post("/cotizacion/utils/fecha-pago-vencida")
 async def cotizaciones_fecha_pago_vencida(session: SessionDep):
+    # Se manda mail a las IF para que nos paguen 💵
     hoy = date.today()
 
     rows = session.exec(
         select(
             Cotizacion.id_cotizacion,
+            Cotizacion.nombre.label("cliente"),
             Cotizacion.fecha_pago,
             Cotizacion.id_financiera,
             Productos.nombre.label("producto"),
@@ -176,11 +178,13 @@ async def cotizaciones_fecha_pago_vencida(session: SessionDep):
     ).all()
 
     cotizaciones = {}
+    print(f"Cotizaciones con fecha de pago vencida: {rows}")
 
     for r in rows:
         if r.id_cotizacion not in cotizaciones:
             cotizaciones[r.id_cotizacion] = {
                 "id_cotizacion": r.id_cotizacion,
+                "cliente": r.cliente,
                 "fecha_pago": r.fecha_pago,
                 "id_financiera": r.id_financiera,
                 "producto": r.producto,
@@ -188,10 +192,41 @@ async def cotizaciones_fecha_pago_vencida(session: SessionDep):
                 "correos": []
             }
 
-        # Solo agregar si existe correo (porque puede venir None)
         if r.correo:
             if r.correo not in cotizaciones[r.id_cotizacion]["correos"]:
                 cotizaciones[r.id_cotizacion]["correos"].append(r.correo)
+
+    for cot in cotizaciones.values():
+        if not cot["correos"]:
+            print(f"No hay correos de pago para cotización {cot['id_cotizacion']}")
+            continue
+
+        try:
+            template = env.get_template("pago_vencido.html")
+            monto_formateado = f"{cot['monto']:,}" if cot["monto"] is not None else "0"
+            html_content = template.render(
+                folio=cot["id_cotizacion"],
+                cliente=cot["cliente"],
+                producto=cot["producto"],
+                fecha_pago=cot["fecha_pago"].strftime("%d/%m/%Y") if cot["fecha_pago"] else "Sin fecha",
+                monto=monto_formateado,
+                imagen_b64=fillFirma() or ""
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error generando plantilla de correo: {str(e)}")
+
+        resultado = enviar_correo_pago_vencida(
+            html_content,
+            cot["correos"],
+            cot["id_cotizacion"],
+            cot["cliente"]
+        )
+
+        print(f"Resultado envío correo pago vencido folio {cot['id_cotizacion']}: {resultado}")
+
+        if not resultado.get("ok", True) or resultado.get("status_code", 200) >= 300:
+            error_info = resultado.get("error") or resultado.get("response") or "Error desconocido"
+            raise HTTPException(status_code=500, detail=f"Error al enviar correo para la cotización {cot['id_cotizacion']}: {error_info}")
 
     return {
         "total": len(cotizaciones),

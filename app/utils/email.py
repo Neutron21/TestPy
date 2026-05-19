@@ -255,6 +255,49 @@ def enviar_correo_simple(html_content: str, correos: list[str], subject: str):
     print(resultados)
     return resultados
 
+
+def enviar_correo_pago_vencida(html_content: str, correos: list[str], folio: int, cliente: str):
+    if not correos:
+        logger.error("No hay correos destino para correo de pago vencido")
+        return {"ok": False, "error": "No hay correos destino"}
+
+    if not BREVO_API_KEY:
+        logger.error("BREVO_KEY no configurada")
+        return {"ok": False, "error": "BREVO_KEY no configurada"}
+    firma_b64 = fillFirma()
+    data = {
+        "sender": {
+            "email": "web.app.no.reply@konnect.mx",
+            "name": "Konnect"
+        },
+        "to": [{"email": correo} for correo in set(correos)],
+        "cc": [{"email": "ij.innovaciones@gmail.com"}],
+        "subject": f"Folio Konnect {folio} - Pago vencido",
+        "htmlContent": html_content,
+        "attachment": [
+            {
+                "name": "imagen_recordatorio.png",
+                "content": firma_b64,
+                "contentId": "imagen_recordatorio"
+            }
+        ]
+    }
+
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+
+    try:
+        res = requests.post(BREVO_URL, json=data, headers=headers, timeout=(3,10))
+        print(f"Brevo response: ({res.status_code}) {res.text}")
+        return {"ok": 200 <= res.status_code < 300, "status_code": res.status_code, "response": res.text}
+    except Exception as e:
+        logger.error(f"❌ Error al enviar correo de pago vencido folio {folio} - {cliente}: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
+
 def send_mail_comment(request, correos, mensaje_html):
     try:
         logger.info("🚀 ENTRO A send_mail_comment")
