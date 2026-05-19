@@ -36,6 +36,7 @@ FINANCIERAS = {
     10: "FINSUS",
     11: "FINBE ABC",
     22: "JEEVES",
+    29: "FINKARGO",
     32: "CLARA",
     34: "FLUXO",
 }

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #2c2c2c;
+            background-color: #f7f8fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 24px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+        .header {
+            margin-bottom: 20px;
+            border-bottom: 2px solid #1a73e8;
+            padding-bottom: 14px;
+        }
+        .header h2 {
+            margin: 0;
+            color: #1a73e8;
+        }
+        .details {
+            margin: 20px 0;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .details th,
+        .details td {
+            text-align: left;
+            padding: 12px 10px;
+            border-bottom: 1px solid #e1e4ea;
+        }
+        .details th {
+            background-color: #f4f8ff;
+            color: #1f4f8b;
+            width: 180px;
+        }
+        .footer {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e6e9ef;
+            color: #6e7591;
+        }
+        .footer img {
+            max-width: 280px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Notificación de pago vencido</h2>
+        </div>
+
+        <p>Buen día.</p>
+        <p>Les recordamos que el pago correspondiente a su operación se encuentra programado para el día de hoy o actualmente presenta vencimiento.</p>
+        <p>Agradecemos mucho su apoyo realizando el pago correspondiente a la brevedad posible para mantener el seguimiento administrativo al corriente.</p>
+        <p>Quedamos atentos a cualquier duda o comprobante de pago.</p>
+        <p>Saludos cordiales.</p>
+
+        <table class="details">
+            <tr>
+                <th>Folio Konnect</th>
+                <td>{{ folio }}</td>
+            </tr>
+            <tr>
+                <th>Cliente</th>
+                <td>{{ cliente }}</td>
+            </tr>
+            <tr>
+                <th>Producto</th>
+                <td>{{ producto }}</td>
+            </tr>
+            <tr>
+                <th>Fecha de pago</th>
+                <td>{{ fecha_pago }}</td>
+            </tr>
+            <tr>
+                <th>Monto</th>
+                <td>${{ monto }}</td>
+            </tr>
+        </table>
+
+        <p>Quedamos al pendiente para darle seguimiento a este pago.</p>
+
+        <div class="footer">
+            <p>Saludos cordiales,</p>
+            <p>Equipo Konnect</p>
+            {% if imagen_b64 %}
+            <img src="data:image/png;base64,{{ imagen_b64 }}" alt="Firma Konnect">
+            {% endif %}
+        </div>
+    </div>
+    <img src="cid:imagen_recordatorio.png" alt="imagen_recordatorio" style="width: 300px; height: auto;">
+</body>
+</html>
