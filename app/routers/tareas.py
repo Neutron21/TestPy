@@ -148,7 +148,7 @@ async def enviar_correo_recordatorio(session: SessionDep, tipo: Optional[int],ba
 
 
 @router.post("/cotizacion/utils/fecha-pago-vencida")
-async def cotizaciones_fecha_pago_vencida(session: SessionDep):
+async def cotizaciones_fecha_pago_vencida(session: SessionDep, _ = Depends(validar_cron_token)):
     # Se manda mail a las IF para que nos paguen 💵
     hoy = date.today()
 
