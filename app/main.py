@@ -65,7 +65,7 @@ def custom_openapi():
 
 app.openapi = custom_openapi  # 🔹 Sobrescribe la función de OpenAPI
 
-# 🔹 Incluir routers
+# 🔹 Incluir routers (ordenado alfabéticamente)
 app.include_router(brokers.router)
 app.include_router(checklist.router)
 app.include_router(comentarios.router)
@@ -75,20 +75,19 @@ app.include_router(documentos.router)
 app.include_router(estatus_tramites.router)
 app.include_router(financieras.router)
 app.include_router(formatos.router)
-app.include_router(producto_formato.router)
 app.include_router(membresias.router)
 app.include_router(pagos.router)
+app.include_router(producto_formato.router)
 app.include_router(productos.router)
 app.include_router(procesos.router)
+app.include_router(sedes.router)
 app.include_router(send_mail.router)
+app.include_router(tareas.router)
 app.include_router(uploadFiles.router)
 app.include_router(usuarios.router)
-app.include_router(utils.router)
 app.include_router(utms.router)
+app.include_router(utils.router)
 app.include_router(viabilidad.router)
-app.include_router(sedes.router)
-app.include_router(tareas.router)
-app.include_router(brokers.router)
 
 
 logger.info("API iniciada correctamente 🚀")

@@ -96,10 +96,11 @@
             <p>Saludos cordiales,</p>
             <p>Equipo Konnect</p>
             {% if imagen_b64 %}
-            <img src="data:image/png;base64,{{ imagen_b64 }}" alt="Firma Konnect">
+            <img src="cid:imagen_recordatorio.png" alt="imagen_recordatorio" style="width: 300px; height: auto;">
+            <!-- <img src="data:image/png;base64,{{ imagen_b64 }}" alt="Firma Konnect"> -->
             {% endif %}
         </div>
     </div>
-    <img src="cid:imagen_recordatorio.png" alt="imagen_recordatorio" style="width: 300px; height: auto;">
+    
 </body>
 </html>

@@ -260,8 +260,8 @@ def syncAllDashboard(session):
         "synced": results
     }
 
-@router.post("/reporte-socios")
-async def reporte_socios(
+@router.post("/catalogo-socios")
+async def catalogo_socios(
     session: SessionDep,
     background_tasks: BackgroundTasks,
     _ = Depends(validar_cron_token)
@@ -346,8 +346,8 @@ async def reporte_socios(
         "total": len(datos_tabla)
     }
 
-@router.post("/reporte-vencimientos")
-async def reporte_vencimientos(
+@router.post("/socios-vencimiento")
+async def cuentas_socios_vencimiento(
     session: SessionDep, 
     background_tasks: BackgroundTasks, 
     _ = Depends(validar_cron_token)
