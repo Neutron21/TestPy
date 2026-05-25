@@ -18,7 +18,7 @@ from app.utils.logger_config import logger
 
 from fastapi.staticfiles import StaticFiles
 
-from .routers import ( checklist, membresias, tareas, utms, documentos,viabilidad, 
+from .routers import ( checklist, membresias, tareas, track_status, utms, documentos,viabilidad, 
     financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, 
     send_mail, uploadFiles, utils, brokers, procesos, sedes)
 from .routers.pagos import (pagos)
@@ -83,6 +83,7 @@ app.include_router(procesos.router)
 app.include_router(sedes.router)
 app.include_router(send_mail.router)
 app.include_router(tareas.router)
+app.include_router(track_status.router)
 app.include_router(uploadFiles.router)
 app.include_router(usuarios.router)
 app.include_router(utms.router)

@@ -407,3 +407,23 @@ class ResponsePagos(BaseModel):
 
     lineas_broker: Optional[int] | None = None
     lineas_konnect: Optional[int] | None = None
+
+class TrackStatusBase(SQLModel):
+    id_cotizacion: int
+    id_status: int
+
+class TrackStatusCreate(TrackStatusBase):
+    pass
+
+class TrackStatusResponse(TrackStatusBase):
+    id: int
+    fecha: datetime
+
+class Track_Status(TrackStatusBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    id_cotizacion: int = Field(foreign_key="cotizacion.id_cotizacion")
+    id_status: int = Field(foreign_key="estatus_tramites.id")
+    fecha: datetime = Field(
+        default_factory=mexico_timestamp,
+        nullable=False
+    )
