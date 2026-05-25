@@ -349,6 +349,7 @@ class ProductosTipoPersonaDTO(ProductosDTO):
 class Productos(ProductosDTO, table=True):
     id: int | None = Field(default=None, primary_key=True)
     plazo: Optional[str] = None
+    visible: bool = Field(default=True)
 
 
 class Pagos(SQLModel, table=True):
