@@ -32,8 +32,7 @@ def obtener_ids_prueba(session):
         WHERE LOWER(nombre) LIKE '%prueba%'
     """))
 
-    ids = [str(row.id_cotizacion) for row in result]
-    return ids
+    return [row.id_cotizacion for row in result]
 
 
 # 🗑 Borra carpetas por ID de cotización
@@ -46,7 +45,7 @@ def borrar_carpetas(ids):
     eliminadas = 0
 
     for cot_id in ids:
-        ruta = os.path.join(base_path, cot_id)
+        ruta = os.path.join(base_path, str(cot_id))
         if os.path.exists(ruta):
             shutil.rmtree(ruta)
             eliminadas += 1
@@ -54,12 +53,28 @@ def borrar_carpetas(ids):
     return eliminadas
 
 
+# 💬 Borra comentarios asociados a las cotizaciones
+def borrar_comentarios_prueba(session, ids):
+    if not ids:
+        return 0
+
+    result = session.execute(text("""
+        DELETE FROM comentarios
+        WHERE id_cotizacion IN :ids
+    """), {"ids": tuple(ids)})
+
+    return result.rowcount
+
+
 # 🧨 Borra registros en BD
-def borrar_cotizaciones_prueba(session):
+def borrar_cotizaciones_prueba(session, ids):
+    if not ids:
+        return 0
+
     result = session.execute(text("""
         DELETE FROM cotizacion
-        WHERE LOWER(nombre) LIKE '%prueba%'
-    """))
+        WHERE id_cotizacion IN :ids
+    """), {"ids": tuple(ids)})
 
     return result.rowcount
 
@@ -94,6 +109,7 @@ def borrar_pruebas(session: SessionDep, _ = Depends(validar_cron_token)):
         return {
             "mensaje": "No hay cotizaciones de prueba",
             "total_bd": 0,
+            "comentarios_borrados": 0,
             "carpetas_borradas": 0
         }
 
@@ -101,13 +117,15 @@ def borrar_pruebas(session: SessionDep, _ = Depends(validar_cron_token)):
     carpetas_borradas = borrar_carpetas(ids)
 
     # 🧨 3. Borrar BD
-    total_bd = borrar_cotizaciones_prueba(session)
+    total_bd = borrar_cotizaciones_prueba(session, ids)
+    comentarios_borrados = borrar_comentarios_prueba(session, ids)
 
     session.commit()
 
     return {
         "mensaje": "Cotizaciones de prueba eliminadas correctamente",
         "total_bd": total_bd,
+        "comentarios_borrados": comentarios_borrados,
         "carpetas_borradas": carpetas_borradas
     }
 
