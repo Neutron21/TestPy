@@ -1,5 +1,6 @@
 import base64
 import os
+import shutil
 from pathlib import Path
 import re
 import tempfile
@@ -52,7 +53,17 @@ async def carga_archivos_endpoint(request: Request):
         print(carpeta)
         os.makedirs(carpeta, exist_ok=True)
 
+        allowed_extensions = os.getenv("ALLOWED_EXTENSIONS")
+        if not allowed_extensions:
+            raise Exception("ALLOWED_EXTENSIONS no configurado")
+        allowed_extensions_set = {
+            ext.strip().lower()
+            for ext in allowed_extensions.split(",")
+            if ext.strip()
+        }
+
         archivos_subidos = []
+
         print(form.multi_items())
         for key, valor in form.multi_items():
             if key.startswith("file"):
@@ -61,19 +72,37 @@ async def carga_archivos_endpoint(request: Request):
                 custom_name_key = f"customName{index}"
                 custom_name = form.get(custom_name_key, archivo.filename)
 
-                ruta_destino = os.path.join(carpeta, custom_name)
+                extension = Path(custom_name).suffix.lower().lstrip(".")
+
+                if extension not in allowed_extensions_set:
+                    raise HTTPException(
+                        status_code=415,
+                        detail=f"El archivo '{custom_name}' no está permitido. Extensiones válidas: {', '.join(sorted(allowed_extensions_set))}"
+                    )
+                safe_name = Path(custom_name).name # Sanitiza el nombre del archivo para evitar problemas de seguridad
+                safe_name = re.sub(r'[^a-zA-Z0-9._-]', '_', safe_name) # Reemplaza caracteres no permitidos por guiones bajos
+                
+                ruta_destino = os.path.join(carpeta, safe_name)
+
                 print(f"rt: {ruta_destino}")
-                with open(ruta_destino, "wb") as f:
-                    contenido = await archivo.read()
-                    f.write(contenido)
+                with open(ruta_destino, "wb") as buffer: # Buffer para no sobrecargar la memoria con archivos grandes
+                    shutil.copyfileobj(archivo.file, buffer)
 
-                archivos_subidos.append(custom_name)
+                archivos_subidos.append(safe_name)
 
-        return JSONResponse(content={"message": "Archivos subidos correctamente", "archivos": archivos_subidos})
+        return JSONResponse(
+            content={"message": "Archivos subidos correctamente", "archivos": archivos_subidos}
+            )
+    
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        logger.error(f"Request: {request}")
+
         logger.error(f"❌ Error al cargar documentos: {str(e)}")
-        return JSONResponse(content={"mensaje": {str(e)}})
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno al cargar documentos"
+        )
 
 @router.get("/download-zip")
 def descargar_zip(numCotizacion: str = Query(..., description="Número de cotización en b64")):
