@@ -372,16 +372,20 @@ async def cuentas_socios_vencimiento(
 ):
     hoy = date.today()
 
-    # 🔹 Traer usuarios cuya fecha de último pago cumple 1 año antes de fin de mes
+    # 🔹 Traer usuarios cuya membresía ya venció o vence este mes
     statement = text("""
         SELECT id, nombre, email, celular, membresia, f_ultimo_pago
         FROM usuarios
-        WHERE DATE_ADD(f_ultimo_pago, INTERVAL 1 YEAR) <= LAST_DAY(CURDATE())
+        WHERE f_ultimo_pago IS NOT NULL
+        AND (
+            DATE_ADD(f_ultimo_pago, INTERVAL 1 YEAR) <= CURDATE()
+            OR DATE_ADD(f_ultimo_pago, INTERVAL 1 YEAR) BETWEEN CURDATE() AND LAST_DAY(CURDATE())
+        )
     """)
     usuarios = session.exec(statement).all()
 
     if not usuarios:
-        return {"message": "No hay usuarios con pagos registrados que cumplan 1 año."}
+        return {"message": "No hay usuarios con pagos registrados que ya vencieron o vencen este mes."}
 
     datos_tabla = []
 
