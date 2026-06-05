@@ -1,8 +1,9 @@
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, status, Query
-from sqlmodel import text
+from sqlmodel import select, text
 from app.db import SessionDep
-from app.models import Utms
+from app.models import Usuarios, Utms, UtmsCreate
+from app.auth.security import validar_token
 
 router = APIRouter(tags=["Utms"])
 
@@ -35,3 +36,39 @@ async def utms_by_tipo_user_id_If(session: SessionDep, idFin: int, idUsuario: Op
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utm no encontrada")
     print(result)
     return result
+
+@router.post("/utms-add", response_model=Utms, status_code=status.HTTP_201_CREATED)
+async def create_utm(session: SessionDep, utmRequest: UtmsCreate):
+
+    user = session.get(Usuarios, int(utmRequest.id_usuario))
+
+    validar_token(utmRequest.token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuario no existe"
+        )
+
+    existing_utm = session.execute(
+        text("SELECT * FROM utms WHERE id_usuario = :id_usuario AND id_financiera = :id_financiera"),
+        {"id_usuario": utmRequest.id_usuario, "id_financiera": utmRequest.id_financiera}
+    ).first()
+
+    if existing_utm:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El usuario ya cuenta con una UTM para esta financiera"
+        )
+
+    nuevo = Utms(
+        id_usuario=utmRequest.id_usuario,
+        id_financiera=utmRequest.id_financiera,
+        tipo_persona=utmRequest.tipo_persona,
+        url=utmRequest.url
+    )
+
+    session.add(nuevo)
+    session.commit()
+    session.refresh(nuevo)
+
+    return nuevo

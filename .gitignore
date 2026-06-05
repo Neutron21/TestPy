@@ -13,3 +13,4 @@ serviceAccountKey.json
 ivan-venv/ 
 desarollo/
 logs/
+/opt/keys/*

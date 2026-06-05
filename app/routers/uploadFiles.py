@@ -1,5 +1,6 @@
 import base64
 import os
+import shutil
 from pathlib import Path
 import re
 import tempfile
@@ -52,7 +53,17 @@ async def carga_archivos_endpoint(request: Request):
         print(carpeta)
         os.makedirs(carpeta, exist_ok=True)
 
+        allowed_extensions = os.getenv("ALLOWED_EXTENSIONS")
+        if not allowed_extensions:
+            raise Exception("ALLOWED_EXTENSIONS no configurado")
+        allowed_extensions_set = {
+            ext.strip().lower()
+            for ext in allowed_extensions.split(",")
+            if ext.strip()
+        }
+
         archivos_subidos = []
+
         print(form.multi_items())
         for key, valor in form.multi_items():
             if key.startswith("file"):
@@ -61,19 +72,37 @@ async def carga_archivos_endpoint(request: Request):
                 custom_name_key = f"customName{index}"
                 custom_name = form.get(custom_name_key, archivo.filename)
 
-                ruta_destino = os.path.join(carpeta, custom_name)
+                extension = Path(custom_name).suffix.lower().lstrip(".")
+
+                if extension not in allowed_extensions_set:
+                    raise HTTPException(
+                        status_code=415,
+                        detail=f"El archivo '{custom_name}' no está permitido. Extensiones válidas: {', '.join(sorted(allowed_extensions_set))}"
+                    )
+                safe_name = Path(custom_name).name # Sanitiza el nombre del archivo para evitar problemas de seguridad
+                safe_name = re.sub(r'[^a-zA-Z0-9._-]', '_', safe_name) # Reemplaza caracteres no permitidos por guiones bajos
+                
+                ruta_destino = os.path.join(carpeta, safe_name)
+
                 print(f"rt: {ruta_destino}")
-                with open(ruta_destino, "wb") as f:
-                    contenido = await archivo.read()
-                    f.write(contenido)
+                with open(ruta_destino, "wb") as buffer: # Buffer para no sobrecargar la memoria con archivos grandes
+                    shutil.copyfileobj(archivo.file, buffer)
 
-                archivos_subidos.append(custom_name)
+                archivos_subidos.append(safe_name)
 
-        return JSONResponse(content={"message": "Archivos subidos correctamente", "archivos": archivos_subidos})
+        return JSONResponse(
+            content={"message": "Archivos subidos correctamente", "archivos": archivos_subidos}
+            )
+    
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        logger.error(f"Request: {request}")
+
         logger.error(f"❌ Error al cargar documentos: {str(e)}")
-        return JSONResponse(content={"mensaje": {str(e)}})
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno al cargar documentos"
+        )
 
 @router.get("/download-zip")
 def descargar_zip(numCotizacion: str = Query(..., description="Número de cotización en b64")):
@@ -88,8 +117,8 @@ def descargar_zip(numCotizacion: str = Query(..., description="Número de cotiza
         # Obtener archivos válidos
         archivos_validos = []
         for archivo in os.listdir(carpeta):
-            ruta = os.path.join(carpeta, archivo)
-            if os.path.isfile(ruta) and archivo.lower().endswith(('.pdf', '.rar', '.zip', '.jpg', '.png', 'docx','xlsx')):
+            ruta = os.path.join(carpeta, archivo)               
+            if os.path.isfile(ruta) and archivo.lower().endswith(('pdf', 'jpg', 'jpeg', 'png', 'zip', 'rar','docx','xlsx')):
                 archivos_validos.append(ruta)
 
         if not archivos_validos:
@@ -138,3 +167,47 @@ def descarga_formato(
         )
     else:
         raise HTTPException(status_code=404, detail="El archivo no existe.")
+    
+@router.get("/getFilesExp/{numCotizacion}")
+async def get_files_cotizacion(numCotizacion: str):
+    try:
+
+        cotizacion_decode = base64.b64decode(numCotizacion.encode()).decode()
+        carpeta = os.path.join(main_path, numCotizacion)
+
+        if not os.path.isdir(carpeta):
+            raise HTTPException(status_code=404, detail="No se encontró la carpeta de la cotización.")
+
+        # Obtener archivos válidos
+        archivos_validos = []
+        for archivo in os.listdir(carpeta):
+            ruta = os.path.join(carpeta, archivo)               
+            if os.path.isfile(ruta) and archivo.lower().endswith(('pdf', 'jpg', 'jpeg', 'png', 'zip', 'rar','docx','xlsx')):
+                archivos_validos.append(ruta)
+
+        if not archivos_validos:
+            raise HTTPException(status_code=404, detail="No hay archivos válidos para descargar.")
+
+        # Crear archivo ZIP temporal
+        temp_dir = tempfile.gettempdir()
+        nombre_zip = f"cotizacion_{cotizacion_decode}.zip"
+        ruta_zip = os.path.join(temp_dir, nombre_zip)
+
+        with zipfile.ZipFile(ruta_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for ruta_archivo in archivos_validos:
+                zipf.write(ruta_archivo, arcname=os.path.basename(ruta_archivo))
+
+        # Preparar la respuesta con StreamingResponse
+        def iterfile():
+            with open(ruta_zip, mode="rb") as f:
+                yield from f
+            os.remove(ruta_zip)  # Eliminar archivo después de servir
+
+        return StreamingResponse(iterfile(), media_type="application/zip", headers={
+            "Content-Disposition": f'attachment; filename="{nombre_zip}"'
+        })
+
+    except Exception as e:
+        logger.error(f"numCotizacion: {numCotizacion}")
+        logger.error(f"❌ Error al descargar zip: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))

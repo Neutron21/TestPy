@@ -1,3 +1,5 @@
+from datetime import datetime
+from jwt import decode as jwt_decode
 import os
 import sys
 
@@ -15,15 +17,14 @@ from firebase_admin import auth, credentials
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import procesos 
 from app.utils.logger_config import logger
-from app.routers import sedes
+
 from fastapi.staticfiles import StaticFiles
 
-
-from app.db import create_all_tables
-from .routers import ( checklist, membresias, utms, documentos,viabilidad, subCategorias,
-    financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, send_mail, uploadFiles, utils, brokers, procesos,sedes,borrar)
+from .routers import ( checklist, membresias, tareas, track_status, utms, documentos,viabilidad, subCategorias,
+    financieras, productos, usuarios, formatos, producto_formato, cotizacion, comentarios, correos, estatus_tramites, 
+    send_mail, uploadFiles, utils, brokers, procesos, sedes)
+from .routers.pagos import (pagos)
 from dotenv import load_dotenv
-
 
 load_dotenv()
 
@@ -44,8 +45,6 @@ app.mount(
     StaticFiles(directory=os.path.join(BASE_DIR, "utils", "static"), html=False),
     name="static"
 )
-
-
 
 original_openapi = app.openapi
 # 🔹 Función personalizada para OpenAPI con seguridad JWT
@@ -68,7 +67,7 @@ def custom_openapi():
 
 app.openapi = custom_openapi  # 🔹 Sobrescribe la función de OpenAPI
 
-# 🔹 Incluir routers
+# 🔹 Incluir routers (ordenado alfabéticamente)
 app.include_router(brokers.router)
 app.include_router(checklist.router)
 app.include_router(comentarios.router)
@@ -79,18 +78,23 @@ app.include_router(estatus_tramites.router)
 app.include_router(financieras.router)
 app.include_router(formatos.router)
 app.include_router(membresias.router)
+app.include_router(pagos.router)
 app.include_router(producto_formato.router)
 app.include_router(productos.router)
 app.include_router(procesos.router)
+app.include_router(sedes.router)
+app.include_router(send_mail.router)
+app.include_router(tareas.router)
+app.include_router(track_status.router)
 app.include_router(uploadFiles.router)
 app.include_router(usuarios.router)
-app.include_router(utils.router)
 app.include_router(utms.router)
+app.include_router(utils.router)
 app.include_router(viabilidad.router)
 app.include_router(sedes.router)
 app.include_router(send_mail.router)
 app.include_router(subCategorias.router)
-app.include_router(borrar.router)
+
 
 
 
@@ -113,7 +117,8 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
         token = auth_header.split(" ")[1]
 
         try:
-            decoded_token = auth.verify_id_token(token)
+            decoded_token = auth.verify_id_token(token, clock_skew_seconds=60)
+
             firebase_project_id = os.getenv("ID_PROJECT")
             if decoded_token["aud"] != firebase_project_id:
                 raise ValueError("Token inválido para este proyecto")
@@ -121,7 +126,28 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             request.state.user = decoded_token
 
         except Exception as e:
-            return self.unauthorized(f"Token inválido: {str(e)}")
+            # return self.unauthorized(f"Token inválido: {str(e)}")
+            try:
+                decoded_unverified = jwt_decode(token, options={"verify_signature": False})
+
+                now = datetime.utcnow().timestamp()
+                iat = decoded_unverified.get("iat")
+                exp = decoded_unverified.get("exp")
+
+                if iat and iat > now + 1:
+                    logger.error(f"⏱️ Token del FUTURO detectado. iat: {iat}, now: {now}")
+                    return self.unauthorized("El reloj del dispositivo está adelantado")
+
+                if exp and exp < now:
+                    logger.error(f"⌛ Token EXPIRADO. exp: {exp}, now: {now}")
+                    return self.unauthorized("Session Expired, inicia sesión nuevamente")
+
+                logger.error(f"❌ Error desconocido en token: {str(e)}")
+                return self.unauthorized("Token inválido")
+
+            except Exception as decode_error:
+                logger.error(f"🔥 No se pudo decodificar el token: {str(decode_error)}")
+                return self.unauthorized("Token inválido. No se pudo decodificar")
 
         return await call_next(request)
 

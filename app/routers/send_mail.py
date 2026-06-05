@@ -1,15 +1,20 @@
 import base64
+from datetime import date, datetime
 import os
-from typing import List, Optional
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Body, Request
-from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios, Productos
-from sqlmodel import select, text
+from types import SimpleNamespace
+from typing import List
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Body, Request
+from app.models import BodyMail, Brokers, Correos, Cotizacion, Financieras, ReqMail, Sedes, Usuarios, Productos, ReqMailComentarioDir
+from sqlmodel import and_, extract, or_, select, text
 from app.db import SessionDep
-from utils.email import enviar_correo, notificacion_if, enviar_correo_dispersion, enviar_correo_informativo
+from app.routers.financieras import getFinancierasUtms
+from app.auth.security import crear_token
+from app.routers.tareas import validar_cron_token
+from utils.email import enviar_correo, enviar_correo_con_expediente_zip, enviar_correo_informativo, enviar_correo_simple, notificacion_if, enviar_correo_dispersion, send_mail_comment
 from app.utils.logger_config import logger
 from jinja2 import Environment, FileSystemLoader
-from datetime import datetime
-import os
+from app.models import Productos
+
 
 
 router = APIRouter(tags=["SendMails"])
@@ -33,7 +38,23 @@ def obtener_jefes(user_id: int, session) -> List[Usuarios]:
     result = session.exec(query.params(user_id=user_id)).all()
     return [row[0] for row in result]
 
+def obtener_mails_ifs(cotizacion: Cotizacion, session) -> List[str]:
 
+    query_producto = select(Productos).where(Productos.id == cotizacion.producto)
+    producto = session.exec(query_producto).first()
+
+    if cotizacion.id_financiera == 14:
+            query_correos = select(Correos.correo).where(
+                (Correos.id_financiera == cotizacion.id_financiera) &
+                (Correos.v_mail == 1) &
+                (Correos.categoria_id == producto.id_categoria)
+            )
+    else:
+            query_correos = select(Correos.correo).where(
+                (Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1)
+            )
+    correosIF = session.exec(query_correos).all()
+    return correosIF
 
 @router.post("/enviar-correo")
 async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: BackgroundTasks):
@@ -46,17 +67,6 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         query_producto = select(Productos).where(Productos.id == cotizacion.producto)
         producto = session.exec(query_producto).first()
 
-        if cotizacion.id_financiera == 14:
-            query_correos = select(Correos.correo).where(
-                (Correos.id_financiera == cotizacion.id_financiera) &
-                (Correos.v_mail == 1) &
-                (Correos.categoria_id == producto.id_categoria)
-            )
-        else:
-            query_correos = select(Correos.correo).where(
-                (Correos.id_financiera == cotizacion.id_financiera) & (Correos.v_mail == 1)
-            )
-
         query_broker = select(Brokers.nombre).where(Brokers.id == cotizacion.broker)
         query_sede = select(Sedes.nombre).where(Sedes.id == cotizacion.sede)
         query_fin = select(Financieras).where(Financieras.id == cotizacion.id_financiera)
@@ -64,7 +74,7 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         correos_superiores = obtener_jefes(cotizacion.id_user, session)
         usuario = session.exec(query_usuario).first()
 
-        correosIF = session.exec(query_correos).all()
+        correosIF = obtener_mails_ifs(cotizacion, session)
         broker = session.exec(query_broker).first()
         sede = session.exec(query_sede).first()
         financiera = session.exec(query_fin).first()
@@ -102,12 +112,16 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         correos = list(set(correosIF + correosKonfio + correos_superiores + ["ara.castro@konnect.mx", "gerencia.operativa@konnect.mx"]))
 
         template_name = "cotizacion.html" if request.isNew else "updateFiles.html"
-        withLink = financiera.tipo == 'M'
+        withLink = financiera.tipo == 'M' and (cotizacion.id_financiera != 39)
 
         template = env.get_template(template_name)
         html_content = template.render(**vars(bodyMail), isLink=withLink)
 
-        background_tasks.add_task(enviar_correo, bodyMail, html_content, correos)
+        if cotizacion.id_financiera == 39:
+            background_tasks.add_task(enviar_correo_con_expediente_zip, cotizacion, html_content, correos, bodyMail.cotizacionB64)
+        else:
+            background_tasks.add_task(enviar_correo, bodyMail, html_content, correos)
+
 
         return {"mensaje": "Solicitud recibida, el correo se está enviando en segundo plano."}
     except Exception as e:
@@ -116,9 +130,8 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         return {"mensaje": str(e)}
 
 
-
 @router.post("/comentario-if")
-async def enviar_mail(session: SessionDep, idCotizacion: int = Body(..., embed=True)):
+async def send_comentario(session: SessionDep, idCotizacion: int = Body(..., embed=True)):
     query_cotizacion = select(Cotizacion).where(Cotizacion.id_cotizacion == idCotizacion)
     cotizacion = session.exec(query_cotizacion).first()
     if not cotizacion:
@@ -136,7 +149,7 @@ async def enviar_mail(session: SessionDep, idCotizacion: int = Body(..., embed=T
 
 
 @router.post("/correo-dispersion")
-def correo_dispersion(data: dict, session: SessionDep):
+def mail_dispersion(data: dict, session: SessionDep):
     id_cotizacion = data.get("idCotizacion")
     if not id_cotizacion:
         raise HTTPException(status_code=400, detail="idCotizacion requerido")
@@ -144,16 +157,26 @@ def correo_dispersion(data: dict, session: SessionDep):
     cotizacion = session.get(Cotizacion, id_cotizacion)
     if not cotizacion:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
+    producto = session.get(Productos, cotizacion.producto)
+    if not producto:
+       raise HTTPException(status_code=404, detail="Producto no encontrado")
 
     if cotizacion.estatus != 7:
         raise HTTPException(status_code=400, detail="La cotización no está en estatus Dispersión")
+    correosIfs = obtener_mails_ifs(cotizacion, session)
+    correos = list(set(correosIfs + [ 
+        "kfigueroa@konnect.mx", 
+        "ara.castro@konnect.mx",
+        "gerencia.operativa@konnect.mx",
+        "gerencia.corporativa@konnect.mx" ,
+        "ericka.aguilar@konnect.mx"
 
-    correos = [
-        "kfigueroa@konnect.mx", "ara.castro@konnect.mx",
-        "gerencia.operativa@konnect.mx", "gerencia.corporativa@konnect.mx"
-    ]
+        ]))
+    monto_formateado = "${:,.2f}".format(cotizacion.monto)
 
-    request = dict(folioKonnect=id_cotizacion, cliente=cotizacion.nombre)
+  
+    request = dict(folioKonnect=id_cotizacion, cliente=cotizacion.nombre, producto=producto.nombre, monto=monto_formateado)
+    
     template = env.get_template("dispersion.html")
     html_content = template.render(**request)
 
@@ -161,46 +184,129 @@ def correo_dispersion(data: dict, session: SessionDep):
 
     return {"ok": True, "message": "Correo de dispersión enviado correctamente"}
 
+@router.post("/correo-nuevo-usuario/{user_id}")
+def enviar_correo_nuevo_usuario(
+    user_id: int,
+    session: SessionDep,
+    background_tasks: BackgroundTasks
+):
 
-@router.post("/recordatorio-estatus")
-async def enviar_correo_recordatorio(session: SessionDep, tipo: Optional[int],background_tasks: BackgroundTasks, request: Request,):
-    # 🔐 Seguridad
-    token = request.headers.get("x-cron-token")
-    if not token:
-        raise HTTPException(status_code=400, detail="X Token requerido")
+    usuario = session.get(Usuarios, int(user_id))
 
-    if token != os.getenv("CRON_SECRET"):
-        raise HTTPException(status_code=401, detail="X Token inválido")
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # 🔥 SOLO enviar si es "Sin financiera"
+    if usuario.id_financiera is not None:
+        return {
+            "ok": True,
+            "mensaje": "Tiene financiera asignada, no se envía correo"
+        }
+
+    broker = session.get(Brokers, usuario.id_broker) if usuario.id_broker else None
+    sede = session.get(Sedes, usuario.id_sede) if usuario.id_sede else None
+
+    # 🔥 Obtener correos de financieras con UTM personalizadas [1, 32, 11, 12, 37]
+    financieras_utm_custom = getFinancierasUtms(0,session)
+
+    correos_financieras = session.query(Correos.correo).where(
+                (Correos.id_financiera.in_(financieras_utm_custom)) & (Correos.v_mail == 1)
+                ).all()
+    correos_db = [correo[0] for correo in correos_financieras]
+    print(f"CORREOS: {correos_db}")
     
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if not correos_db:
+        return {
+            "ok": False,
+            "mensaje": "No se encontraron correos para enviar"
+        }
+    correos_konnect = [
+        "evolucion.talento@konnect.mx",
+        "ij.innovaciones@gmail.com",
+        "ernesto.veraza@clara.team", # este correo de Clara se agrega aqui ya que solo atiende peticiones de las utms no de cotizaciones
+        "ara.castro@konnect.mx",
+        "kfigueroa@konnect.mx"
+    ]
 
-    if tipo == 1:
-        image_name = "orden.jpg"
-        subject = "📌 ACTUALIZA TUS ESTATUS"
-    elif tipo == 2:
-        image_name = "estatus.jpg"
-        subject = "🗓️ VIERNES DE ESTATUS"
-    elif tipo == 3:
-        image_name = "viernes.jpg"
-        subject = "⏰ NO LO OLVIDES"
-  
-    img_path = os.path.join(BASE_DIR, "utils", "static", image_name)
+    # 🔥 Lista final sin duplicados, sin None y sin vacíos
+    lista_correos = list({
+        correo.strip()
+        for correo in (correos_db + correos_konnect)
+        if correo and correo.strip()
+    })
+    token = crear_token({
+        "email": usuario.email,
+        "name": usuario.nombre,
+        "id_user": usuario.id
+    })
+    template = env.get_template("usuario.html")
 
-    if not os.path.exists(img_path):
-        raise HTTPException(status_code=404, detail=f"No existe la imagen: {img_path}")
+    html_content = template.render(
+        nombre=usuario.nombre,
+        email=usuario.email,
+        telefono=usuario.celular,
+        broker=broker.nombre if broker else "N/A",
+        sede=sede.nombre if sede else "N/A",
+        financiera="Sin financiera",
+        token=token
+    )
 
-    with open(img_path, "rb") as f:
-        imagen_b64 = base64.b64encode(f.read()).decode("utf-8")
+    print("📩 Enviando correo para usuario:", usuario.id)
+    print("📨 Destinatarios:", lista_correos)
 
-    template = env.get_template("recordatorios.html")
-    html_content = template.render()
+    background_tasks.add_task(
+        enviar_correo_simple,
+        html_content,
+        lista_correos,
+        f"Konnect 🆕 Nuevo Usuario - {usuario.nombre}"
+    )
 
-    query_usuarios = select(Usuarios.email).where(Usuarios.nivel <= 3)
-    correos = session.exec(query_usuarios).all()
+    return {
+        "ok": True,
+        "mensaje": "Correo enviado correctamente",
+        "destinatarios": lista_correos
+    }
+    
+@router.post("/comentario-direccion")
+def mail_comentario_direccion(data: ReqMailComentarioDir, session: SessionDep):
 
-   
-    print("Correos que recibirán el recordatorio:", correos)
+    cotizacion = session.get(Cotizacion, data.idCotizacion)
+    if not cotizacion:
+        raise HTTPException(status_code=404, detail="Cotización no encontrada")
 
-    background_tasks.add_task(enviar_correo_informativo, html_content, correos, subject, imagen_b64)
-   
-    return {"mensaje": "Proceso de envío iniciado"}
+    query_usuario = select(Usuarios).where(Usuarios.email == cotizacion.id_usuario)
+    correos_superiores = obtener_jefes(cotizacion.id_user, session)
+    usuario = session.exec(query_usuario).first()
+
+    try:
+        request_mail = SimpleNamespace(
+            id_cotizacion=data.idCotizacion,
+            cliente=cotizacion.nombre,
+            mensaje=data.message
+        )
+
+        if usuario.nivel == 1:
+            correos = correos_superiores
+        else:
+            correos = list(set([cotizacion.id_usuario] + correos_superiores))
+
+        template = env.get_template("comentarioDir.html")
+        html_content = template.render(
+            cliente=cotizacion.nombre,
+            mensaje=data.message,
+            folioKonnect=data.idCotizacion
+        )
+
+        result = send_mail_comment(request_mail, correos, html_content)
+
+        if not result["ok"]:
+            raise HTTPException(status_code=500, detail=result["error"])
+
+        return result
+
+    except HTTPException:
+        raise  # 👈 importantísimo, no borrar, “Si ya es un error HTTP válido, déjalo pasar intacto”
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+    

@@ -1,18 +1,25 @@
 import base64
+import io
+import logging
+import os
+import time
+import zipfile
 
 import requests
-from email.mime.image import MIMEImage
-import os
+from dotenv import load_dotenv
 
+from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import time
-from app.utils.logger_config import logger
-from app.models import ReqMail
 
+from app.models import ReqMail
+from app.utils.logger_config import logger
+
+load_dotenv()
 
 BREVO_API_KEY = os.getenv("BREVO_KEY") 
 BREVO_URL = os.getenv("BREVO_LINK")
+main_path = os.getenv("RUTA_COTIZACIONES")
 
 def fillFirma():
     firma_path = os.path.join(os.path.dirname(__file__), "static", "firma.png")
@@ -25,6 +32,12 @@ def fillFirma():
         firma_b64 = None
     
     return firma_b64
+
+def excel_a_base64():
+    file_path = os.path.join(os.path.dirname(__file__), "attachment", "Formato_validacion.xlsx")
+
+    with open(file_path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
 
 def enviar_correo(request: ReqMail, mensaje_html: str, correos: list[str]):
     destinatario = [request.emailUser]
@@ -42,6 +55,9 @@ def enviar_correo(request: ReqMail, mensaje_html: str, correos: list[str]):
         "sender": {
             "email": "web.app.no.reply@konnect.mx",
             "name": "Konnect"
+        },
+        "replyTo": {
+            "email": request.emailUser
         },
         "to": [{"email": e} for e in destinatario],
         "cc": [{"email": e} for e in correos],
@@ -80,6 +96,7 @@ def notificacion_if(cliente: str, mensaje_html: str, correos: list[str]):
             "email": "web.app.no.reply@konnect.mx",
             "name": "Konnect"
         },
+    
         "to": [{"email": e} for e in correos],
         "subject": f"La IF comento sobre el cliente {cliente}",
         "htmlContent": mensaje_html,
@@ -109,7 +126,6 @@ def notificacion_if(cliente: str, mensaje_html: str, correos: list[str]):
 def enviar_correo_dispersion(cotizacion, mensaje_html, correos):
     logger.info("🚀 ENTRO A enviar_correo_dispersion")
 
-
     BREVO_API_KEY = os.getenv("BREVO_KEY")
     BREVO_URL = os.getenv("BREVO_LINK")
 
@@ -118,6 +134,7 @@ def enviar_correo_dispersion(cotizacion, mensaje_html, correos):
         return
 
     firma_b64 = fillFirma()
+    excel_base64 = excel_a_base64()
 
     data = {
         "sender": {
@@ -125,9 +142,13 @@ def enviar_correo_dispersion(cotizacion, mensaje_html, correos):
             "name": "Konnect"
         },
         "to": [{"email": e} for e in correos],
-        "subject": f"Dispersión Cotización {cotizacion.id_cotizacion} - {cotizacion.nombre}",
+        "subject": f"Dispersión Cotización {cotizacion.id_cotizacion} - {cotizacion.nombre} - {cotizacion.producto}",
         "htmlContent": mensaje_html,
         "attachment": [
+            {
+                "content": excel_base64,
+                "name": "Formato_validacion.xlsx"
+            },
             {
                 "name": "firma.png",
                 "content": firma_b64
@@ -191,3 +212,203 @@ def enviar_correo_informativo(html_content: str, correos: list[str], subject: st
 
     print(f"{resultados}")       
     return resultados
+
+def enviar_correo_simple(html_content: str, correos: list[str], subject: str):
+
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+
+    resultados = []
+
+    data_base = {
+        "sender": {
+            "email": "web.app.no.reply@konnect.mx",
+            "name": "Konnect"
+        },
+        "subject": subject,
+        "htmlContent": html_content
+    }
+
+    for mail in correos:
+        try:
+            data = data_base.copy()
+            data["to"] = [{"email": mail}]
+
+            res = requests.post(BREVO_URL, json=data, headers=headers, timeout=(3,10))
+
+            resultados.append({
+                "email": mail,
+                "status": res.status_code,
+                "response": res.text
+            })
+
+        except Exception as e:
+            resultados.append({
+                "email": mail,
+                "ok": False,
+                "error": str(e)
+            })
+
+    print(resultados)
+    return resultados
+
+
+def enviar_correo_pago_vencida(html_content: str, correos: list[str], folio: int, cliente: str):
+    if not correos:
+        logger.error("No hay correos destino para correo de pago vencido")
+        return {"ok": False, "error": "No hay correos destino"}
+
+    if not BREVO_API_KEY:
+        logger.error("BREVO_KEY no configurada")
+        return {"ok": False, "error": "BREVO_KEY no configurada"}
+    firma_b64 = fillFirma()
+    data = {
+        "sender": {
+            "email": "web.app.no.reply@konnect.mx",
+            "name": "Konnect"
+        },
+        "to": [{"email": correo} for correo in set(correos)],
+        "cc": [{"email": "ij.innovaciones@gmail.com"}],
+        "subject": f"Folio Konnect {folio} - Pago vencido",
+        "htmlContent": html_content,
+        "attachment": [
+            {
+                "name": "imagen_recordatorio.png",
+                "content": firma_b64,
+                "contentId": "imagen_recordatorio"
+            }
+        ]
+    }
+
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+
+    try:
+        res = requests.post(BREVO_URL, json=data, headers=headers, timeout=(3,10))
+        print(f"Brevo response: ({res.status_code}) {res.text}")
+        return {"ok": 200 <= res.status_code < 300, "status_code": res.status_code, "response": res.text}
+    except Exception as e:
+        logger.error(f"❌ Error al enviar correo de pago vencido folio {folio} - {cliente}: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
+
+def send_mail_comment(request, correos, mensaje_html):
+    try:
+        logger.info("🚀 ENTRO A send_mail_comment")
+
+        BREVO_API_KEY = os.getenv("BREVO_KEY")
+        BREVO_URL = os.getenv("BREVO_LINK")
+
+        if not BREVO_API_KEY:
+            raise Exception("BREVO_KEY no configurada")
+
+        firma_b64 = fillFirma()
+
+        data = {
+            "sender": {
+                "email": "web.app.no.reply@konnect.mx",
+                "name": "Konnect"
+            },
+            "to": [{"email": e} for e in correos],
+            "subject": f"Mensaje de Dirección {request.id_cotizacion} - {request.cliente}",
+            "htmlContent": mensaje_html,
+            "attachment": [
+                {
+                    "name": "firma.png",
+                    "content": firma_b64
+                }
+            ]
+        }
+
+        headers = {
+            "accept": "application/json",
+            "api-key": BREVO_API_KEY,
+            "content-type": "application/json"
+        }
+
+        res = requests.post(BREVO_URL, json=data, headers=headers)
+
+        if res.status_code >= 400:
+            raise Exception(f"Error en Brevo: {res.text}")
+
+        return {"ok": True, "message": "Correo enviado correctamente"}
+
+    except Exception as e:
+        logger.error(f"❌ Error enviando correo: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
+def enviar_correo_con_expediente_zip(cotizacion, mensaje_html, correos, folder_name):
+    print(f"🚀 Iniciando tarea para Cotización: {cotizacion.id_cotizacion}")
+    destinatario = [cotizacion.id_usuario]
+    if not main_path:
+        print("❌ ERROR: RUTA_COTIZACIONES no definida en el .env")
+        logger.error("❌ ERROR: La variable RUTA_COTIZACIONES no está definida en el .env")
+        return
+
+    carpeta = os.path.join(main_path, folder_name)
+    print(f"📂 Buscando archivos en: {carpeta}")
+    
+    if not os.path.isdir(carpeta):
+        print(f"❌ Carpeta NO encontrada: {carpeta}")
+        return
+
+    try:
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            archivos_encontrados = os.listdir(carpeta)
+            agregados = 0
+            for archivo in archivos_encontrados:
+                ruta_archivo = os.path.join(carpeta, archivo)
+                if os.path.isfile(ruta_archivo) and archivo.lower().endswith(('pdf', 'jpg', 'jpeg', 'png', 'zip', 'rar', 'docx', 'xlsx','xls')):
+                    zipf.write(ruta_archivo, arcname=archivo)
+                    agregados += 1
+            
+            if agregados == 0:
+                print("⚠️ Carpeta vacía o sin archivos válidos.")
+                return
+
+        buffer.seek(0)
+        zip_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        print(f"📦 ZIP generado con {agregados} archivos.")
+        
+    except Exception as e:
+        print(f"❌ Error al comprimir: {str(e)}")
+        return
+
+    firma_b64 = fillFirma()
+    
+    data = {
+        "sender": {"email": "web.app.no.reply@konnect.mx", "name": "Konnect"},
+        "to": [{"email": e} for e in destinatario],
+        "cc": [{"email": e} for e in correos],
+        "subject": f"Expediente Digital - Cotización {cotizacion.id_cotizacion} - {cotizacion.nombre}",
+        "htmlContent": mensaje_html,
+        "attachment": [
+            {
+                "content": zip_base64,
+                "name": f"Expediente_{cotizacion.id_cotizacion}.zip"
+            }
+        ]
+    }
+
+    if firma_b64:
+        data["attachment"].append({"name": "firma.png", "content": firma_b64})
+
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+
+    try:
+        print("📤 Enviando a Brevo...")
+        res = requests.post(BREVO_URL, json=data, headers=headers)
+        print(f"✅ Brevo response: ({res.status_code}) {res.text}")
+    except Exception as e:
+        print(f"❌ Fallo crítico al enviar: {str(e)}")

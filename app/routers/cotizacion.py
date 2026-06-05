@@ -3,8 +3,17 @@ from fastapi import APIRouter, HTTPException, Query, status, Path
 from sqlalchemy import desc
 from sqlmodel import select, text
 from app.db import SessionDep
-from app.models import Cotizacion, CotizacionDTO, EstatusUpdate, MontoUpdate
+from app.models import Cotizacion, CotizacionDTO, EstatusUpdate, FechaPagoDTO, MontoUpdate
 import base64
+from sqlmodel import update
+from datetime import date
+from fastapi import APIRouter
+from sqlmodel import select
+
+from app.models import Cotizacion
+
+
+from app.routers import comentarios
 
 router = APIRouter(tags=["Cotizacion"])
 
@@ -177,3 +186,30 @@ async def update_estatus_cotizacion(
     session.refresh(cotizacion)
     
     return cotizacion
+@router.patch("/updatefechaPago")
+async def update_fecha_pago(
+    data: FechaPagoDTO,
+    session: SessionDep
+):
+    try:
+        session.expunge_all()
+        statement = (
+            update(Cotizacion)
+            .where(Cotizacion.id_cotizacion == data.id_cotizacion)
+            .values(fecha_pago=data.fecha_pago)
+        )
+        result = session.exec(statement)
+        session.commit()
+
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Cotización no encontrada")
+
+        return {"ok": True, "mensaje": "Columna fecha_pago actualizada exitosamente"}
+
+    except Exception as e:
+        session.rollback()
+        print(f"Error detectado: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Error de integridad: el sistema intentó tocar la tabla comentarios"
+        )

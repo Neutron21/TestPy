@@ -1,17 +1,16 @@
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from enum import Enum
 from typing import List, Optional
 from zoneinfo import ZoneInfo
-from pydantic import BaseModel, EmailStr, field_validator
-from sqlmodel import SQLModel, Field, Relationship, Session, select
+from pydantic import BaseModel, EmailStr, condecimal
+from sqlmodel import DECIMAL, SQLModel, Field
 from app.db import engine
-from pydantic import ConfigDict
-from pydantic import BaseModel
 from typing import List
 from sqlmodel import SQLModel, Field
 from typing import Optional
 
-
+Decimal_7_5 = condecimal(max_digits=15, decimal_places=5)
 # Una buena práctica en arquitecturas limpias es usar ORM para la capa de acceso a datos y DTO
 # para la comunicación con la API, evitando exponer modelos de la base de datos directamente. 🚀
 def mexico_timestamp():
@@ -28,6 +27,9 @@ class FinancierasDTO(SQLModel):
     fase: int = Field(default=None)
     img: str = Field(default=None)
     id_membresia: int = Field(foreign_key="membresias.id")
+    liga_carpeta: str = Field(default=None)
+    url: str = Field (default=None)
+
 
 class Financieras(FinancierasDTO,table=True):
         pass
@@ -62,6 +64,7 @@ class ProductoFormatoTipoPersona(SQLModel, table=True):
 class UsuarioDTO(BaseModel):
     nombre: str
     email: str
+    rfc: Optional[str] = None
     rol: str
     membresia: Optional[int] = None
     id_broker: Optional[int] = None
@@ -72,20 +75,24 @@ class UsuarioDTO(BaseModel):
     id_superior: Optional[int] = None   # ← AHORA SÍ SE MANDA
     
 
-
 class Usuarios(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     nombre: str
     email: str
     rol: str
-    membresia: Optional[int] = None
+    rfc: str
+    membresia: Optional[int] = Field(default=None, foreign_key="membresias.id")
     id_broker: Optional[int] = Field(default=None, foreign_key="brokers.id")
     id_sede: Optional[int] = Field(default=None, foreign_key="sedes.id")
     celular: Optional[str] = None
     nivel: Optional[int] = None
     id_financiera: Optional[int] = Field(default=None, foreign_key="financieras.id")
     id_superior: Optional[int] = Field(default=None, foreign_key="usuarios.id")
-
+    created_at: datetime = Field(
+    default_factory=lambda: datetime.now(ZoneInfo("America/Mexico_City"))
+    )
+    comisiones: str 
+    f_ultimo_pago: Optional[date] = None
 
 class UsuarioSimple(BaseModel):
     id: int
@@ -103,6 +110,8 @@ class UsuarioResponse(SQLModel):
     nivel: Optional[int]
     id_financiera: Optional[int]
     id_superior: Optional[int]
+    created_at: Optional[datetime]
+    
 
 
 
@@ -145,8 +154,8 @@ class CotizacionDTO (SQLModel):
     rfc: str = Field(max_length=100, nullable=False)
     plazo: str = Field(max_length=100, nullable=False)
     edad: int = Field(nullable=False)
-    monto: float = Field(nullable=False)  
-    ingresos: float = Field(nullable=False)
+    monto: int = Field(nullable=False)  
+    ingresos: int = Field(nullable=False)
     estatus: int = Field(nullable=False) 
     antiguedad_empresa: int = Field(nullable=False)
     OpCliente: str = Field(max_length=250, nullable=False)
@@ -154,17 +163,37 @@ class CotizacionDTO (SQLModel):
     sede: Optional[int] = Field(default=None, nullable=True) # aun no se recibe del front
     destinoCredito: str = Field(max_length=250, nullable=False)
     custom_prod: Optional[str] = Field(default=None, nullable=True)
+    fecha_pago: Optional[date] = Field(default=None)
+
+
+
 
 class Cotizacion (CotizacionDTO, table=True ):   
     pass 
     timestamp: datetime | None = Field(default_factory=mexico_timestamp, nullable=False)
     id_cotizacion: int | None = Field(default=None, primary_key=True, nullable=False)
     id_user: int = Field(foreign_key="usuarios.id", nullable=False)
+    fecha_pago: Optional[date] = Field(default=None)
+
 
 class ComentariosDTO(SQLModel):
     id_cotizacion: int = Field(default=None)
     id_usuario: str = Field(default=None)
     comentarios: str = Field(default=None)
+
+class FechaPagoDTO(BaseModel):
+    id_cotizacion: int
+    fecha_pago: date
+
+class CorreosPagos(SQLModel, table=True):
+    __tablename__ = "correos_pagos"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    id_financiera: int = Field(foreign_key="financieras.id", index=True)
+
+    nombre_contacto: str
+    telefono: int
+    correo: str    
 
 
 class Comentarios(ComentariosDTO, table=True):
@@ -187,9 +216,11 @@ class Correos(CorreosDTO ,table=True ):
 
 class ReqMail(BaseModel):
     isNew:  bool
-    # producto: str
-    # userName: str
     numCotizacion: int
+
+class ReqMailComentarioDir(BaseModel):
+    idCotizacion: int
+    message: str
 
 class BodyMail(BaseModel):
     OpCliente: str
@@ -267,93 +298,50 @@ class Membresias(SQLModel, table=True):
      nombre: str
 
 class Utms(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
     id_usuario: Optional[int] = Field(default=None, foreign_key="usuarios.id")
     id_financiera: int = Field(foreign_key="financieras.id")
-    tipo_persona: Optional[str] = Field(default=None)
+    tipo_persona: Optional[str] = None
     url: str
 
-# MODELOS DE EJEMPLO
-class StatusEnum(str, Enum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
+class UtmsCreate(SQLModel):
+    id_usuario: Optional[int] = None
+    id_financiera: int
+    tipo_persona: Optional[str] = None
+    url: str
+    token: str
 
-class CustomerPlan(SQLModel, table=True):
-    id: int = Field(primary_key=True)
-    plan_id: int = Field(foreign_key="plan.id")
-    customer_id: int = Field(foreign_key="customer.id")
-    status: StatusEnum = Field(default=StatusEnum.ACTIVE)
-
-class Plan(SQLModel, table=True):
-    id: int | None = Field(primary_key=True)
-    name: str = Field(default=None)
-    price: int = Field(default=None)
-    descripcion: str = Field(default=None)
-    customers: list['Customer'] = Relationship( # Custome aun no esta definido en esta linea, por ese se usan comillas
-    back_populates="plans", link_model=CustomerPlan
-    )
-
-class CustomerBase(SQLModel):
-    name: str = Field(default=None)
-    description: str | None = Field(default=None)
-    email: EmailStr = Field(default=None)
-    age: int = Field(default=None)
-
-    @field_validator("email")
-    @classmethod # field_validator necesita ser un classmethod
-    def validate_email(cls, value):
-        session = Session(engine)
-        query = select(Customer).where(Customer.email == value)
-        result = session.exec(query).first()
-        if result:
-            raise ValueError("Este correo ya esta registrado")
-        return value
-
-class CustomerCreate(CustomerBase):
-    pass
-
-class CustomerUpdate(CustomerBase):
-    pass
-
-class Customer(CustomerBase, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    transactions: list["Transaction"] = Relationship(back_populates="customer")
-    plans: list[Plan] = Relationship(
-        back_populates="customers", link_model=CustomerPlan
-    )
-
-class TransactionBase(SQLModel):
-    ammount: int
-    description: str
-
-class Transaction(TransactionBase, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    customer_id: int = Field(foreign_key="customer.id")
-    customer: Customer = Relationship(back_populates="transactions")
-
-class TransactionCreate(TransactionBase):
-    customer_id: int = Field(foreign_key="customer.id")
-
-class Invoice(BaseModel):
-    id: int
-    customer: Customer
-    transactions: list[Transaction] # Como Transaction ya existe a esta altura se puede usar sin comillas
-    total: int
-
-    @property
-    def ammount_total(self):
-        return sum(transaction.ammount for transaction in self.transactions)
-    
-class PaginatedTransactionsResponse(SQLModel):
-    total_count: int  # Total de elementos
-    total_pages: int   # Total de páginas
-    current_page: int  # Página actual
-    limit: int         # Límite de elementos por página
-    transactions: list[Transaction] 
 
 class utils(BaseModel):
     numeros: List[int]
 
+
+class ProductoParametros(SQLModel, table=True):
+    __tablename__ = "producto_desc"
+
+    id: int | None = Field(default=None, primary_key=True)
+    id_producto: int = Field(foreign_key="productos.id")
+
+    param: str
+    value: str
+    orden: int
+
+
+class ParametroResponse(BaseModel):
+    param: str
+    value: str
+    orden: int
+
+    class Config:
+        from_attributes = True
+
+class ProductoResponse(BaseModel):
+    id: int
+    nombre: str
+    parametros: list[ParametroResponse]
+
+    class Config:
+        from_attributes = True
 
 class ProductosTipoPersonaDTO(ProductosDTO):
     id: int
@@ -362,6 +350,82 @@ class ProductosTipoPersonaDTO(ProductosDTO):
 class Productos(ProductosDTO, table=True):
     id: int | None = Field(default=None, primary_key=True)
     plazo: Optional[str] = None
+    visible: bool = Field(default=True)
 
 
+class Pagos(SQLModel, table=True):
 
+    id: int = Field(primary_key=True)
+    id_financiera: Optional[int] = Field(default=None, foreign_key="financieras.id")
+    regla:  str
+
+    id_producto: Optional[int] = Field(foreign_key="productos.id")
+    m_max: Optional[int]
+    m_min: Optional[int]
+
+    pago_a_konnect: Decimal = Field (DECIMAL(7, 5), nullable=False)
+
+    c_apertura: Decimal = Field (DECIMAL(7, 5), nullable=False)
+    c_plata: Decimal = Field (DECIMAL(7, 5), nullable=False)
+    c_oro: Decimal = Field (DECIMAL(7, 5), nullable=False)
+    c_platino: Decimal = Field (DECIMAL(7, 5), nullable=False)
+    c_diamante: Decimal = Field (DECIMAL(7, 5), nullable=False)
+
+    notas: Optional[str] = Field(default=None, max_length=300)
+
+    ganancia_plata: Decimal = Field (DECIMAL(7, 5), nullable=False)
+    ganancia_oro: Decimal = Field (DECIMAL(7, 5), nullable=False)
+    ganancia_platino: Decimal = Field (DECIMAL(7, 5), nullable=False)
+    ganancia_diamante: Decimal = Field (DECIMAL(7, 5), nullable=False)
+    ganancia_konnect: Decimal = Field (DECIMAL(7, 5), nullable=False)
+
+class ResponsePagos(BaseModel):
+    id_cotizacion: int
+    id_financiera: int
+    financiera: str
+    regla: str
+    id_producto: int
+    producto: str
+    membresia_broker: str
+    nombre_usuario: str
+    monto_credito: Decimal_7_5 # type: ignore
+    
+    comision_apertura_porcentaje: Optional[str] = None
+    comision_apertura_pesos: Optional[str] = None
+    
+    porcentaje_pago_a_konnect: str
+    pago_a_konnect: Decimal_7_5 # type: ignore
+    iva_pago_a_konnect: Decimal_7_5 # type: ignore
+    total_pago_a_konnect: Decimal_7_5 # type: ignore
+
+    porcentaje_pago_broker: str
+    pago_broker: Decimal_7_5 # type: ignore
+    iva_pago_broker: Decimal_7_5 # type: ignore
+    total_pago_broker: Decimal_7_5 # type: ignore
+    
+    ganancia_konnect: Decimal_7_5 # type: ignore
+    iva_ganancia_konnect: Decimal_7_5 # type: ignore
+    total_ganancia_konnect: Decimal_7_5 # type: ignore
+
+    lineas_broker: Optional[int] | None = None
+    lineas_konnect: Optional[int] | None = None
+
+class TrackStatusBase(SQLModel):
+    id_cotizacion: int
+    id_status: int
+
+class TrackStatusCreate(TrackStatusBase):
+    pass
+
+class TrackStatusResponse(TrackStatusBase):
+    id: int
+    fecha: datetime
+
+class Track_Status(TrackStatusBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    id_cotizacion: int = Field(foreign_key="cotizacion.id_cotizacion")
+    id_status: int = Field(foreign_key="estatus_tramites.id")
+    fecha: datetime = Field(
+        default_factory=mexico_timestamp,
+        nullable=False
+    )
