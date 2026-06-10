@@ -38,3 +38,31 @@ def manager_func(id_cotizacion: int, session: SessionDep):
     financiera = financiera_class(cot_result, session)
 
     return financiera.calculate()
+
+
+def manager_func_finkargo_custom(id_cotizacion: int, monto: int, id_producto: int, session: SessionDep):
+    """
+    Calcula comisiones de Finkargo con monto y producto personalizados.
+    Solo valida que la cotización existe, pero usa los parámetros del endpoint para los cálculos.
+    
+    Args:
+        id_cotizacion: ID de cotización (solo para validación)
+        monto: Monto sobre el cual se harán los cálculos
+        id_producto: Producto para hacer los cálculos (ej: 172 para finkargo-incremento)
+        session: Sesión de base de datos
+    """
+    # Validar que la cotización existe y es de Finkargo
+    query_cot = select(Cotizacion).where(Cotizacion.id_cotizacion == id_cotizacion)
+    cot_result = session.exec(query_cot).first()
+
+    if not cot_result:
+        raise HTTPException(status_code=404, detail="Cotización no encontrada")
+    
+    if cot_result.id_financiera != 29:
+        raise HTTPException(status_code=406, detail="Esta función solo soporta Finkargo")
+    
+    # Usar el calculador de Finkargo con los parámetros personalizados
+    # El constructor acepta monto_override e id_producto_override
+    financiera = FinkargoCalculator(cot_result, session, monto_override=monto, id_producto_override=id_producto)
+    
+    return financiera.calculate()
