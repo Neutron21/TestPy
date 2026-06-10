@@ -22,6 +22,8 @@ router = APIRouter(tags=["SendMails"])
 ruta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ruta_templates = os.path.join(ruta_base, "templates")
 env = Environment(loader=FileSystemLoader(ruta_templates))
+FINANCIERAS_ESPECIALES = {7, 14}
+
 
 
 def obtener_jefes(user_id: int, session) -> List[Usuarios]:
@@ -43,7 +45,7 @@ def obtener_mails_ifs(cotizacion: Cotizacion, session) -> List[str]:
     query_producto = select(Productos).where(Productos.id == cotizacion.producto)
     producto = session.exec(query_producto).first()
 
-    if cotizacion.id_financiera == 14:
+    if cotizacion.id_financiera in FINANCIERAS_ESPECIALES:
             query_correos = select(Correos.correo).where(
                 (Correos.id_financiera == cotizacion.id_financiera) &
                 (Correos.v_mail == 1) &
