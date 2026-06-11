@@ -24,7 +24,7 @@ async def calular_comisiones_finkargo_incremento(id_cotizacion: int, monto: int,
     
     El producto se usa automáticamente como  Finkargo Incremento de linea.
     """
-    return manager_func_finkargo_custom(id_cotizacion, monto, 67, session)
+    return manager_func_finkargo_custom(id_cotizacion, monto, 187, session)
 
 @router.get("/pagos/finkargo-operativa", response_model=ResponsePagos)
 async def calular_comisiones_finkargo_operativa(id_cotizacion: int, monto: int, session: SessionDep):
