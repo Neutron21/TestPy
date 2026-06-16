@@ -69,15 +69,15 @@ class UnifinCalculator(BaseFinanciera):
             porcentaje_pago_a_konnect = show_percent(t_pago.pago_a_konnect),
             pago_a_konnect=to_decimal_7_5(calc_pago_konnect),
             iva_pago_a_konnect = calc_IVA(calc_pago_konnect),
-            total_pago_a_konnect = calc_pago_konnect + calc_IVA(calc_pago_konnect),
+            total_pago_a_konnect = to_decimal_7_5(calc_pago_konnect + calc_IVA(calc_pago_konnect)),
             
             porcentaje_pago_broker = show_percent(porcentaje_broker),
             pago_broker=to_decimal_7_5(comision_broker),
             iva_pago_broker = calc_IVA(comision_broker),
-            total_pago_broker = comision_broker + calc_IVA(comision_broker),
+            total_pago_broker = to_decimal_7_5(comision_broker + calc_IVA(comision_broker)),
             
             ganancia_konnect=to_decimal_7_5(gan_konn),
             iva_ganancia_konnect = calc_IVA(gan_konn),
-            total_ganancia_konnect = gan_konn + calc_IVA(gan_konn),
+            total_ganancia_konnect = to_decimal_7_5(gan_konn + calc_IVA(gan_konn)),
             
         )     
