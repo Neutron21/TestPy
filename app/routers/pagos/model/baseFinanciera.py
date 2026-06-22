@@ -29,12 +29,14 @@ def show_percent(value: Decimal) -> str:
     return f"{str(percent.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP))} %"
 
 def calc_IVA(value: Decimal) -> Decimal:
-    return value.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP) * iva_value
+    iva = value * iva_value
+    return iva.quantize(Decimal("0.00001"), rounding=ROUND_HALF_UP)
 
 FINANCIERAS = {
     1: "KONFIO",
     10: "FINSUS",
     11: "FINBE ABC",
+    20: "UNIFIN",
     22: "JEEVES",
     29: "FINKARGO",
     32: "CLARA",

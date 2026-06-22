@@ -33,9 +33,8 @@ async def usuario_by_mail(email: str, session: SessionDep):
 
     return user
 
-# ============================================================
 # Crear usuario →
-# ============================================================
+
 @router.post(
     "/usuarios",
     response_model=Usuarios
