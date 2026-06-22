@@ -61,7 +61,7 @@ async def create_usuario(usuario_data: UsuarioDTO, session: SessionDep):
     # 🔥 CAMBIO IMPORTANTE
     usuario = Usuarios(
         **usuario_dict,
-        comisiones="2026"
+        comisiones="evoluciona"
     )
 
     session.add(usuario)
