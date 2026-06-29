@@ -42,7 +42,7 @@ def getFinancierasUtms(retorno: int, session):
 
 @router.get("/financieras", response_model=list[Financieras])
 async def list_financieras(session: SessionDep):
-    query = select(Financieras).where(Financieras.fase > 0).order_by(Financieras.nombre)
+    query = select(Financieras).where(Financieras.fase != 0).order_by(Financieras.nombre)
     financieras = session.exec(query).all()
     return financieras
 
