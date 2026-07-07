@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, status, Query
 from sqlmodel import select, text
 from app.db import SessionDep
 from app.models import Comentarios, ComentariosDTO, Cotizacion, MontoUpdateDTO, Usuarios
+from sqlmodel import desc # Importa esto
+
 
 router = APIRouter(tags=["Comentarios"])
 
@@ -43,4 +45,23 @@ async def create_new_coment(coment_request: ComentariosDTO, session: SessionDep)
     return coment_data  
     
 
+@router.get("/ultimo-comentario/{id_cotizacion}/{id_usuario}")
+async def obtener_ultimo_comentario(
+    id_cotizacion: int, 
+    id_usuario: int,
+    session: SessionDep
+):
+    user = session.get(Usuarios, id_usuario)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+    query = select(Comentarios).where(Comentarios.id_cotizacion == id_cotizacion)
+    
+    if user.nivel < 2:
+        query = query.where(Comentarios.id_usuario != "gerencia.corporativa@konnect.mx")
+    
+    query = query.order_by(desc(Comentarios.id)).limit(1)
+    
+    comentario = session.exec(query).first()
+    
+    return comentario if comentario else {"comentarios": "Sin comentarios"}
 
