@@ -173,6 +173,11 @@ class Cotizacion (CotizacionDTO, table=True ):
     id_cotizacion: int | None = Field(default=None, primary_key=True, nullable=False)
     id_user: int = Field(foreign_key="usuarios.id", nullable=False)
     fecha_pago: Optional[date] = Field(default=None)
+    
+class CotizacionResponse(CotizacionDTO):
+    id_cotizacion: int
+    timestamp: datetime
+    ultimo_comentario: Optional[datetime] = None    
 
 
 class ComentariosDTO(SQLModel):

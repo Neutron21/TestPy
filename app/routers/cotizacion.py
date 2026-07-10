@@ -25,37 +25,42 @@ async def get_cotizacion_by_id(id_cotizacion: int, session: SessionDep):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Cotización")
     return  cotizacion
 
-@router.get("/cotizaciones", response_model=list[Cotizacion])
+@router.get("/cotizaciones") # Quitamos response_model temporalmente si da error
 async def obtener_cotizaciones_por_usuario(
     session: SessionDep,
     id_user: Optional[int] = Query(None),
     nivel_user: Optional[int] = Query(None)):
 
+    # Agregamos el JOIN en todas las consultas manuales
+    join_sql = """
+        LEFT JOIN (
+            SELECT id_cotizacion, MAX(timestamp) AS ultimo_comentario
+            FROM comentarios GROUP BY id_cotizacion
+        ) uc ON c.id_cotizacion = uc.id_cotizacion
+    """
+
     if nivel_user == 4:
-        # MasterBroker ve todo
-        cotizaciones = session.exec(select(Cotizacion).order_by(desc(Cotizacion.timestamp))).all()
+        query = text(f"SELECT c.*, uc.ultimo_comentario FROM cotizacion c {join_sql} ORDER BY c.timestamp DESC")
+        result = session.execute(query)
     elif nivel_user in [2, 3]:
-        # Director o Gerente ve las suyas y las de sus subordinados
-        query = text("""
+        query = text(f"""
             WITH RECURSIVE subordinates AS (
               SELECT id FROM usuarios WHERE id = :user_id
               UNION ALL
               SELECT u.id FROM usuarios u
               INNER JOIN subordinates s ON u.id_superior = s.id
             )
-            SELECT * FROM cotizacion WHERE id_user IN (SELECT id FROM subordinates)
-            ORDER BY timestamp DESC
+            SELECT c.*, uc.ultimo_comentario FROM cotizacion c {join_sql}
+            WHERE c.id_user IN (SELECT id FROM subordinates)
+            ORDER BY c.timestamp DESC
         """)
         result = session.execute(query, {"user_id": id_user})
-        cotizaciones = [Cotizacion(**dict(row._mapping)) for row in result.fetchall()]
-
     else:
-        # Operador solo ve las suyas
-        cotizaciones = session.exec(
-            select(Cotizacion).where(Cotizacion.id_user == id_user).order_by(desc(Cotizacion.timestamp))
-        ).all()
+        query = text(f"SELECT c.*, uc.ultimo_comentario FROM cotizacion c {join_sql} WHERE c.id_user = :id_user ORDER BY c.timestamp DESC")
+        result = session.execute(query, {"id_user": id_user})
     
-    return cotizaciones
+    # IMPORTANTE: Devolvemos diccionarios, no objetos Cotizacion
+    return [dict(row._mapping) for row in result.fetchall()]
 
 @router.get("/cotizacion/buscar/", response_model=List[Cotizacion])
 async def buscador_cotizaciones(
