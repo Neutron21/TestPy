@@ -199,6 +199,7 @@ class Comentarios(ComentariosDTO, table=True):
     pass
     id_comentario: Optional[int] | None = Field(primary_key=True)
     timestamp: datetime = Field(default_factory=mexico_timestamp, nullable=False)
+    visible: bool = Field(default=True)
 
 class CorreosDTO(SQLModel):
     id_financiera: int = Field(default=None)

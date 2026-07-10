@@ -18,7 +18,9 @@ async def obtener_comentarios(
     
     # Si es nivel 2, regresar todos los comentarios
     if user.nivel >= 2:
-        query = select(Comentarios).where(Comentarios.id_cotizacion == id_cotizacion)
+        query = select(Comentarios).where(
+            Comentarios.id_cotizacion == id_cotizacion,
+            Comentarios.visible == True)
         comentarios = session.exec(query).all()
         return comentarios
     
@@ -26,7 +28,8 @@ async def obtener_comentarios(
     else:
         query = select(Comentarios).where(
             Comentarios.id_cotizacion == id_cotizacion,
-            Comentarios.id_usuario != "gerencia.corporativa@konnect.mx"
+            Comentarios.id_usuario != "gerencia.corporativa@konnect.mx",
+            Comentarios.visible == True
         )
 
     

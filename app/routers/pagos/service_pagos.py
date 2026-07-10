@@ -1,7 +1,7 @@
 from fastapi import HTTPException
-from sqlmodel import func, select
+from sqlmodel import select
 
-from app.models import Cotizacion, Pagos, Usuarios
+from app.models import Cotizacion
 from app.db import SessionDep
 from app.routers.pagos.model.finsusCalculator import FinsusCalculator
 from app.routers.pagos.model.konfioCalculator import  KonfioCalculator
@@ -11,18 +11,20 @@ from app.routers.pagos.model.jeevesCalculator import JeevesCalculator
 from app.routers.pagos.model.finbeAbcCalculator import FinbeAbcCalculator
 from app.routers.pagos.model.finkargoCalculator import FinkargoCalculator
 from app.routers.pagos.model.unifinCalculator import UnifinCalculator
+from app.routers.pagos.model.afirmeCalculator import AfirmeCalculator
     
 
 CALCULOS = {
     1: KonfioCalculator, #✅ Pendinte TDCE
     10: FinsusCalculator, #✅
     11: FinbeAbcCalculator, #
+    14: AfirmeCalculator, #
     20: UnifinCalculator, #✅
     22: JeevesCalculator, #✅
     29: FinkargoCalculator, #✅
     32: ClaraCalculator, #✅ Dispersados por mes
     34: FluxoCalculator, #✅ 
-    # Afirme
+
 }
 
 def manager_func(id_cotizacion: int, session: SessionDep):

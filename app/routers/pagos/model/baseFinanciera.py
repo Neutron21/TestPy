@@ -36,6 +36,7 @@ FINANCIERAS = {
     1: "KONFIO",
     10: "FINSUS",
     11: "FINBE ABC",
+    14: "AFIRME",
     20: "UNIFIN",
     22: "JEEVES",
     29: "FINKARGO",

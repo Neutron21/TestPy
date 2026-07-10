@@ -1,7 +1,7 @@
-from sqlmodel import func, select
+from sqlmodel import  select
 
-from app.routers.pagos.model.baseFinanciera import BaseFinanciera, status_pagado, to_decimal_7_5, show_percent, calc_IVA
-from app.models import Cotizacion, Pagos, ResponsePagos, Usuarios, Productos
+from app.routers.pagos.model.baseFinanciera import BaseFinanciera, to_decimal_7_5, show_percent, calc_IVA
+from app.models import  Pagos, ResponsePagos, Usuarios, Productos
 from app.routers.pagos.model.baseFinanciera import MEMBRESIAS, FINANCIERAS
 
 
