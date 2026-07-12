@@ -82,32 +82,43 @@ async def buscador_cotizaciones(
 
     query_filters = ""
     params = {}
+    alias_prefix = "c." if rol == 'a' else ""
+    join_sql = ""
+
+    if rol == 'a':
+        join_sql = """
+            LEFT JOIN (
+                SELECT id_cotizacion, MAX(timestamp) AS ultimo_comentario
+                FROM comentarios
+                GROUP BY id_cotizacion
+            ) uc ON c.id_cotizacion = uc.id_cotizacion
+        """
 
     if estatus is not None:
-        query_filters += " AND estatus = :estatus"
+        query_filters += f" AND {alias_prefix}estatus = :estatus"
         params["estatus"] = estatus
 
     if fin is not None:
-        query_filters += " AND id_financiera = :fin"
+        query_filters += f" AND {alias_prefix}id_financiera = :fin"
         params["fin"] = fin
 
     if broker is not None:
-        query_filters += " AND broker = :broker"
+        query_filters += f" AND {alias_prefix}broker = :broker"
         params["broker"] = broker
     
     if idUser is not None:
-        query_filters += " AND id_user = :idUser"
+        query_filters += f" AND {alias_prefix}id_user = :idUser"
         params["idUser"] = idUser
 
     if fechaDesde and fechaHasta:
-        query_filters += " AND timestamp BETWEEN :fechaDesde AND :fechaHasta"
+        query_filters += f" AND {alias_prefix}timestamp BETWEEN :fechaDesde AND :fechaHasta"
         params["fechaDesde"] = fechaDesde
         params["fechaHasta"] = fechaHasta + " 23:59:59"
 
     if folioUserRfc:
         like = f"%{folioUserRfc}%"
         if rol == 'a':
-            query_filters += " AND (id_usuario LIKE :like OR nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
+            query_filters += " AND (c.id_usuario LIKE :like OR c.nombre LIKE :like OR c.rfc LIKE :like OR c.id_cotizacion = :folioUserRfc)"
         else:
             query_filters += " AND (nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
         params["like"] = like
@@ -129,12 +140,21 @@ async def buscador_cotizaciones(
         """
         params["user_id"] = user
     else:
-        query = f"""
-        SELECT * FROM cotizacion
-        WHERE 1=1
-        {query_filters}
-        ORDER BY timestamp DESC
-        """
+        if rol == 'a':
+            query = f"""
+            SELECT c.*, uc.ultimo_comentario FROM cotizacion c
+            {join_sql}
+            WHERE 1=1
+            {query_filters}
+            ORDER BY c.timestamp DESC
+            """
+        else:
+            query = f"""
+            SELECT * FROM cotizacion
+            WHERE 1=1
+            {query_filters}
+            ORDER BY timestamp DESC
+            """
 
     print(f"QUERY: {query}")
     print(f"PARAMS: {params}")
