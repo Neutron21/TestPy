@@ -418,6 +418,7 @@ class ResponsePagos(BaseModel):
 class TrackStatusBase(SQLModel):
     id_cotizacion: int
     id_status: int
+    id_usuario: int
 
 class TrackStatusCreate(TrackStatusBase):
     pass
@@ -430,6 +431,7 @@ class Track_Status(TrackStatusBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     id_cotizacion: int = Field(foreign_key="cotizacion.id_cotizacion")
     id_status: int = Field(foreign_key="estatus_tramites.id")
+    id_usuario: int = Field(foreign_key="usuarios.id")
     fecha: datetime = Field(
         default_factory=mexico_timestamp,
         nullable=False
