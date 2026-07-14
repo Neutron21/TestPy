@@ -12,6 +12,7 @@ from app.routers.pagos.model.finbeAbcCalculator import FinbeAbcCalculator
 from app.routers.pagos.model.finkargoCalculator import FinkargoCalculator
 from app.routers.pagos.model.unifinCalculator import UnifinCalculator
 from app.routers.pagos.model.afirmeCalculator import AfirmeCalculator
+from app.routers.pagos.model.finamoCalculator import FinamoCalculator
     
 
 CALCULOS = {
@@ -21,6 +22,7 @@ CALCULOS = {
     14: AfirmeCalculator, #
     20: UnifinCalculator, #✅
     22: JeevesCalculator, #✅
+    24: FinamoCalculator, #
     29: FinkargoCalculator, #✅
     32: ClaraCalculator, #✅ Dispersados por mes
     34: FluxoCalculator, #✅ 

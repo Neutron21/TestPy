@@ -39,6 +39,7 @@ FINANCIERAS = {
     14: "AFIRME",
     20: "UNIFIN",
     22: "JEEVES",
+    24: "FINAMO",
     29: "FINKARGO",
     32: "CLARA",
     34: "FLUXO",
