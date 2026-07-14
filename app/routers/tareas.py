@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Header
 from sqlalchemy import text
-from sqlmodel import select
+from sqlmodel import delete, select
 from jinja2 import Environment, FileSystemLoader
 import os
 import shutil
@@ -10,10 +10,9 @@ import base64
 from datetime import date, timedelta
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import CorreosPagos, Cotizacion, Productos
+from app.models import Comentarios, CorreosPagos, Cotizacion, Productos, Track_Status, Usuarios
 
 from app.db import SessionDep
-from app.models import Usuarios
 from app.routers.bigQuery.dashboard import ( sync_brokers, sync_categorias, sync_cotizacion, sync_estatus_tramites, sync_financieras,
                                              sync_productos, sync_sedes, sync_subCategorias, sync_usuarios)
 from utils.email import enviar_correo_informativo, enviar_correo_simple, enviar_correo_pago_vencida, fillFirma
@@ -53,17 +52,25 @@ def borrar_carpetas(ids):
     return eliminadas
 
 
-# 💬 Borra comentarios asociados a las cotizaciones
-def borrar_comentarios_prueba(session, ids):
+# 🧹 Borra los hijos asociados a las cotizaciones antes de eliminar el padre
+def borrar_hijos_prueba(session, ids):
     if not ids:
-        return 0
+        return {"comentarios": 0, "track_status": 0}
 
-    result = session.execute(text("""
-        DELETE FROM comentarios
-        WHERE id_cotizacion IN :ids
-    """), {"ids": tuple(ids)})
+    ids_tuple = tuple(ids)
 
-    return result.rowcount
+    comentarios_borrados = session.exec(
+        delete(Comentarios).where(Comentarios.id_cotizacion.in_(ids_tuple))
+    ).rowcount
+
+    track_status_borrados = session.exec(
+        delete(Track_Status).where(Track_Status.id_cotizacion.in_(ids_tuple))
+    ).rowcount
+
+    return {
+        "comentarios": comentarios_borrados,
+        "track_status": track_status_borrados,
+    }
 
 
 # 🧨 Borra registros en BD
@@ -116,16 +123,19 @@ def borrar_pruebas(session: SessionDep, _ = Depends(validar_cron_token)):
     # 🗑 2. Borrar carpetas
     carpetas_borradas = borrar_carpetas(ids)
 
-    # 🧨 3. Borrar BD
+    # � 3. Borrar hijos antes del padre para evitar conflictos por FK
+    hijos_borrados = borrar_hijos_prueba(session, ids)
+
+    # 🧨 4. Borrar BD
     total_bd = borrar_cotizaciones_prueba(session, ids)
-    comentarios_borrados = borrar_comentarios_prueba(session, ids)
 
     session.commit()
 
     return {
         "mensaje": "Cotizaciones de prueba eliminadas correctamente",
         "total_bd": total_bd,
-        "comentarios_borrados": comentarios_borrados,
+        "comentarios_borrados": hijos_borrados["comentarios"],
+        "track_status_borrados": hijos_borrados["track_status"],
         "carpetas_borradas": carpetas_borradas
     }
 

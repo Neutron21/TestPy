@@ -181,7 +181,7 @@ class CotizacionResponse(CotizacionDTO):
 
 
 class ComentariosDTO(SQLModel):
-    id_cotizacion: int = Field(default=None)
+    id_cotizacion: int = Field(default=None, foreign_key="cotizacion.id_cotizacion")
     id_usuario: str = Field(default=None)
     comentarios: str = Field(default=None)
 

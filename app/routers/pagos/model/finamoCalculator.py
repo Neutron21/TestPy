@@ -8,7 +8,7 @@ from app.routers.pagos.model.baseFinanciera import MEMBRESIAS, FINANCIERAS
 class FinamoCalculator(BaseFinanciera):
 
     def bussinesRules(self):
-
+        # Regla general aplica a todos los productos de Finamo
         query_pagos = select(Pagos).where(Pagos.id_financiera == self.cotizacion.id_financiera)
         self.pagos_result = self.session.exec(query_pagos).all()
 
