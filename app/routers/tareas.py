@@ -102,9 +102,15 @@ def validar_cron_token_bq(x_cron_token: str = Header(None)):
         raise HTTPException(status_code=500, detail="Error de configuración en el servidor")
     if not x_cron_token:
         raise HTTPException(status_code=400, detail="X Token requerido")
+    bq_secret = os.getenv("CRON_SECRET_BQ")
+    print(f"SECRET LEN: {len(bq_secret)}")
+    print(f"HEADER LEN: {len(x_cron_token)}")
+    print(f"IGUALES: {bq_secret == x_cron_token}")
 
+    print(f"SECRET REPR: {repr(bq_secret)}")
+    print(f"HEADER REPR: {repr(x_cron_token)}")
     if x_cron_token != os.getenv("CRON_SECRET_BQ"):
-        raise HTTPException(status_code=401, detail="X Token inválido")
+        raise HTTPException(status_code=401, detail="X Token inválido BQ")
 # 🚀 ENDPOINT PRINCIPAL
 @router.delete("/cotizaciones/borrar-pruebas")
 def borrar_pruebas(session: SessionDep, _ = Depends(validar_cron_token)):

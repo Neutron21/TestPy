@@ -28,22 +28,22 @@ class FinamoCalculator(BaseFinanciera):
         print(f"t_pago: {t_pago}")
         com_apertura = self.cotizacion.monto * t_pago.c_apertura
         print(f"com_apertura: {t_pago.c_apertura}% de {self.cotizacion.monto} -> {com_apertura}")
-        calc_pago_konnect = t_pago.pago_a_konnect * self.cotizacion.monto
+        calc_pago_konnect = t_pago.pago_a_konnect * com_apertura
         print(f"Pago Konnect: {calc_pago_konnect}, {t_pago.pago_a_konnect} de {com_apertura}")
     
         match self.id_membresia:
             case 1:
                 porcentaje_broker = t_pago.c_plata
-                comision_broker = t_pago.c_plata * self.cotizacion.monto
+                comision_broker = t_pago.c_plata * calc_pago_konnect
             case 2:
                 porcentaje_broker = t_pago.c_oro
-                comision_broker = t_pago.c_oro * self.cotizacion.monto
+                comision_broker = t_pago.c_oro * calc_pago_konnect
             case 3:
                 porcentaje_broker = t_pago.c_platino
-                comision_broker = t_pago.c_platino * self.cotizacion.monto
+                comision_broker = t_pago.c_platino * calc_pago_konnect
             case 4:
                 porcentaje_broker = t_pago.c_diamante
-                comision_broker = t_pago.c_diamante * self.cotizacion.monto
+                comision_broker = t_pago.c_diamante * calc_pago_konnect
 
         print(f"Membreisa Broker: {MEMBRESIAS.get(self.id_membresia)}")
         print(f"Comision Broker: {comision_broker}")
