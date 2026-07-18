@@ -21,6 +21,57 @@ BREVO_API_KEY = os.getenv("BREVO_KEY")
 BREVO_URL = os.getenv("BREVO_LINK")
 main_path = os.getenv("RUTA_COTIZACIONES")
 
+
+def _obtener_destinatarios_alerta() -> list[str]:
+    destinatarios = os.getenv("ALERTA_EMAILS")
+    return [correo.strip() for correo in destinatarios.split(",") if correo.strip()]
+
+
+def enviar_correo_alerta(mensaje: str, asunto: str = "Alerta de logs Konnect", log_path: str | None = None):
+    if not BREVO_API_KEY:
+        logger.error("BREVO_KEY no configurada para alerta")
+        return {"ok": False, "error": "BREVO_KEY no configurada"}
+
+    destinatarios = _obtener_destinatarios_alerta()
+    if not destinatarios:
+        return {"ok": False, "error": "No hay destinatarios para alerta"}
+
+    attachment = None
+    if log_path and os.path.exists(log_path):
+        with open(log_path, "rb") as archivo:
+            attachment = {
+                "name": os.path.basename(log_path),
+                "content": base64.b64encode(archivo.read()).decode("utf-8")
+            }
+
+    data = {
+        "sender": {
+            "email": "web.app.no.reply@konnect.mx",
+            "name": "Konnect"
+        },
+        "to": [{"email": correo} for correo in destinatarios],
+        "subject": asunto,
+        "htmlContent": f"<p>Se detectó un error en la API.</p><pre>{mensaje}</pre>",
+        "attachment": [attachment] if attachment else []
+    }
+
+    headers = {
+        "accept": "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json"
+    }
+
+    try:
+        res = requests.post(BREVO_URL, json=data, headers=headers, timeout=(5, 15))
+        if res.status_code >= 400:
+            logger.error(f"❌ Error al enviar alerta por correo: {res.text}")
+            return {"ok": False, "status_code": res.status_code, "response": res.text}
+
+        return {"ok": True, "status_code": res.status_code, "response": res.text}
+    except Exception as e:
+        logger.error(f"❌ Error enviando alerta por correo: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
 def fillFirma():
     firma_path = os.path.join(os.path.dirname(__file__), "static", "firma.png")
    

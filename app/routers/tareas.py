@@ -15,7 +15,8 @@ from app.models import Comentarios, CorreosPagos, Cotizacion, Productos, Track_S
 from app.db import SessionDep
 from app.routers.bigQuery.dashboard import ( sync_brokers, sync_categorias, sync_cotizacion, sync_estatus_tramites, sync_financieras,
                                              sync_productos, sync_sedes, sync_subCategorias, sync_usuarios)
-from utils.email import enviar_correo_informativo, enviar_correo_simple, enviar_correo_pago_vencida, fillFirma
+from app.utils.logger_config import logger
+from app.utils.email import enviar_correo_informativo, enviar_correo_simple, enviar_correo_pago_vencida, fillFirma
 
 router = APIRouter(tags=["Tareas"])
 
@@ -277,22 +278,26 @@ async def sync_all(session: SessionDep, background_tasks: BackgroundTasks, _ = D
     }
 
 def syncAllDashboard(session):
-    results = {}
+    try:
+        results = {}
 
-    results["brokers"] = sync_brokers(session)
-    results["cotizacion"] = sync_cotizacion(session)
-    results["categorias"] = sync_categorias(session)
-    results["estatus_tramites"] = sync_estatus_tramites(session)
-    results["financieras"] = sync_financieras(session)
-    results["productos"] = sync_productos(session)
-    results["sedes"] = sync_sedes(session)
-    results["subCategorias"] = sync_subCategorias(session)
-    results["usuarios"] = sync_usuarios(session)
-    print(results)
-    return {
-        "status": "ok",
-        "synced": results
-    }
+        results["brokers"] = sync_brokers(session)
+        results["cotizacion"] = sync_cotizacion(session)
+        results["categorias"] = sync_categorias(session)
+        results["estatus_tramites"] = sync_estatus_tramites(session)
+        results["financieras"] = sync_financieras(session)
+        results["productos"] = sync_productos(session)
+        results["sedes"] = sync_sedes(session)
+        results["subCategorias"] = sync_subCategorias(session)
+        results["usuarios"] = sync_usuarios(session)
+        print(results)
+        return {
+            "status": "ok",
+            "synced": results
+        }
+    except Exception as exc:
+        logger.critical("Error crítico en syncAllDashboard: %s", exc, exc_info=True)
+        raise
 
 @router.post("/catalogo-socios")
 async def catalogo_socios(
