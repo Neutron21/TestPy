@@ -16,9 +16,12 @@ def ensure_table(dataset, table, schema):
         client.create_table(new_table)
         print(f"🚀 Tabla {table} creada")
 
+
 def truncate_table(dataset, table):
+    print(f"🧹 Truncando tabla {dataset}.{table}")
     query = f"TRUNCATE TABLE `{dataset}.{table}`"
     client.query(query).result()
+
 
 def insert_rows(dataset, table, rows):
     print(f"🔹 Insertando {len(rows)} filas en {dataset}.{table}...")
@@ -26,7 +29,7 @@ def insert_rows(dataset, table, rows):
     errors = client.insert_rows_json(table_ref, rows)
     print(f"🔥 Filas insertadas en la tabla {table}")
     if errors:
-        print("❌ BigQuery insert error:", errors)
+        print(f"❌ BigQuery insert error en {table}: {errors}")
         raise RuntimeError(errors)
     
 SCHEMAS = {

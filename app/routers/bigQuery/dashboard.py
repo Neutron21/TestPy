@@ -14,15 +14,17 @@ from app.routers.bigQuery.service_bQ import (
 router = APIRouter(prefix="/sync/bigquery", tags=["BigQuery Sync"])
 
 def sync_brokers(session: SessionDep):
+    print("Iniciando sincronización de brokers")
     brokers = get_brokers_mysql(session)
 
     if not brokers:
         raise HTTPException(400, "No hay brokers para sincronizar")
+    print(f"Broker rows obtenidas: {len(brokers)}")
     ensure_table("analytics_konnect", "brokers", SCHEMAS["brokers"])
     truncate_table("analytics_konnect", "brokers")
     insert_rows("analytics_konnect", "brokers", brokers)
 
-    return len(brokers) 
+    return len(brokers)
 
 def sync_categorias(session: SessionDep):
     categorias = get_categorias_mysql(session)
@@ -108,23 +110,26 @@ def sync_subCategorias(session: SessionDep):
 
 
 def sync_usuarios(session: SessionDep):
+    print("Iniciando sincronización de usuarios")
     usuarios = get_usuarios_mysql(session)
 
     if not usuarios:
         raise HTTPException(400, "No hay usuarios para sincronizar")
+    print(f"Usuarios rows obtenidas: {len(usuarios)}")
     ensure_table("analytics_konnect", "usuarios", SCHEMAS["usuarios"])
     truncate_table("analytics_konnect", "usuarios")
     insert_rows("analytics_konnect", "usuarios", usuarios)
-
 
     return len(usuarios)
 
 
 def sync_membresias(session: SessionDep):
+    print("Iniciando sincronización de membresias")
     membresias = get_membresias_mysql(session)
 
     if not membresias:
         raise HTTPException(400, "No hay membresias para sincronizar")
+    print(f"Membresias rows obtenidas: {len(membresias)}")
     ensure_table("analytics_konnect", "membresias", SCHEMAS["membresias"])
     truncate_table("analytics_konnect", "membresias")
     insert_rows("analytics_konnect", "membresias", membresias)
@@ -133,10 +138,12 @@ def sync_membresias(session: SessionDep):
 
 
 def sync_track_status(session: SessionDep):
+    print("Iniciando sincronización de track_status")
     track_status = get_track_status_mysql(session)
 
     if not track_status:
         raise HTTPException(400, "No hay track_status para sincronizar")
+    print(f"Track status rows obtenidas: {len(track_status)}")
     ensure_table("analytics_konnect", "track_status", SCHEMAS["track_status"])
     truncate_table("analytics_konnect", "track_status")
     insert_rows("analytics_konnect", "track_status", track_status)
@@ -145,10 +152,12 @@ def sync_track_status(session: SessionDep):
 
 
 def sync_comentarios(session: SessionDep):
+    print("Iniciando sincronización de comentarios")
     comentarios = get_comentarios_mysql(session)
 
     if not comentarios:
         raise HTTPException(400, "No hay comentarios para sincronizar")
+    print(f"Comentarios rows obtenidas: {len(comentarios)}")
     ensure_table("analytics_konnect", "comentarios", SCHEMAS["comentarios"])
     truncate_table("analytics_konnect", "comentarios")
     insert_rows("analytics_konnect", "comentarios", comentarios)
