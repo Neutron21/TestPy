@@ -310,20 +310,22 @@ async def catalogo_socios(
     _ = Depends(validar_cron_token)
 ):
     statement = text("""
-        SELECT 
-            u.id,         
-            u.nombre,
-            u.email,
-            b.nombre AS broker,
-            s.nombre AS sede,
-            u.celular
-        FROM usuarios u
-        INNER JOIN brokers b on b.id = u.id_broker
-        INNER JOIN sedes s on s.id = u.id_sede
-        WHERE u.id_financiera IS NULL
-        AND u.id NOT IN (1,2,9,14,15,23,42,43)
-        ORDER BY u.id
-    """)
+            SELECT 
+                u.id,         
+                u.nombre,
+                u.email,
+                b.nombre AS broker,
+                s.nombre AS sede,
+                u.celular
+            FROM usuarios u
+            INNER JOIN brokers b on b.id = u.id_broker
+            INNER JOIN sedes s on s.id = u.id_sede
+            WHERE u.id_financiera IS NULL
+            AND u.id NOT IN (1,9,14,15,23,42,43)
+            AND u.f_ultimo_pago IS NOT NULL
+            AND DATE_ADD(u.f_ultimo_pago, INTERVAL 1 YEAR) >= CURRENT_DATE()
+            ORDER BY u.id
+        """)
 
     usuarios = session.exec(statement).all()
 
@@ -350,7 +352,7 @@ async def catalogo_socios(
     #     "info@konnect.mx", 
     #     "ara.castro@konnect.mx",
     #     "kfigueroa@konnect.mx"
-    #     ]
+        # ]
 
     if not lista_correos:
         return {"message": "No hay correos destino."}
