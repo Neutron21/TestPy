@@ -14,7 +14,8 @@ from app.models import Comentarios, CorreosPagos, Cotizacion, Productos, Track_S
 
 from app.db import SessionDep
 from app.routers.bigQuery.dashboard import ( sync_brokers, sync_categorias, sync_cotizacion, sync_estatus_tramites, sync_financieras,
-                                             sync_productos, sync_sedes, sync_subCategorias, sync_usuarios)
+                                             sync_productos, sync_sedes, sync_subCategorias, sync_usuarios, sync_membresias,
+                                             sync_track_status, sync_comentarios)
 from app.utils.logger_config import logger
 from app.utils.email import enviar_correo_informativo, enviar_correo_simple, enviar_correo_pago_vencida, fillFirma
 
@@ -290,6 +291,9 @@ def syncAllDashboard(session):
         results["sedes"] = sync_sedes(session)
         results["subCategorias"] = sync_subCategorias(session)
         results["usuarios"] = sync_usuarios(session)
+        results["membresias"] = sync_membresias(session)
+        results["track_status"] = sync_track_status(session)
+        results["comentarios"] = sync_comentarios(session)
         print(results)
         return {
             "status": "ok",

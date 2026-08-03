@@ -70,6 +70,7 @@ SCHEMAS = {
         bigquery.SchemaField("nombre", "STRING"),
         bigquery.SchemaField("tipo", "STRING"),
         bigquery.SchemaField("fase", "INT64"),
+        bigquery.SchemaField("id_membresia ", "INT64"),
     ],
     "productos": [
         bigquery.SchemaField("id", "INT64"),
@@ -93,6 +94,7 @@ SCHEMAS = {
         bigquery.SchemaField("nombre", "STRING"),
         bigquery.SchemaField("email", "STRING"),
         bigquery.SchemaField("rol", "STRING"),
+        bigquery.SchemaField("rfc", "STRING"),
         bigquery.SchemaField("id_broker", "INT64"),
         bigquery.SchemaField("id_sede", "INT64"),
         bigquery.SchemaField("membresia", "INT64"),
@@ -100,5 +102,27 @@ SCHEMAS = {
         bigquery.SchemaField("nivel", "INT64"),
         bigquery.SchemaField("id_superior", "INT64"),
         bigquery.SchemaField("id_financiera", "INT64"),
+        bigquery.SchemaField("created_at", "TIMESTAMP"),
+        bigquery.SchemaField("comisiones", "STRING"),
+        bigquery.SchemaField("f_ultimo_pago", "DATE"),
+    ],
+    "comentarios": [
+        bigquery.SchemaField("id_comentario", "INT64"),
+        bigquery.SchemaField("id_cotizacion", "INT64"),
+        bigquery.SchemaField("id_usuario", "STRING"),
+        bigquery.SchemaField("comentarios", "STRING"),
+        bigquery.SchemaField("timestamp", "TIMESTAMP"),
+        bigquery.SchemaField("visible", "BOOL"),
+    ],
+    "membresias": [
+        bigquery.SchemaField("id", "INT64"),
+        bigquery.SchemaField("nombre", "STRING"),
+    ],
+    "track_status": [
+        bigquery.SchemaField("id", "INT64"),
+        bigquery.SchemaField("id_cotizacion", "INT64"),
+        bigquery.SchemaField("id_status", "INT64"),
+        bigquery.SchemaField("fecha", "TIMESTAMP"),
+        bigquery.SchemaField("id_usuario", "STRING"),
     ],
 }

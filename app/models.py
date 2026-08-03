@@ -18,7 +18,7 @@ def mexico_timestamp():
 # MODELOS OFICIALES
 class TipoFinEnum(str, Enum):
     LIGA = "L"
-    MAIL = "M"
+    MAIL = "M" 
 
 class FinancierasDTO(SQLModel):
     id: int = Field(primary_key=True)

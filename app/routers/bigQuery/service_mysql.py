@@ -53,6 +53,36 @@ def get_estatus_tramites_mysql(session):
     return [dict(row._mapping) for row in result]
 
 
+def get_membresias_mysql(session):
+    result = session.execute(
+        text("""
+            SELECT id, nombre
+            FROM membresias
+        """)
+    )
+    return [dict(row._mapping) for row in result]
+
+
+def get_track_status_mysql(session):
+    result = session.execute(
+        text("""
+            SELECT id, id_cotizacion, id_status, fecha, id_usuario
+            FROM track_status
+        """)
+    )
+    return [serialize_row(dict(row._mapping)) for row in result]
+
+
+def get_comentarios_mysql(session):
+    result = session.execute(
+        text("""
+            SELECT id_comentario, id_cotizacion, id_usuario, comentarios, timestamp, visible
+            FROM comentarios
+        """)
+    )
+    return [serialize_row(dict(row._mapping)) for row in result]
+
+
 def get_financieras_mysql(session):
     result = session.execute(
         text("""
@@ -92,7 +122,7 @@ def get_subCategorias_mysql(session):
 def get_usuarios_mysql(session):
     result = session.execute(
         text("""
-            SELECT id, nombre, email, rol, id_broker, id_sede, membresia, celular, nivel, id_superior, id_financiera
+            SELECT id, nombre, email, rol, rfc, id_broker, id_sede, membresia, celular, nivel, id_superior, id_financiera, created_at, comisiones, f_ultimo_pago
             FROM usuarios
         """)
     )
