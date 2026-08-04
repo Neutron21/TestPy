@@ -321,7 +321,7 @@ async def catalogo_socios(
             INNER JOIN brokers b on b.id = u.id_broker
             INNER JOIN sedes s on s.id = u.id_sede
             WHERE u.id_financiera IS NULL
-            AND u.id NOT IN (1,9,14,15,23,42,43)
+            AND u.id NOT IN (1,2,9,14,15,23,42,43)
             AND u.f_ultimo_pago IS NOT NULL
             AND DATE_ADD(u.f_ultimo_pago, INTERVAL 1 YEAR) >= CURRENT_DATE()
             ORDER BY u.id
