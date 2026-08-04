@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
 from sqlmodel import select, text
 from app.db import SessionDep
 from app.models import Comentarios, ComentariosDTO, Cotizacion, MontoUpdateDTO, Usuarios
@@ -10,37 +11,9 @@ router = APIRouter(tags=["Comentarios"])
 ALLOWED_COMMENT_DELETE_USERS = {1, 2, 9, 14, 15, 23, 42, 43}
 
 
-def soft_delete_comentario_logic(session, id_usuario: int, id_comentario: int) -> Comentarios:
-    if id_usuario not in ALLOWED_COMMENT_DELETE_USERS:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Usuario no autorizado para borrar comentarios"
-        )
-
-    comentario = session.get(Comentarios, id_comentario)
-    if not comentario:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Comentario no encontrado"
-        )
-
-    if not comentario.visible:
-        return comentario
-
-    comentario.visible = False
-    session.add(comentario)
-    session.commit()
-    session.refresh(comentario)
-    return comentario
-
-
-@router.delete("/comentario", response_model=Comentarios)
-async def delete_comentario(
-    id_usuario: int = Query(..., description="ID del usuario autorizado"),
-    id_comentario: int = Query(..., description="ID del comentario a borrar"),
-    session: SessionDep = None,
-):
-    return soft_delete_comentario_logic(session, id_usuario, id_comentario)
+class DeleteComentarioRequest(BaseModel):
+    id_usuario: int
+    id_comentario: int
 
 
 @router.get("/comentarios/{id_cotizacion}/{id_usuario}", response_model=list[Comentarios])
@@ -104,3 +77,33 @@ async def obtener_ultimo_comentario(
     
     return comentario if comentario else {"comentarios": "Sin comentarios"}
 
+def soft_delete_comentario_logic(session, id_usuario: int, id_comentario: int) -> Comentarios:
+    if id_usuario not in ALLOWED_COMMENT_DELETE_USERS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario no autorizado para borrar comentarios"
+        )
+
+    comentario = session.get(Comentarios, id_comentario)
+    if not comentario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comentario no encontrado"
+        )
+
+    if not comentario.visible:
+        return comentario
+
+    comentario.visible = False
+    session.add(comentario)
+    session.commit()
+    session.refresh(comentario)
+    return comentario
+
+
+@router.delete("/comentario-delete", response_model=Comentarios)
+async def delete_comentario(
+    request: DeleteComentarioRequest,
+    session: SessionDep,
+):
+    return soft_delete_comentario_logic(session, request.id_usuario, request.id_comentario)
