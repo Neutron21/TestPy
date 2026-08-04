@@ -25,13 +25,12 @@ async def get_cotizacion_by_id(id_cotizacion: int, session: SessionDep):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Cotización")
     return  cotizacion
 
-@router.get("/cotizaciones") # Quitamos response_model temporalmente si da error
+@router.get("/cotizaciones") 
 async def obtener_cotizaciones_por_usuario(
     session: SessionDep,
     id_user: Optional[int] = Query(None),
     nivel_user: Optional[int] = Query(None)):
 
-    # Agregamos el JOIN en todas las consultas manuales
     join_sql = """
         LEFT JOIN (
             SELECT id_cotizacion, MAX(timestamp) AS ultimo_comentario
@@ -59,10 +58,9 @@ async def obtener_cotizaciones_por_usuario(
         query = text(f"SELECT c.*, uc.ultimo_comentario FROM cotizacion c {join_sql} WHERE c.id_user = :id_user ORDER BY c.timestamp DESC")
         result = session.execute(query, {"id_user": id_user})
     
-    # IMPORTANTE: Devolvemos diccionarios, no objetos Cotizacion
     return [dict(row._mapping) for row in result.fetchall()]
 
-@router.get("/cotizacion/buscar/", response_model=List[Cotizacion])
+@router.get("/cotizacion/buscar/")
 async def buscador_cotizaciones(
     session: SessionDep,
     estatus: Optional[int] = Query(None),
@@ -75,24 +73,22 @@ async def buscador_cotizaciones(
     user: Optional[int] = Query(None),
     rol: Optional[str] = Query(None),
     ):
-    rows = [] 
     
     if estatus is None and fin is None and not folioUserRfc and not fechaDesde and not fechaHasta and not broker and not idUser:
         raise HTTPException(status_code=400, detail="Error: Campos incompletos.")
 
     query_filters = ""
     params = {}
-    alias_prefix = "c." if rol == 'a' else ""
-    join_sql = ""
-
-    if rol == 'a':
-        join_sql = """
-            LEFT JOIN (
-                SELECT id_cotizacion, MAX(timestamp) AS ultimo_comentario
-                FROM comentarios
-                GROUP BY id_cotizacion
-            ) uc ON c.id_cotizacion = uc.id_cotizacion
-        """
+    alias_prefix = "c." # Usamos alias c. para todas las consultas del buscador para mantener consistencia
+    
+    # Definimos el join de comentarios para todas las consultas del buscador
+    join_sql = """
+        LEFT JOIN (
+            SELECT id_cotizacion, MAX(timestamp) AS ultimo_comentario
+            FROM comentarios
+            GROUP BY id_cotizacion
+        ) uc ON c.id_cotizacion = uc.id_cotizacion
+    """
 
     if estatus is not None:
         query_filters += f" AND {alias_prefix}estatus = :estatus"
@@ -120,11 +116,10 @@ async def buscador_cotizaciones(
         if rol == 'a':
             query_filters += " AND (c.id_usuario LIKE :like OR c.nombre LIKE :like OR c.rfc LIKE :like OR c.id_cotizacion = :folioUserRfc)"
         else:
-            query_filters += " AND (nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
+            query_filters += " AND (c.nombre LIKE :like OR c.rfc LIKE :like OR c.id_cotizacion = :folioUserRfc)"
         params["like"] = like
         params["folioUserRfc"] = folioUserRfc
 
-    # Aquí decides si usas recursive o no
     if rol != 'a' and user:
         query = f"""
         WITH RECURSIVE subordinates AS (
@@ -133,41 +128,34 @@ async def buscador_cotizaciones(
             SELECT u.id FROM usuarios u
             JOIN subordinates s ON u.id_superior = s.id
         )
-        SELECT * FROM cotizacion
-        WHERE id_user IN (SELECT id FROM subordinates)
+        SELECT c.*, uc.ultimo_comentario FROM cotizacion c
+        {join_sql}
+        WHERE c.id_user IN (SELECT id FROM subordinates)
         {query_filters}
-        ORDER BY timestamp DESC
+        ORDER BY c.timestamp DESC
         """
         params["user_id"] = user
     else:
-        if rol == 'a':
-            query = f"""
-            SELECT c.*, uc.ultimo_comentario FROM cotizacion c
-            {join_sql}
-            WHERE 1=1
-            {query_filters}
-            ORDER BY c.timestamp DESC
-            """
-        else:
-            query = f"""
-            SELECT * FROM cotizacion
-            WHERE 1=1
-            {query_filters}
-            ORDER BY timestamp DESC
-            """
+        query = f"""
+        SELECT c.*, uc.ultimo_comentario FROM cotizacion c
+        {join_sql}
+        WHERE 1=1
+        {query_filters}
+        ORDER BY c.timestamp DESC
+        """
 
     print(f"QUERY: {query}")
     print(f"PARAMS: {params}")
     result = session.execute(text(query), params)
 
-    rows = [Cotizacion(**row._mapping) for row in result]
+    # Devolvemos diccionarios con el mapeo correcto incluyendo el ultimo_comentario
+    rows = [dict(row._mapping) for row in result]
     print(f"Total rows: {len(rows)}")
-    print(f"Contenido: {rows}")
    
     return rows
 
 @router.get("/cotizacion/byFin/{id_financiera}" , response_model=List[Cotizacion])
-async def get_cotizacion_by_id(id_financiera: int, session: SessionDep):
+async def get_cotizacion_by_fin_endpoint(id_financiera: int, session: SessionDep):
     query = select(Cotizacion).where(Cotizacion.id_financiera == id_financiera).order_by(desc(Cotizacion.timestamp))
     cotizacion = session.exec(query).all()
     if not cotizacion:
@@ -198,7 +186,7 @@ async def update_estatus_cotizacion(
     return cotizacion
 
 @router.patch("/cotizacion/monto_udpate", response_model=Cotizacion)
-async def update_estatus_cotizacion(
+async def update_monto_cotizacion(
     request: MontoUpdate, session: SessionDep,):
 
     cotizacion = session.get(Cotizacion, request.id_cotizacion)
@@ -211,6 +199,7 @@ async def update_estatus_cotizacion(
     session.refresh(cotizacion)
     
     return cotizacion
+
 @router.patch("/updatefechaPago")
 async def update_fecha_pago(
     data: FechaPagoDTO,
