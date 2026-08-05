@@ -91,7 +91,9 @@ class Usuarios(SQLModel, table=True):
     default_factory=lambda: datetime.now(ZoneInfo("America/Mexico_City"))
     )
     comisiones: str 
-    f_ultimo_pago: Optional[date] = None
+    f_ultimo_pago: Optional[date] = Field(
+    default_factory=lambda: datetime.now(ZoneInfo("America/Mexico_City"))
+    )
 
 class UsuarioSimple(BaseModel):
     id: int
