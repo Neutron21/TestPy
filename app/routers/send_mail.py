@@ -171,7 +171,6 @@ def mail_dispersion(data: dict, session: SessionDep):
         "ara.castro@konnect.mx",
         "gerencia.operativa@konnect.mx",
         "gerencia.corporativa@konnect.mx" ,
-        "ericka.aguilar@konnect.mx"
 
         ]))
     monto_formateado = "${:,.2f}".format(cotizacion.monto)
