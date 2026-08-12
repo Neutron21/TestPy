@@ -33,13 +33,15 @@ async def obtener_cotizaciones_por_usuario(
 
     join_sql = """
         LEFT JOIN (
-            SELECT id_cotizacion, MAX(timestamp) AS ultimo_comentario
+            SELECT id_cotizacion, MAX(timestamp) AS max_timestamp
             FROM comentarios GROUP BY id_cotizacion
-        ) uc ON c.id_cotizacion = uc.id_cotizacion
+        ) last_c ON c.id_cotizacion = last_c.id_cotizacion
+        LEFT JOIN comentarios uc ON uc.id_cotizacion = last_c.id_cotizacion 
+        AND uc.timestamp = last_c.max_timestamp
     """
 
     if nivel_user == 4:
-        query = text(f"SELECT c.*, uc.ultimo_comentario FROM cotizacion c {join_sql} ORDER BY c.timestamp DESC")
+        query = text(f"SELECT c.*, uc.comentarios AS ultimo_comentario FROM cotizacion c {join_sql} ORDER BY c.timestamp DESC")
         result = session.execute(query)
     elif nivel_user in [2, 3]:
         query = text(f"""
@@ -49,13 +51,13 @@ async def obtener_cotizaciones_por_usuario(
               SELECT u.id FROM usuarios u
               INNER JOIN subordinates s ON u.id_superior = s.id
             )
-            SELECT c.*, uc.ultimo_comentario FROM cotizacion c {join_sql}
+            SELECT c.*, uc.comentarios AS ultimo_comentario FROM cotizacion c {join_sql}
             WHERE c.id_user IN (SELECT id FROM subordinates)
             ORDER BY c.timestamp DESC
         """)
         result = session.execute(query, {"user_id": id_user})
     else:
-        query = text(f"SELECT c.*, uc.ultimo_comentario FROM cotizacion c {join_sql} WHERE c.id_user = :id_user ORDER BY c.timestamp DESC")
+        query = text(f"SELECT c.*, uc.comentarios AS ultimo_comentario FROM cotizacion c {join_sql} WHERE c.id_user = :id_user ORDER BY c.timestamp DESC")
         result = session.execute(query, {"id_user": id_user})
     
     return [dict(row._mapping) for row in result.fetchall()]
