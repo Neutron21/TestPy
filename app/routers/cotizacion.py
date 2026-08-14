@@ -11,8 +11,6 @@ from fastapi import APIRouter
 from sqlmodel import select
 
 from app.models import Cotizacion
-
-
 from app.routers import comentarios
 
 router = APIRouter(tags=["Cotizacion"])
@@ -32,16 +30,19 @@ async def obtener_cotizaciones_por_usuario(
     nivel_user: Optional[int] = Query(None)):
 
     join_sql = """
-        LEFT JOIN (
-            SELECT id_cotizacion, MAX(timestamp) AS max_timestamp
-            FROM comentarios GROUP BY id_cotizacion
-        ) last_c ON c.id_cotizacion = last_c.id_cotizacion
-        LEFT JOIN comentarios uc ON uc.id_cotizacion = last_c.id_cotizacion 
-        AND uc.timestamp = last_c.max_timestamp
-    """
+            LEFT JOIN (
+                SELECT id_cotizacion, MAX(timestamp) AS max_timestamp
+                FROM comentarios GROUP BY id_cotizacion
+            ) last_c ON c.id_cotizacion = last_c.id_cotizacion
+            LEFT JOIN comentarios uc ON uc.id_cotizacion = last_c.id_cotizacion 
+            AND uc.timestamp = last_c.max_timestamp
+        """
+
+# En tus endpoints /cotizaciones y //buscar/
+    select_fields = "c.*, uc.comentarios AS texto_comentario, uc.timestamp AS fecha_ultimo_comentario"
 
     if nivel_user == 4:
-        query = text(f"SELECT c.*, uc.comentarios AS ultimo_comentario FROM cotizacion c {join_sql} ORDER BY c.timestamp DESC")
+        query = text(f"SELECT {select_fields} FROM cotizacion c {join_sql} ORDER BY c.timestamp DESC")
         result = session.execute(query)
     elif nivel_user in [2, 3]:
         query = text(f"""
@@ -51,13 +52,13 @@ async def obtener_cotizaciones_por_usuario(
               SELECT u.id FROM usuarios u
               INNER JOIN subordinates s ON u.id_superior = s.id
             )
-            SELECT c.*, uc.comentarios AS ultimo_comentario FROM cotizacion c {join_sql}
+            SELECT {select_fields} FROM cotizacion c {join_sql}
             WHERE c.id_user IN (SELECT id FROM subordinates)
             ORDER BY c.timestamp DESC
         """)
         result = session.execute(query, {"user_id": id_user})
     else:
-        query = text(f"SELECT c.*, uc.comentarios AS ultimo_comentario FROM cotizacion c {join_sql} WHERE c.id_user = :id_user ORDER BY c.timestamp DESC")
+        query = text(f"SELECT {select_fields} FROM cotizacion c {join_sql} WHERE c.id_user = :id_user ORDER BY c.timestamp DESC")
         result = session.execute(query, {"id_user": id_user})
     
     return [dict(row._mapping) for row in result.fetchall()]
@@ -81,16 +82,17 @@ async def buscador_cotizaciones(
 
     query_filters = ""
     params = {}
-    alias_prefix = "c." # Usamos alias c. para todas las consultas del buscador para mantener consistencia
+    alias_prefix = "c." 
     
-    # Definimos el join de comentarios para todas las consultas del buscador
     join_sql = """
-        LEFT JOIN (
-            SELECT id_cotizacion, MAX(timestamp) AS ultimo_comentario
-            FROM comentarios
-            GROUP BY id_cotizacion
-        ) uc ON c.id_cotizacion = uc.id_cotizacion
-    """
+            LEFT JOIN (
+                SELECT id_cotizacion, MAX(timestamp) AS max_timestamp
+                FROM comentarios
+                GROUP BY id_cotizacion
+            ) last_c ON c.id_cotizacion = last_c.id_cotizacion
+            LEFT JOIN comentarios uc ON uc.id_cotizacion = last_c.id_cotizacion 
+            AND uc.timestamp = last_c.max_timestamp
+        """
 
     if estatus is not None:
         query_filters += f" AND {alias_prefix}estatus = :estatus"
@@ -122,6 +124,8 @@ async def buscador_cotizaciones(
         params["like"] = like
         params["folioUserRfc"] = folioUserRfc
 
+    select_fields = "c.*, uc.timestamp AS ultimo_comentario"
+
     if rol != 'a' and user:
         query = f"""
         WITH RECURSIVE subordinates AS (
@@ -130,7 +134,7 @@ async def buscador_cotizaciones(
             SELECT u.id FROM usuarios u
             JOIN subordinates s ON u.id_superior = s.id
         )
-        SELECT c.*, uc.ultimo_comentario FROM cotizacion c
+        SELECT {select_fields} FROM cotizacion c
         {join_sql}
         WHERE c.id_user IN (SELECT id FROM subordinates)
         {query_filters}
@@ -139,20 +143,15 @@ async def buscador_cotizaciones(
         params["user_id"] = user
     else:
         query = f"""
-        SELECT c.*, uc.ultimo_comentario FROM cotizacion c
+        SELECT {select_fields} FROM cotizacion c
         {join_sql}
         WHERE 1=1
         {query_filters}
         ORDER BY c.timestamp DESC
         """
 
-    print(f"QUERY: {query}")
-    print(f"PARAMS: {params}")
     result = session.execute(text(query), params)
-
-    # Devolvemos diccionarios con el mapeo correcto incluyendo el ultimo_comentario
     rows = [dict(row._mapping) for row in result]
-    print(f"Total rows: {len(rows)}")
    
     return rows
 
@@ -224,8 +223,7 @@ async def update_fecha_pago(
 
     except Exception as e:
         session.rollback()
-        print(f"Error detectado: {e}")
         raise HTTPException(
             status_code=500, 
-            detail="Error de integridad: el sistema intentó tocar la tabla comentarios"
+            detail="Error de integridad"
         )
