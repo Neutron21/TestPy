@@ -29,17 +29,16 @@ async def obtener_cotizaciones_por_usuario(
     id_user: Optional[int] = Query(None),
     nivel_user: Optional[int] = Query(None)):
 
+    # Usamos una subconsulta con ROW_NUMBER() para garantizar que siempretraiga el último comentario exacto
     join_sql = """
             LEFT JOIN (
-                SELECT id_cotizacion, MAX(timestamp) AS max_timestamp
-                FROM comentarios GROUP BY id_cotizacion
-            ) last_c ON c.id_cotizacion = last_c.id_cotizacion
-            LEFT JOIN comentarios uc ON uc.id_cotizacion = last_c.id_cotizacion 
-            AND uc.timestamp = last_c.max_timestamp
+                SELECT id_cotizacion, comentarios AS texto_comentario, timestamp AS fecha_ultimo_comentario,
+                ROW_NUMBER() OVER(PARTITION BY id_cotizacion ORDER BY timestamp DESC) as rn
+                FROM comentarios
+            ) uc ON c.id_cotizacion = uc.id_cotizacion AND uc.rn = 1
         """
 
-# En tus endpoints /cotizaciones y //buscar/
-    select_fields = "c.*, uc.comentarios AS texto_comentario, uc.timestamp AS fecha_ultimo_comentario"
+    select_fields = "c.*, uc.texto_comentario, uc.fecha_ultimo_comentario"
 
     if nivel_user == 4:
         query = text(f"SELECT {select_fields} FROM cotizacion c {join_sql} ORDER BY c.timestamp DESC")
@@ -63,6 +62,7 @@ async def obtener_cotizaciones_por_usuario(
     
     return [dict(row._mapping) for row in result.fetchall()]
 
+
 @router.get("/cotizacion/buscar/")
 async def buscador_cotizaciones(
     session: SessionDep,
@@ -84,14 +84,13 @@ async def buscador_cotizaciones(
     params = {}
     alias_prefix = "c." 
     
+    # Aplicamos la misma lógica segura aquí también
     join_sql = """
             LEFT JOIN (
-                SELECT id_cotizacion, MAX(timestamp) AS max_timestamp
+                SELECT id_cotizacion, comentarios AS texto_comentario, timestamp AS fecha_ultimo_comentario,
+                ROW_NUMBER() OVER(PARTITION BY id_cotizacion ORDER BY timestamp DESC) as rn
                 FROM comentarios
-                GROUP BY id_cotizacion
-            ) last_c ON c.id_cotizacion = last_c.id_cotizacion
-            LEFT JOIN comentarios uc ON uc.id_cotizacion = last_c.id_cotizacion 
-            AND uc.timestamp = last_c.max_timestamp
+            ) uc ON c.id_cotizacion = uc.id_cotizacion AND uc.rn = 1
         """
 
     if estatus is not None:
@@ -124,7 +123,7 @@ async def buscador_cotizaciones(
         params["like"] = like
         params["folioUserRfc"] = folioUserRfc
 
-    select_fields = "c.*, uc.timestamp AS ultimo_comentario"
+    select_fields = "c.*, uc.texto_comentario, uc.fecha_ultimo_comentario"
 
     if rol != 'a' and user:
         query = f"""
@@ -154,7 +153,6 @@ async def buscador_cotizaciones(
     rows = [dict(row._mapping) for row in result]
    
     return rows
-
 @router.get("/cotizacion/byFin/{id_financiera}" , response_model=List[Cotizacion])
 async def get_cotizacion_by_fin_endpoint(id_financiera: int, session: SessionDep):
     query = select(Cotizacion).where(Cotizacion.id_financiera == id_financiera).order_by(desc(Cotizacion.timestamp))

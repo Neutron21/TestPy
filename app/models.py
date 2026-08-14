@@ -187,6 +187,12 @@ class ComentariosDTO(SQLModel):
     id_usuario: str = Field(default=None)
     comentarios: str = Field(default=None)
 
+class Comentarios(ComentariosDTO, table=True):
+    pass
+    id_comentario: Optional[int] | None = Field(primary_key=True)
+    timestamp: datetime = Field(default_factory=mexico_timestamp, nullable=False) 
+    visible: bool = Field(default=True)   
+
 class FechaPagoDTO(BaseModel):
     id_cotizacion: int
     fecha_pago: date
@@ -202,10 +208,7 @@ class CorreosPagos(SQLModel, table=True):
     correo: str    
 
 
-class Comentarios(ComentariosDTO, table=True):
-    pass
-    id_comentario: Optional[int] | None = Field(primary_key=True)
-    timestamp: datetime = Field(default_factory=mexico_timestamp, nullable=False)
+
     visible: bool = Field(default=True)
 
 class CorreosDTO(SQLModel):

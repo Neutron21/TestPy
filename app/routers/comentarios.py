@@ -101,9 +101,17 @@ def soft_delete_comentario_logic(session, id_usuario: int, id_comentario: int) -
     return comentario
 
 
-@router.delete("/comentario-delete", response_model=Comentarios)
+@router.patch("/comentario-delete", response_model=Comentarios)
 async def delete_comentario(
     request: DeleteComentarioRequest,
     session: SessionDep,
 ):
-    return soft_delete_comentario_logic(session, request.id_usuario, request.id_comentario)
+    comentario = session.get(Comentarios, request.id_comentario)
+    if not comentario:
+        raise HTTPException(status_code=404, detail="Comentario no encontrado")
+    
+    comentario.visible = False
+    session.add(comentario)
+    session.commit()
+    session.refresh(comentario)
+    return comentario
