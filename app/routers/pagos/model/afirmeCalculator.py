@@ -28,24 +28,25 @@ class AfirmeCalculator(BaseFinanciera):
 
         t_pago = next((p for p in self.pagos_result), "None")
         print(f"t_pago: {t_pago}")
-        com_apertura = self.cotizacion.monto * t_pago.c_apertura
-        print(f"com_apertura: {t_pago.c_apertura}% de {self.cotizacion.monto} -> {com_apertura}")
-        calc_pago_konnect = t_pago.pago_a_konnect * com_apertura
-        print(f"Pago Konnect: {calc_pago_konnect}, {t_pago.pago_a_konnect} de {com_apertura}")
+        com_apertura = 0
+        #  com_apertura = self.cotizacion.monto * t_pago.pago_a_konnect
+        # print(f"com_apertura: {t_pago.c_apertura}% de {self.cotizacion.monto} -> {com_apertura}")
+        calc_pago_konnect = self.cotizacion.monto * t_pago.pago_a_konnect
+        print(f"Pago Konnect: {calc_pago_konnect}, {t_pago.pago_a_konnect} de {self.cotizacion.monto}")
     
         match self.id_membresia:
             case 1:
                 porcentaje_broker = t_pago.c_plata
-                comision_broker = t_pago.c_plata * com_apertura
+                comision_broker = t_pago.c_plata * calc_pago_konnect
             case 2:
                 porcentaje_broker = t_pago.c_oro
-                comision_broker = t_pago.c_oro * com_apertura
+                comision_broker = t_pago.c_oro * calc_pago_konnect
             case 3:
                 porcentaje_broker = t_pago.c_platino
-                comision_broker = t_pago.c_platino * com_apertura
+                comision_broker = t_pago.c_platino * calc_pago_konnect
             case 4:
                 porcentaje_broker = t_pago.c_diamante
-                comision_broker = t_pago.c_diamante * com_apertura
+                comision_broker = t_pago.c_diamante * calc_pago_konnect
 
         print(f"Membreisa Broker: {MEMBRESIAS.get(self.id_membresia)}")
         print(f"Comision Broker: {comision_broker}")
