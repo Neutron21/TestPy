@@ -10,7 +10,10 @@ class AfirmeCalculator(BaseFinanciera):
 
     def bussinesRules(self):
 
-        query_pagos = select(Pagos).where(Pagos.id_financiera == self.cotizacion.id_financiera)
+        # query_pagos = select(Pagos).where(Pagos.id_financiera == self.cotizacion.id_financiera)
+        query_pagos = select(Pagos).where(
+                    (Pagos.id_financiera == self.cotizacion.id_financiera) & (Pagos.id_producto == self.cotizacion.producto)
+                    )
         self.pagos_result = self.session.exec(query_pagos).all()
 
         query_user = select(Usuarios).where(Usuarios.id == self.cotizacion.id_user)
