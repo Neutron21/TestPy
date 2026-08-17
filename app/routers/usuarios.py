@@ -200,3 +200,35 @@ async def payment_status(id_user: int, session: SessionDep):
     return {
         "status": "active"
     }
+@router.get("/usuarios/{id_usuario}/utms-faltantes")
+async def obtener_utms_faltantes(id_usuario: int, session: SessionDep):
+    user = session.exec(
+        select(Usuarios).where(Usuarios.id == id_usuario)
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no existe")
+
+    # Catálogo de financieras (puedes ajustar los nombres según tu necesidad)
+    catalogo_if = {
+        1: "Konfio",
+        12: "Xepelin",
+        11: "FnbeABC",
+        32: "Clara",
+        37: "Pymio"
+    }
+
+    # IDs que el usuario ya tiene
+    ids_registrados = [user.id_financiera] if user.id_financiera else []
+    
+    # Calcular faltantes: solo los que están en el catálogo pero no en los registrados
+    faltantes = [
+        {"id": fid, "nombre": nombre} 
+        for fid, nombre in catalogo_if.items() 
+        if fid not in ids_registrados
+    ]
+
+    return {
+        "id_usuario": id_usuario,
+        "instituciones_faltantes": faltantes
+    }
