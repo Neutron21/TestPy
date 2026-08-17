@@ -221,7 +221,6 @@ async def obtener_utms_faltantes(id_usuario: int, session: SessionDep):
     # IDs que el usuario ya tiene
     ids_registrados = [user.id_financiera] if user.id_financiera else []
     
-    # Calcular faltantes: solo los que están en el catálogo pero no en los registrados
     faltantes = [
         {"id": fid, "nombre": nombre} 
         for fid, nombre in catalogo_if.items() 
