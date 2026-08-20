@@ -66,10 +66,13 @@ async def obtener_ultimo_comentario(
     user = session.get(Usuarios, id_usuario)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+    
     query = select(Comentarios).where(Comentarios.id_cotizacion == id_cotizacion)
     
-    if user.nivel < 2:
-        query = query.where(Comentarios.id_usuario != "gerencia.corporativa@konnect.mx")
+    # Si el rol es 'if' O su nivel es menor a 2 (manejando que nivel pueda ser None), filtramos gerencia
+    if user.rol == "if" or (user.nivel is not None and user.nivel < 2):
+        subquery = select(Usuarios.id).where(Usuarios.correo == "gerencia.corporativa@konnect.mx")
+        query = query.where(Comentarios.id_usuario.not_in(subquery))
     
     query = query.order_by(desc(Comentarios.id)).limit(1)
     
