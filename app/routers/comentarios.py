@@ -3,8 +3,7 @@ from pydantic import BaseModel
 from sqlmodel import select, text
 from app.db import SessionDep
 from app.models import Comentarios, ComentariosDTO, Cotizacion, MontoUpdateDTO, Usuarios
-from sqlmodel import desc # Importa esto
-
+from sqlmodel import desc
 
 router = APIRouter(tags=["Comentarios"])
 
@@ -22,63 +21,40 @@ async def obtener_comentarios(
     id_usuario: int,
     session: SessionDep
 ):
-    # Consultar el usuario
-    user = session.get(Usuarios, id_usuario)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
-    
-    # Si es nivel 2, regresar todos los comentarios
-    if user.nivel >= 2:
-        query = select(Comentarios).where(
-            Comentarios.id_cotizacion == id_cotizacion,
-            Comentarios.visible == True)
-        comentarios = session.exec(query).all()
-        return comentarios
-    
-    # Si es nivel 1, excluir comentarios de "gerencia.corporativa@konnect.mx"
-    else:
-        query = select(Comentarios).where(
-            Comentarios.id_cotizacion == id_cotizacion,
-            Comentarios.id_usuario != "gerencia.corporativa@konnect.mx",
-            Comentarios.visible == True
-        )
+    try:
+        user = session.get(Usuarios, id_usuario)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+        
+        nivel_usuario = user.nivel if user.nivel is not None else 0
 
-    
-    comentarios = session.exec(query).all()
-    print(f"comentarios: {comentarios}")
-    return comentarios 
+        if nivel_usuario >= 2:
+            query = select(Comentarios).where(
+                Comentarios.id_cotizacion == id_cotizacion,
+                Comentarios.visible == True)
+        else:
+            query = select(Comentarios).where(
+                Comentarios.id_cotizacion == id_cotizacion,
+                Comentarios.id_usuario != "gerencia.corporativa@konnect.mx",
+                Comentarios.visible == True
+            )
+        
+        comentarios = session.exec(query).all()
+        return comentarios 
+
+    except Exception as e:
+        print(f"ERROR DETALLADO EN /comentarios: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
 
 @router.post("/comentario", response_model=Comentarios) 
 async def create_new_coment(coment_request: ComentariosDTO, session: SessionDep):
-    coment_data = Comentarios(**coment_request.model_dump(exclude_unset=True))  # exclude_unset=True previen inyeccion de campos NO definidos
+    coment_data = Comentarios(**coment_request.model_dump(exclude_unset=True))  
     session.add(coment_data)  
     session.commit() 
     session.refresh(coment_data) 
     return coment_data  
-    
 
-@router.get("/ultimo-comentario/{id_cotizacion}/{id_usuario}")
-async def obtener_ultimo_comentario(
-    id_cotizacion: int, 
-    id_usuario: int,
-    session: SessionDep
-):
-    user = session.get(Usuarios, id_usuario)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
-    
-    query = select(Comentarios).where(Comentarios.id_cotizacion == id_cotizacion)
-    
-    # Si el rol es 'if' O su nivel es menor a 2 (manejando que nivel pueda ser None), filtramos gerencia
-    if user.rol == "if" or (user.nivel is not None and user.nivel < 2):
-        subquery = select(Usuarios.id).where(Usuarios.correo == "gerencia.corporativa@konnect.mx")
-        query = query.where(Comentarios.id_usuario.not_in(subquery))
-    
-    query = query.order_by(desc(Comentarios.id)).limit(1)
-    
-    comentario = session.exec(query).first()
-    
-    return comentario if comentario else {"comentarios": "Sin comentarios"}
 
 def soft_delete_comentario_logic(session, id_usuario: int, id_comentario: int) -> Comentarios:
     if id_usuario not in ALLOWED_COMMENT_DELETE_USERS:
