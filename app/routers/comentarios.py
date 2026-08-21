@@ -26,9 +26,8 @@ async def obtener_comentarios(
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
         
-        nivel_usuario = user.nivel if user.nivel is not None else 0
 
-        if nivel_usuario >= 2:
+        if user.rol == 'if' or user.nivel >= 2  :
             query = select(Comentarios).where(
                 Comentarios.id_cotizacion == id_cotizacion,
                 Comentarios.visible == True)
