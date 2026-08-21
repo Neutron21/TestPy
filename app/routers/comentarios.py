@@ -57,7 +57,13 @@ async def create_new_coment(coment_request: ComentariosDTO, session: SessionDep)
 
 
 def soft_delete_comentario_logic(session, id_usuario: int, id_comentario: int) -> Comentarios:
-    if id_usuario not in ALLOWED_COMMENT_DELETE_USERS:
+    # 1. Consultamos al usuario para verificar su rol e ID
+    user = session.get(Usuarios, id_usuario)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # 2. Bloqueamos si el rol es 'if' o si su ID no está en la lista permitida
+    if user.rol == "if" or id_usuario not in ALLOWED_COMMENT_DELETE_USERS:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Usuario no autorizado para borrar comentarios"
@@ -85,6 +91,18 @@ async def delete_comentario(
     request: DeleteComentarioRequest,
     session: SessionDep,
 ):
+    # Consultamos al usuario que hace la petición
+    user = session.get(Usuarios, request.id_usuario)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # Validamos que no sea rol 'if' y que esté en los permitidos
+    if user.rol == "if" or request.id_usuario not in ALLOWED_COMMENT_DELETE_USERS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Los usuarios IF no tienen permitido borrar comentarios"
+        )
+
     comentario = session.get(Comentarios, request.id_comentario)
     if not comentario:
         raise HTTPException(status_code=404, detail="Comentario no encontrado")
