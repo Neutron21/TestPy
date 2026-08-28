@@ -389,6 +389,40 @@ class Pagos(SQLModel, table=True):
     ganancia_diamante: Decimal = Field (DECIMAL(7, 5), nullable=False)
     ganancia_konnect: Decimal = Field (DECIMAL(7, 5), nullable=False)
 
+class CalculoComisionesBase(SQLModel, table=True):
+    # __tablename__ = "pagos_calculados"
+
+    id: int | None = Field(default=None, primary_key=True)
+    id_cotizacion: int
+    version: int
+    id_financiera: int | None = None
+    id_producto: int | None = None
+    id_usuario: int | None = None
+    membresia_broker: str | None = Field(default=None, max_length=50)
+    porcentaje_pago_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(8, 5))
+    pago_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    iva_pago_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    total_pago_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    porcentaje_pago_broker: Decimal | None = Field(default=None, sa_type=DECIMAL(8, 5))
+    pago_broker: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    iva_pago_broker: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    total_pago_broker: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    ganancia_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    iva_ganancia_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    total_ganancia_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    regla_aplicada: str | None = None
+    fecha_calculo: datetime = Field(default_factory=mexico_timestamp, nullable=False)
+    es_vigente: bool | None = None
+    recalculado_por: int | None = None
+    motivo_recalculo: str | None = None
+    
+class TrackStatusCreate(CalculoComisionesBase):
+    pass
+
+class TrackStatusResponse(CalculoComisionesBase):
+    id: int
+    fecha_calculo: datetime
+
 class ResponsePagos(BaseModel):
     id_cotizacion: int
     id_financiera: int
