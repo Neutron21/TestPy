@@ -23,7 +23,7 @@ class FluxoCalculator(BaseFinanciera):
         query_producto = select(Productos.nombre).where(Productos.id == self.cotizacion.producto)
         self.producto_nombre = self.session.exec(query_producto).first()
 
-    def calculate(self):
+    def calculate(self) -> ResponsePagos:
         self.bussinesRules()
         print(f"Calculando {FINANCIERAS.get(self.cotizacion.id_financiera)} por monto de producto")
 
@@ -61,7 +61,7 @@ class FluxoCalculator(BaseFinanciera):
             comision_apertura_porcentaje = show_percent(self.pagos_result.c_apertura),
             comision_apertura_pesos = str(com_apertura),
             
-            porcentaje_pago_a_konnect = show_percent(self.pagos_result.pago_a_konnect) ,
+            porcentaje_pago_a_konnect = show_percent(self.pagos_result.pago_a_konnect),
             pago_a_konnect=to_decimal_7_5(calc_pago_konnect),
             iva_pago_a_konnect = calc_IVA(calc_pago_konnect),
             total_pago_a_konnect = calc_pago_konnect + calc_IVA(calc_pago_konnect),
@@ -74,4 +74,4 @@ class FluxoCalculator(BaseFinanciera):
             ganancia_konnect=to_decimal_7_5(gan_konn),
             iva_ganancia_konnect = calc_IVA(gan_konn),
             total_ganancia_konnect = gan_konn + calc_IVA(gan_konn)
-        )     
+        )

@@ -441,3 +441,34 @@ class Track_Status(TrackStatusBase, table=True):
         default_factory=mexico_timestamp,
         nullable=False
     )
+class CalculoComisiones(SQLModel, table=True):
+    __tablename__ = "calculo_comisiones"
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    id_cotizacion: int = Field(nullable=False)
+    version: int = Field(nullable=False)
+    id_financiera: Optional[int] = Field(default=None)
+    id_producto: Optional[int] = Field(default=None)
+    id_usuario: int = Field(default=None)
+    membresia_broker: Optional[str] = Field(default=None)
+    
+    porcentaje_pago_konnect: Optional[Decimal] = Field(default=None)
+    pago_konnect: Optional[Decimal] = Field(default=None)
+    iva_pago_konnect: Optional[Decimal] = Field(default=None)
+    total_pago_konnect: Optional[Decimal] = Field(default=None)
+
+    porcentaje_pago_broker: Optional[Decimal] = Field(default=None)
+    pago_broker: Optional[Decimal] = Field(default=None)
+    iva_pago_broker: Optional[Decimal] = Field(default=None)
+    total_pago_broker: Optional[Decimal] = Field(default=None)
+    
+    ganancia_konnect: Optional[Decimal] = Field(default=None)
+    iva_ganancia_konnect: Optional[Decimal] = Field(default=None)
+    total_ganancia_konnect: Optional[Decimal] = Field(default=None)
+
+    regla_aplicada: Optional[str] = Field(default=None)  # Coincide con tu BD
+    fecha_calculo: datetime = Field(default_factory=mexico_timestamp)
+    es_vigente: Optional[int] = Field(default=1)
+    recalculado_por: Optional[int] = Field(default=None)
+    motivo_recalculo: Optional[str] = Field(default=None)    
+    
