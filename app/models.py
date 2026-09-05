@@ -72,6 +72,17 @@ class UsuarioDTO(BaseModel):
     nivel: Optional[int] = None
     id_financiera: Optional[int] = None
     id_superior: Optional[int] = None   # ← AHORA SÍ SE MANDA
+
+
+class UsuarioUpdate(BaseModel):
+    nombre: Optional[str] = None
+    email: Optional[str] = None
+    rfc: Optional[str] = None
+    rol: Optional[str] = None
+    membresia: Optional[int] = None
+    id_broker: Optional[int] = None
+    id_sede: Optional[int] = None
+    celular: Optional[str] = None
     
 
 class Usuarios(SQLModel, table=True):

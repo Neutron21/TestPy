@@ -6,6 +6,7 @@ from app.models import (
     UsuarioDTO,
     UsuarioResponse,
     UsuarioSimple,
+    UsuarioUpdate,
     Usuarios
 )
 from datetime import datetime, timedelta
@@ -231,3 +232,55 @@ async def obtener_utms_faltantes(id_usuario: int, session: SessionDep):
         "id_usuario": id_usuario,
         "instituciones_faltantes": faltantes
     }
+
+# ============================================================
+# Actualizar usuario
+# ============================================================
+@router.patch(
+    "/usuarios/{id_usuario}",
+    response_model=Usuarios
+)
+async def update_usuario(
+    id_usuario: int,
+    usuario_data: UsuarioUpdate,
+    session: SessionDep
+):
+
+    usuario = session.exec(
+        select(Usuarios).where(Usuarios.id == id_usuario)
+    ).first()
+
+    if not usuario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuario no existe"
+        )
+
+    # Si se está modificando el correo, verificar que no exista otro usuario
+    if usuario_data.email is not None and usuario_data.email != usuario.email:
+
+        existing = session.exec(
+            select(Usuarios).where(
+                Usuarios.email == usuario_data.email,
+                Usuarios.id != id_usuario
+            )
+        ).first()
+
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El correo ya existe"
+            )
+
+    # Obtener solamente los campos que fueron enviados
+    datos = usuario_data.model_dump(exclude_unset=True)
+
+    # Actualizar usuario
+    for campo, valor in datos.items():
+        setattr(usuario, campo, valor)
+
+    session.add(usuario)
+    session.commit()
+    session.refresh(usuario)
+
+    return usuario
