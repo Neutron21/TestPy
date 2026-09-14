@@ -485,6 +485,8 @@ class CalculoComisiones(SQLModel, table=True):
     id_producto: Optional[int] = Field(default=None)
     id_usuario: int = Field(default=None)
     membresia_broker: Optional[str] = Field(default=None)
+    monto_credito: Decimal_7_5 # type: ignore
+
     
     porcentaje_pago_konnect: Optional[Decimal] = Field(default=None)
     pago_konnect: Optional[Decimal] = Field(default=None)
