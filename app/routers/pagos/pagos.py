@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import CalculoComisiones, ResponsePagos
+from app.models import CalculoComisiones, ResponsePagos, Cotizacion
 from app.routers.pagos.service_pagos import manager_func, manager_func_finkargo_custom
 
 
@@ -43,15 +43,31 @@ async def calular_comisiones_finkargo_operativa(id_cotizacion: int, monto: int, 
    
     return manager_func_finkargo_custom(id_cotizacion, monto, 186, session)
 
-@router.get("/pagos/calculo-comisiones-vigentes", response_model=list[CalculoComisiones])
+@router.get("/pagos/calculo-comisiones-vigentes")
 async def obtener_calculo_comisiones_vigentes(session: SessionDep):
-    """
-    Obtiene todos los registros donde es_vigente es igual a 1.
-    """
-    statement = select(CalculoComisiones).where(CalculoComisiones.es_vigente == 1)
+    statement = (
+        select(CalculoComisiones, Cotizacion)
+        .join(Cotizacion, CalculoComisiones.id_cotizacion == Cotizacion.id_cotizacion, isouter=True)
+        .where(CalculoComisiones.es_vigente == 1)
+    )
     resultados = session.exec(statement).all()
     
-    return resultados
+    lista_respuesta = []
+    for calculo, cotizacion in resultados:
+        data = calculo.dict()
+        
+        # Obtenemos el nombre del cliente y el monto de la cotización relacionada
+        if cotizacion:
+            data["cliente"] = getattr(cotizacion, "nombre", None) or getattr(cotizacion, "cliente", f"Cotización #{calculo.id_cotizacion}")
+            # Asegúrate de que 'monto' sea el nombre exacto de la columna en tu tabla de Cotización
+            data["monto_credito"] = getattr(cotizacion, "monto", 0) 
+        else:
+            data["cliente"] = f"Cotización #{calculo.id_cotizacion}"
+            data["monto_credito"] = calculo.monto_credito or 0
+            
+        lista_respuesta.append(data)
+        
+    return lista_respuesta
 
 
 
