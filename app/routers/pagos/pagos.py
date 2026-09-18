@@ -56,14 +56,16 @@ async def obtener_calculo_comisiones_vigentes(session: SessionDep):
     for calculo, cotizacion in resultados:
         data = calculo.dict()
         
-        # Obtenemos el nombre del cliente y el monto de la cotización relacionada
         if cotizacion:
             data["cliente"] = getattr(cotizacion, "nombre", None) or getattr(cotizacion, "cliente", f"Cotización #{calculo.id_cotizacion}")
-            # Asegúrate de que 'monto' sea el nombre exacto de la columna en tu tabla de Cotización
             data["monto_credito"] = getattr(cotizacion, "monto", 0) 
+            
+            # --- ¡ESTO ES LO QUE FALTABA! INCLUIMOS EL BROKER DE LA COTIZACIÓN ---
+            data["broker"] = getattr(cotizacion, "broker", None)
         else:
             data["cliente"] = f"Cotización #{calculo.id_cotizacion}"
             data["monto_credito"] = calculo.monto_credito or 0
+            data["broker"] = None
             
         lista_respuesta.append(data)
         
