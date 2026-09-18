@@ -43,7 +43,7 @@ async def calular_comisiones_finkargo_operativa(id_cotizacion: int, monto: int, 
    
     return manager_func_finkargo_custom(id_cotizacion, monto, 186, session)
 
-@router.get("/pagos/calculo-comisiones-vigentes")
+@router.get("/pagos/comisiones")
 async def obtener_calculo_comisiones_vigentes(session: SessionDep):
     statement = (
         select(CalculoComisiones, Cotizacion)
@@ -71,7 +71,7 @@ async def obtener_calculo_comisiones_vigentes(session: SessionDep):
 
 
 
-@router.get("/pagos/calculo-comisiones-por-id-vigente/{id}", response_model=CalculoComisiones)
+@router.get("/pagos/calculo-comisiones-por-id/{id}", response_model=CalculoComisiones)
 async def obtener_comision_por_id_siendo_vigente(id: int, session: SessionDep):
     """
     Busca un registro por su ID exacto y solo lo devuelve si su campo es_vigente es 1.
