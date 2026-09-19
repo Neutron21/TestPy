@@ -1,6 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
+from sqlalchemy import text
 from sqlmodel import select
 from app.db import SessionDep
 from app.models import CalculoComisiones, ResponsePagos, Cotizacion
@@ -45,31 +46,58 @@ async def calular_comisiones_finkargo_operativa(id_cotizacion: int, monto: int, 
 
 @router.get("/pagos/comisiones")
 async def obtener_calculo_comisiones_vigentes(session: SessionDep):
-    statement = (
-        select(CalculoComisiones, Cotizacion)
-        .join(Cotizacion, CalculoComisiones.id_cotizacion == Cotizacion.id_cotizacion, isouter=True)
-        .where(CalculoComisiones.es_vigente == 1)
-    )
-    resultados = session.exec(statement).all()
-    
-    lista_respuesta = []
-    for calculo, cotizacion in resultados:
-        data = calculo.dict()
-        
-        if cotizacion:
-            data["cliente"] = getattr(cotizacion, "nombre", None) or getattr(cotizacion, "cliente", f"Cotización #{calculo.id_cotizacion}")
-            data["monto_credito"] = getattr(cotizacion, "monto", 0) 
-            
-            # --- ¡ESTO ES LO QUE FALTABA! INCLUIMOS EL BROKER DE LA COTIZACIÓN ---
-            data["broker"] = getattr(cotizacion, "broker", None)
-        else:
-            data["cliente"] = f"Cotización #{calculo.id_cotizacion}"
-            data["monto_credito"] = calculo.monto_credito or 0
-            data["broker"] = None
-            
-        lista_respuesta.append(data)
-        
-    return lista_respuesta
+    query = text("""
+        SELECT
+            cc.id,
+            cc.id_cotizacion AS folio,
+            c.nombre AS cliente,
+            cc.id_financiera,
+            f.nombre AS financiera,
+            cc.id_producto,
+            p.nombre AS producto,
+            cat.id AS id_categoria,
+            cat.nombre AS linea,
+            cc.id_usuario,
+            u.nombre AS usuario,
+            b.nombre AS broker,
+            cc.monto_credito,
+            cc.membresia_broker,
+            cc.porcentaje_pago_konnect,
+            cc.pago_konnect,
+            cc.iva_pago_konnect,
+            cc.total_pago_konnect,
+            cc.porcentaje_pago_broker,
+            cc.pago_broker,
+            cc.iva_pago_broker,
+            cc.total_pago_broker,
+            cc.ganancia_konnect,
+            cc.iva_ganancia_konnect,
+            cc.total_ganancia_konnect,
+            cc.regla_aplicada,
+            cc.fecha_calculo,
+            cc.es_vigente,
+            cc.version,
+            ur.nombre AS recalculado_por,
+            cc.motivo_recalculo
+        FROM calculo_comisiones cc
+        INNER JOIN financieras f
+            ON f.id = cc.id_financiera
+        INNER JOIN productos p
+            ON p.id = cc.id_producto
+        INNER JOIN categorias cat
+            ON p.id = cat.id
+        INNER JOIN usuarios u
+            ON u.id = cc.id_usuario
+        LEFT JOIN usuarios ur
+            ON ur.id = cc.recalculado_por
+        INNER JOIN cotizacion c
+            ON c.id_cotizacion = cc.id_cotizacion
+        INNER JOIN brokers b
+            ON c.broker = b.id
+        WHERE cc.es_vigente = 1
+    """)
+
+    return [dict(row) for row in session.execute(query).mappings().all()]
 
 
 
