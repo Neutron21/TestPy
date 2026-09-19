@@ -56,7 +56,8 @@ def guardar_registro_pagos(session, obj_res_pagos: ResponsePagos, id_user: int, 
         id_producto=obj_res_pagos.id_producto,
         id_usuario=id_user,
         membresia_broker=obj_res_pagos.membresia_broker,
-        
+
+        monto_credito=obj_res_pagos.monto_credito,
         porcentaje_pago_konnect=obj_res_pagos.porcentaje_pago_a_konnect,
         pago_konnect=obj_res_pagos.pago_a_konnect,
         iva_pago_konnect=obj_res_pagos.iva_pago_a_konnect,
