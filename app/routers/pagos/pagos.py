@@ -77,6 +77,8 @@ async def obtener_calculo_comisiones_vigentes(session: SessionDep):
             cc.fecha_calculo,
             cc.es_vigente,
             cc.version,
+            et.id AS estatus_id,
+            et.name AS estatus_name,
             ur.nombre AS recalculado_por,
             cc.motivo_recalculo
         FROM calculo_comisiones cc
@@ -85,21 +87,21 @@ async def obtener_calculo_comisiones_vigentes(session: SessionDep):
         INNER JOIN productos p
             ON p.id = cc.id_producto
         INNER JOIN categorias cat
-            ON p.id = cat.id
+            ON p.id_categoria = cat.id
         INNER JOIN usuarios u
             ON u.id = cc.id_usuario
         LEFT JOIN usuarios ur
             ON ur.id = cc.recalculado_por
         INNER JOIN cotizacion c
             ON c.id_cotizacion = cc.id_cotizacion
+        INNER JOIN estatus_tramites et
+        	ON et.id = c.estatus
         INNER JOIN brokers b
             ON c.broker = b.id
         WHERE cc.es_vigente = 1
     """)
 
     return [dict(row) for row in session.execute(query).mappings().all()]
-
-
 
 @router.get("/pagos/calculo-comisiones-por-id/{id}", response_model=CalculoComisiones)
 async def obtener_comision_por_id_siendo_vigente(id: int, session: SessionDep):
