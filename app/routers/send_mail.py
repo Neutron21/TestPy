@@ -224,7 +224,6 @@ def enviar_correo_nuevo_usuario(
     correos_konnect = [
         "evolucion.talento@konnect.mx",
         "ij.innovaciones@gmail.com",
-        "ernesto.veraza@clara.team", # este correo de Clara se agrega aqui ya que solo atiende peticiones de las utms no de cotizaciones
         "ara.castro@konnect.mx",
         "kfigueroa@konnect.mx"
     ]
@@ -310,4 +309,52 @@ def mail_comentario_direccion(data: ReqMailComentarioDir, session: SessionDep):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+def enviar_correo_solicitud_utms(user, ids_financieras_filtro, titulo_correo, session, background_tasks):
+    correos_financieras = session.exec(
+        select(Correos.correo).where(
+            Correos.id_financiera.in_(ids_financieras_filtro),
+            Correos.v_mail == 1
+        )
+    ).all()
     
+    correos_db = [c[0] if isinstance(c, tuple) else c for c in correos_financieras]
+    if not correos_db:
+        return False
+
+    # correos_konnect = [
+    #     #"evolucion.talento@konnect.mx", 
+    #     "ij.innovaciones@gmail.com",
+    #     "ara.castro@konnect.mx", 
+    #     "kfigueroa@konnect.mx"
+    # ]
+
+    # Preparamos todos los correos a incluir (Financieras + Konnect + Usuario)
+    correos_a_incluir = correos_db # + correos_konnect
+    if user.email:
+        correos_a_incluir.append(user.email)
+
+    lista_correos = list({ c.strip() for c in correos_a_incluir if c and c.strip()})
+
+    broker = session.get(Brokers, user.id_broker) if user.id_broker else None
+    sede = session.get(Sedes, user.id_sede) if user.id_sede else None
+    token = crear_token({"email": user.email, "name": user.nombre, "id_user": user.id})
+
+    html_content = env.get_template("usuario.html").render(
+        nombre=user.nombre, 
+        email=user.email, 
+        id_user=user.id,  
+        telefono=user.celular,
+        broker=broker.nombre if broker else "N/A", 
+        sede=sede.nombre if sede else "N/A",
+        token=token
+    )
+
+    background_tasks.add_task(
+        enviar_correo_simple, 
+        html_content, 
+        lista_correos, 
+        f"Konnect 📋 {titulo_correo} - {user.nombre}"
+    )
+    
+    return lista_correos
