@@ -9,6 +9,7 @@ from sqlmodel import update
 from datetime import date
 from fastapi import APIRouter
 from sqlmodel import select
+from app.models import Sedes
 
 from app.models import Cotizacion
 from app.routers import comentarios
@@ -225,3 +226,12 @@ async def update_fecha_pago(
             status_code=500, 
             detail="Error de integridad"
         )
+@router.get("/operativa/{id_operativa}")
+async def get_operativa_nombre(id_operativa: int, session: SessionDep):
+    query = select(Sedes).where(Sedes.id == id_operativa)
+    operativa = session.exec(query).first()
+    
+    if not operativa:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Operativa")
+    
+    return {"nombre": operativa.nombre}
