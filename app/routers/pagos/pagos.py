@@ -101,6 +101,7 @@ async def obtener_calculo_comisiones_vigentes(session: SessionDep):
         INNER JOIN brokers b
             ON c.broker = b.id
         WHERE cc.es_vigente = 1
+        ORDER BY cc.fecha_calculo DESC
     """)
 
     return [dict(row) for row in session.execute(query).mappings().all()]
