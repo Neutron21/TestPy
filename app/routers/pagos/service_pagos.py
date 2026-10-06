@@ -30,7 +30,7 @@ CALCULOS = {
     34: FluxoCalculator, #✅ 
 }
 
-def guardar_registro_pagos(session, obj_res_pagos: ResponsePagos, id_user: int, motivo: str = "Cálculo de comisiones") -> ResponsePagos:
+def guardar_registro_pagos(session, obj_res_pagos: ResponsePagos, id_user: int, recalculate_user: int, motivo: str = "Cálculo inicial") -> ResponsePagos:
     id_cot = obj_res_pagos.id_cotizacion
     
     statement_vigente = select(CalculoComisiones).where(
@@ -75,6 +75,7 @@ def guardar_registro_pagos(session, obj_res_pagos: ResponsePagos, id_user: int, 
         regla_aplicada=obj_res_pagos.regla,
         fecha_calculo=datetime.now(ZoneInfo("America/Mexico_City")),
         es_vigente=1,
+        recalculado_por=recalculate_user,
         motivo_recalculo=motivo if nueva_version > 1 else "Cálculo inicial"
     )
 
@@ -85,7 +86,7 @@ def guardar_registro_pagos(session, obj_res_pagos: ResponsePagos, id_user: int, 
     return obj_res_pagos
 
 
-def manager_func(id_cotizacion: int, session: SessionDep):
+def manager_func(id_cotizacion: int, session: SessionDep, id_usuario: int = None, motivo: str = None):
     query_cot = select(Cotizacion).where(Cotizacion.id_cotizacion == id_cotizacion)
     cot_result = session.exec(query_cot).first()
 
@@ -99,7 +100,9 @@ def manager_func(id_cotizacion: int, session: SessionDep):
 
     financiera = financiera_class(cot_result, session)
     response_pagos = financiera.calculate()
-    guardar_registro_pagos(session, response_pagos, id_user=cot_result.id_user)
+    get_id_user = cot_result.id_user # Usuario de la cotizacioin
+    recalculate_user = id_usuario  # Usuario que recálcula
+    guardar_registro_pagos(session, response_pagos, id_user=get_id_user, recalculate_user=recalculate_user, motivo=motivo)
     return response_pagos
 
 
