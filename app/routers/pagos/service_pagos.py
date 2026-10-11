@@ -15,19 +15,40 @@ from app.routers.pagos.model.finkargoCalculator import FinkargoCalculator
 from app.routers.pagos.model.unifinCalculator import UnifinCalculator
 from app.routers.pagos.model.afirmeCalculator import AfirmeCalculator
 from app.routers.pagos.model.finamoCalculator import FinamoCalculator
+# from app.routers.pagos.model.covaltoCalculator import CovaltoCalculator
+from app.routers.pagos.model.fincomunCalculator import fincomunCalculator 
+from app.routers.pagos.model.kapitalizarCalculator import KapitalizerCalculator
+from app.routers.pagos.model.arrendamasCalculator import ArrendaMasCalculator
+from app.routers.pagos.model.prioritaCalculator import PrioritaCalculator
+from app.routers.pagos.model.centralleasingCalculator import CentralLeasingCalculator
+from app.routers.pagos.model.engenCalculator import EngenCalculator
+from app.routers.pagos.model.bxCalculator import BxmasCalculator
     
 
 CALCULOS = {
     1: KonfioCalculator, #✅ Pendinte TDCE
+    5: BxmasCalculator,
     10: FinsusCalculator, #✅
     11: FinbeAbcCalculator, #
+    13: ArrendaMasCalculator,
     14: AfirmeCalculator, #
+    16: fincomunCalculator,
+    19: KapitalizerCalculator,
     20: UnifinCalculator, #✅
     22: JeevesCalculator, #✅
     24: FinamoCalculator, #
+    23: PrioritaCalculator,
     29: FinkargoCalculator, #✅
     32: ClaraCalculator, #✅ Dispersados por mes
     34: FluxoCalculator, #✅ 
+    35: EngenCalculator
+    # 3: CovaltoCalculator,
+
+    
+    
+    
+    
+   
 }
 
 def guardar_registro_pagos(session, obj_res_pagos: ResponsePagos, id_user: int, motivo: str = "Cálculo de comisiones") -> ResponsePagos:
@@ -88,7 +109,7 @@ def guardar_registro_pagos(session, obj_res_pagos: ResponsePagos, id_user: int, 
 def manager_func(id_cotizacion: int, session: SessionDep):
     query_cot = select(Cotizacion).where(Cotizacion.id_cotizacion == id_cotizacion)
     cot_result = session.exec(query_cot).first()
-
+    print("Encontro la cotizacion")
     if not cot_result:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
     
@@ -99,7 +120,7 @@ def manager_func(id_cotizacion: int, session: SessionDep):
 
     financiera = financiera_class(cot_result, session)
     response_pagos = financiera.calculate()
-    guardar_registro_pagos(session, response_pagos, id_user=cot_result.id_user)
+    # guardar_registro_pagos(session, response_pagos, id_user=cot_result.id_user)
     return response_pagos
 
 
