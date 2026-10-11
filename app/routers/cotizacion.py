@@ -9,6 +9,7 @@ from sqlmodel import update
 from datetime import date
 from fastapi import APIRouter
 from sqlmodel import select
+from app.models import Sedes
 
 from app.models import Cotizacion
 from app.routers import comentarios
@@ -171,13 +172,18 @@ async def create_cotizacion(usuario_data: CotizacionDTO, session: SessionDep):
 
 @router.patch("/cotizacion/status_udpate", response_model=Cotizacion)
 async def update_estatus_cotizacion(
-    estatus_data: EstatusUpdate, session: SessionDep,):
+    estatus_data: EstatusUpdate, session: SessionDep):
 
     cotizacion = session.get(Cotizacion, estatus_data.id_cotizacion)
     if not cotizacion:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
     
     cotizacion.estatus = estatus_data.estatus
+    
+    # 👈 Si el estatus es Pagado (9), guardamos la fecha de hoy automáticamente
+    if estatus_data.estatus == 9:
+        cotizacion.fecha_pago = date.today()
+        
     session.add(cotizacion)
     session.commit()
     session.refresh(cotizacion)
@@ -225,3 +231,12 @@ async def update_fecha_pago(
             status_code=500, 
             detail="Error de integridad"
         )
+@router.get("/operativa/{id_operativa}")
+async def get_operativa_nombre(id_operativa: int, session: SessionDep):
+    query = select(Sedes).where(Sedes.id == id_operativa)
+    operativa = session.exec(query).first()
+    
+    if not operativa:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Operativa")
+    
+    return {"nombre": operativa.nombre}

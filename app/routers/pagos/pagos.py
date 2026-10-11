@@ -11,9 +11,11 @@ from app.routers.pagos.service_pagos import manager_func, manager_func_finkargo_
 router = APIRouter(tags=["Pagos"])
 
 @router.get("/pagos", response_model=ResponsePagos)
-async def calular_comisiones(id_cotizacion: int, session: SessionDep):
+async def calular_comisiones(
+    id_cotizacion: int, session: SessionDep, 
+    id_usuario: Optional[int] = None, motivo_recalculo: Optional[str] = None):
     
-    return manager_func(id_cotizacion, session)
+    return manager_func(id_cotizacion, session, id_usuario=id_usuario, motivo=motivo_recalculo)
 
 @router.get("/pagos/finkargo-incremento", response_model=ResponsePagos)
 async def calular_comisiones_finkargo_incremento(id_cotizacion: int, monto: int, session: SessionDep):
@@ -99,6 +101,7 @@ async def obtener_calculo_comisiones_vigentes(session: SessionDep):
         INNER JOIN brokers b
             ON c.broker = b.id
         WHERE cc.es_vigente = 1
+        ORDER BY cc.fecha_calculo DESC
     """)
 
     return [dict(row) for row in session.execute(query).mappings().all()]

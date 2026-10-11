@@ -10,6 +10,9 @@ from app.models import (
     Usuarios
 )
 from datetime import datetime, timedelta
+from fastapi import BackgroundTasks
+
+from app.routers.send_mail import enviar_correo_solicitud_utms
 
 
 router = APIRouter(tags=["Usuarios"])
@@ -201,36 +204,48 @@ async def payment_status(id_user: int, session: SessionDep):
     return {
         "status": "active"
     }
-@router.get("/usuarios/{id_usuario}/utms-faltantes")
-async def obtener_utms_faltantes(id_usuario: int, session: SessionDep):
-    user = session.exec(
-        select(Usuarios).where(Usuarios.id == id_usuario)
-    ).first()
-
+# ============================================================
+# Pedir UMTs Usuario Nuevo/Existente
+# ============================================================
+@router.post("/usuarios/{id_usuario}/notificar-utms-faltantes")
+async def notificar_utms_faltantes(
+    id_usuario: int, 
+    session: SessionDep, 
+    background_tasks: BackgroundTasks
+):
+    user = session.exec(select(Usuarios).where(Usuarios.id == id_usuario)).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no existe")
 
-    # Catálogo de financieras (puedes ajustar los nombres según tu necesidad)
-    catalogo_if = {
-        1: "Konfio",
-        12: "Xepelin",
-        11: "FnbeABC",
-        32: "Clara",
-        37: "Pymio"
-    }
+    # 1. Calcular financieras faltantes
+    ids_base = (1, 4, 11, 12, 32, 37)
+    query = text("""
+        SELECT financieras.id, financieras.nombre 
+        FROM financieras 
+        WHERE financieras.id IN :ids_base
+        AND financieras.id NOT IN (
+            SELECT id_financiera FROM utms WHERE id_usuario = :id_usuario
+        )
+    """)
+    faltantes = session.execute(query, {"ids_base": ids_base, "id_usuario": id_usuario}).mappings().all()
+    if not faltantes:
+        return {"ok": False, "mensaje": "El usuario ya cuenta con UTMs para todas las financieras."}
 
-    # IDs que el usuario ya tiene
-    ids_registrados = [user.id_financiera] if user.id_financiera else []
-    
-    faltantes = [
-        {"id": fid, "nombre": nombre} 
-        for fid, nombre in catalogo_if.items() 
-        if fid not in ids_registrados
-    ]
+    ids_faltantes = [fin["id"] for fin in faltantes]
+
+    # 2. Reutilizar la función de envío
+    destinatarios = enviar_correo_solicitud_utms(
+        user, ids_faltantes, "Solicitud de UTMs Faltantes", session, background_tasks
+    )
+
+    if not destinatarios:
+        return {"ok": False, "mensaje": "No se encontraron correos para las financieras faltantes."}
 
     return {
-        "id_usuario": id_usuario,
-        "instituciones_faltantes": faltantes
+        "ok": True,
+        "mensaje": "Correo enviado correctamente",
+        "instituciones_faltantes": list(faltantes),
+        "destinatarios": destinatarios
     }
 
 # ============================================================
@@ -284,3 +299,5 @@ async def update_usuario(
     session.refresh(usuario)
 
     return usuario
+
+
