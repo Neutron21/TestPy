@@ -33,3 +33,17 @@ async def create_correo(correo_data: CorreosDTO, session: SessionDep):
     session.commit()
     session.refresh(nuevo_correo)
     return nuevo_correo
+
+@router.put("/correo/{id_correo}", response_model=Correos)
+async def update_correo(id_correo: int, correo_data: CorreosDTO, session: SessionDep):
+    correo_existente = session.get(Correos, id_correo)
+    if not correo_existente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Correo no encontrado",
+        )
+
+    correo_existente.sqlmodel_update(correo_data.model_dump())
+    session.commit()
+    session.refresh(correo_existente)
+    return correo_existente
