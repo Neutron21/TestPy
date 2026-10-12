@@ -172,13 +172,18 @@ async def create_cotizacion(usuario_data: CotizacionDTO, session: SessionDep):
 
 @router.patch("/cotizacion/status_udpate", response_model=Cotizacion)
 async def update_estatus_cotizacion(
-    estatus_data: EstatusUpdate, session: SessionDep,):
+    estatus_data: EstatusUpdate, session: SessionDep):
 
     cotizacion = session.get(Cotizacion, estatus_data.id_cotizacion)
     if not cotizacion:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
     
     cotizacion.estatus = estatus_data.estatus
+    
+    # 👈 Si el estatus es Pagado (9), guardamos la fecha de hoy automáticamente
+    if estatus_data.estatus == 9:
+        cotizacion.fecha_pago = date.today()
+        
     session.add(cotizacion)
     session.commit()
     session.refresh(cotizacion)
