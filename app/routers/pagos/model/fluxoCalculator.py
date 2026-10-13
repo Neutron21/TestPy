@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from sqlmodel import select
+from fastapi import HTTPException
 from app.routers.pagos.model.baseFinanciera import FINANCIERAS, MEMBRESIAS, BaseFinanciera, to_decimal_7_5, show_percent, calc_IVA
 from app.models import Cotizacion, Pagos, Productos, ResponsePagos, Usuarios
 
@@ -14,6 +15,8 @@ class FluxoCalculator(BaseFinanciera):
             (Pagos.id_producto == self.cotizacion.producto)
             )
         self.pagos_result = self.session.exec(query_pagos).first()
+        if not self.pagos_result:
+            raise HTTPException(status_code=404, detail="Regla no encontrada")
         print(self.pagos_result)
 
         query_user = select(Usuarios).where(Usuarios.id == self.cotizacion.id_user)

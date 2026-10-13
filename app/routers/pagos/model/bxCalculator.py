@@ -1,4 +1,5 @@
 from sqlmodel import  select
+from fastapi import HTTPException
 
 from app.routers.pagos.model.baseFinanciera import BaseFinanciera, to_decimal_7_5, show_percent, calc_IVA
 from app.models import  Pagos, ResponsePagos, Usuarios, Productos
@@ -13,6 +14,8 @@ class BxmasCalculator(BaseFinanciera):
         query_pagos = select(Pagos).where(Pagos.id_financiera == self.cotizacion.id_financiera)
                     
         self.pagos_result = self.session.exec(query_pagos).first()
+        if not self.pagos_result:
+            raise HTTPException(status_code=404, detail="Regla no encontrada")
 
         query_user = select(Usuarios).where(Usuarios.id == self.cotizacion.id_user)
         self.user_result = self.session.exec(query_user).first()

@@ -19,26 +19,22 @@ from app.models import Pagos, Productos, ResponsePagos, Usuarios
 class EngenCalculator(BaseFinanciera):
 
     def bussinesRules(self):
-                        monto = self.cotizacion.monto
-        
-                        query_pagos = select(Pagos).where(
-                        Pagos.id_financiera == self.cotizacion.id_financiera
+            monto = self.cotizacion.monto
+
+            query_pagos = select(Pagos).where(
+            Pagos.id_financiera == self.cotizacion.id_financiera
         )
-            
-                        #query_pagos = select(Pagos).where(
-                                   #(Pagos.id_financiera == self.cotizacion.id_financiera) &  
-                                           #(Pagos.m_min <= monto) &
-                                            #(Pagos.m_max >= monto))            
-                        self.pagos_result = self.session.exec(query_pagos).first()
-        
-                        print(f"Resultado de Pagos: {self.pagos_result}")
-                
-                        query_user = select(Usuarios).where(Usuarios.id == self.cotizacion.id_user)
-                        self.user_result = self.session.exec(query_user).first()
-                        self.id_membresia = self.user_result.membresia
-                
-                        query_producto = select(Productos.nombre).where(Productos.id == self.cotizacion.producto)
-                        self.producto_nombre = self.session.exec(query_producto).first()
+                       
+            self.pagos_result = self.session.exec(query_pagos).first()
+            if not self.pagos_result:
+                            raise HTTPException(status_code=404, detail="Regla no encontrada")
+    
+            query_user = select(Usuarios).where(Usuarios.id == self.cotizacion.id_user)
+            self.user_result = self.session.exec(query_user).first()
+            self.id_membresia = self.user_result.membresia
+    
+            query_producto = select(Productos.nombre).where(Productos.id == self.cotizacion.producto)
+            self.producto_nombre = self.session.exec(query_producto).first()
                 
                 
     def calculate(self):

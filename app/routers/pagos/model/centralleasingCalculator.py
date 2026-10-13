@@ -30,6 +30,8 @@ class CentralLeasingCalculator(BaseFinanciera):
                                        #(Pagos.m_min <= monto) &
                                         #(Pagos.m_max >= monto))            
                     self.pagos_result = self.session.exec(query_pagos).first()
+                    if not self.pagos_result:
+                        raise HTTPException(status_code=404, detail="Regla no encontrada")
     
                     print(f"Resultado de Pagos: {self.pagos_result}")
             

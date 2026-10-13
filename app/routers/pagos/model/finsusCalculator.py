@@ -1,4 +1,5 @@
 from sqlmodel import func, select
+from fastapi import HTTPException
 
 from app.routers.pagos.model.baseFinanciera import BaseFinanciera, status_pagado, to_decimal_7_5, show_percent, calc_IVA
 from app.models import Cotizacion, Pagos, ResponsePagos, Usuarios, Productos
@@ -23,6 +24,8 @@ class FinsusCalculator(BaseFinanciera):
 
         query_pagos = select(Pagos).where(Pagos.id_financiera == self.cotizacion.id_financiera)
         self.pagos_result = self.session.exec(query_pagos).all()
+        if not self.pagos_result:
+                raise HTTPException(status_code=404, detail="Regla no encontrada")
 
         query_user = select(Usuarios).where(Usuarios.id == self.cotizacion.id_user)
         self.user_result = self.session.exec(query_user).first()
@@ -47,7 +50,9 @@ class FinsusCalculator(BaseFinanciera):
         self.bussinesRules()
         print(f"Calculando {FINANCIERAS.get(self.cotizacion.id_financiera)} por monto de producto")
         
-        t_pago = next((p for p in self.pagos_result if p.m_min == self.regla), "None")
+        t_pago = next((p for p in self.pagos_result if p.m_min == self.regla), None)
+        if not t_pago:
+            raise HTTPException(status_code=404, detail="Regla no encontrada")
 
         com_apertura = self.cotizacion.monto * t_pago.c_apertura
         print(f"com_apertura: {t_pago.c_apertura}% de {self.cotizacion.monto} -> {com_apertura}")
