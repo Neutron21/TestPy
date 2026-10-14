@@ -20,7 +20,7 @@ async def obtener_todos_los_correos_activos(session: SessionDep):
 @router.get("/financieras/con-correos")
 async def obtener_financieras_con_correos(session: SessionDep):
     query = text("""
-        SELECT 
+            SELECT 
             f.id AS id_financiera,
             f.nombre AS financiera,
             f.img AS img, 
@@ -30,8 +30,9 @@ async def obtener_financieras_con_correos(session: SessionDep):
             c.telefono AS telefono,
             cat.nombre AS categoria
         FROM financieras f
-        LEFT JOIN correos c ON f.id = c.id_financiera
+        INNER JOIN correos c ON f.id = c.id_financiera
         LEFT JOIN categorias cat ON c.categoria_id = cat.id
+        WHERE c.v_comercial <> 0  
         ORDER BY f.nombre ASC, c.correo ASC;
     """)
     
