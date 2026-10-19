@@ -1,0 +1,104 @@
+from decimal import Decimal
+
+from fastapi import HTTPException
+from sqlmodel import select
+
+from app.routers.pagos.model.baseFinanciera import (
+    FINANCIERAS,
+    MEMBRESIAS,
+    BaseFinanciera,
+    to_decimal_7_5,
+    show_percent,
+    calc_IVA,
+)
+
+from app.models import Pagos, Productos, ResponsePagos, Usuarios
+
+
+class heybancoCalculator(BaseFinanciera):
+
+    def bussinesRules(self):
+                        monto = self.cotizacion.monto
+        
+                        #query_pagos = select(Pagos).where(
+                        #Pagos.id_financiera == self.cotizacion.id_financiera)
+            
+                        query_pagos = select(Pagos).where(
+                                   (Pagos.id_financiera == self.cotizacion.id_financiera) &  
+                                           (Pagos.m_min <= monto) &
+                                            (Pagos.m_max >= monto))            
+                        self.pagos_result = self.session.exec(query_pagos).first()
+        
+                        print(f"Resultado de Pagos: {self.pagos_result}")
+                
+                        query_user = select(Usuarios).where(Usuarios.id == self.cotizacion.id_user)
+                        self.user_result = self.session.exec(query_user).first()
+                        self.id_membresia = self.user_result.membresia
+                
+                        query_producto = select(Productos.nombre).where(Productos.id == self.cotizacion.producto)
+                        self.producto_nombre = self.session.exec(query_producto).first()
+                
+                
+    def calculate(self):
+                
+                        self.bussinesRules()
+                        print(f"ID membresía: {self.id_membresia}, tipo: {type(self.id_membresia)}")
+                        print(f"Calculando {FINANCIERAS.get(self.cotizacion.id_financiera)} por producto")
+                
+                        # t_pago = next((p for p in self.pagos_result), "None")
+                        t_pago = self.pagos_result
+                        print(f"t_pago: {t_pago}")
+                        com_apertura = 0
+                        #  com_apertura = self.cotizacion.monto * t_pago.pago_a_konnect
+                        # print(f"com_apertura: {t_pago.c_apertura}% de {self.cotizacion.monto} -> {com_apertura}")
+                        calc_pago_konnect = self.cotizacion.monto * t_pago.pago_a_konnect
+                        print(f"Pago Konnect: {calc_pago_konnect}, {t_pago.pago_a_konnect} de {self.cotizacion.monto}")
+                    
+                        match self.id_membresia:
+                            case 1:
+                                porcentaje_broker = t_pago.c_plata
+                                comision_broker = t_pago.c_plata * self.cotizacion.monto
+                            case 2:
+                                porcentaje_broker = t_pago.c_oro
+                                comision_broker = t_pago.c_oro * self.cotizacion.monto
+                            case 3:
+                                porcentaje_broker = t_pago.c_platino
+                                comision_broker = t_pago.c_platino * self.cotizacion.monto
+                            case 4:
+                                porcentaje_broker = t_pago.c_diamante
+                                comision_broker = t_pago.c_diamante * self.cotizacion.monto
+                
+                        print(f"Membreisa Broker: {MEMBRESIAS.get(self.id_membresia)}")
+                        print(f"Comision Broker: {comision_broker}")
+                        gan_konn = calc_pago_konnect - comision_broker
+                        print(f"Ganancia Konnect: {gan_konn}")
+                
+                        return ResponsePagos(
+                            id_cotizacion=self.cotizacion.id_cotizacion,
+                            id_financiera=self.cotizacion.id_financiera,
+                            financiera=FINANCIERAS.get(self.cotizacion.id_financiera),
+                            regla=t_pago.regla,
+                            id_producto=self.cotizacion.producto,
+                            producto=self.producto_nombre,
+                            membresia_broker=MEMBRESIAS.get(self.id_membresia),
+                            nombre_usuario=self.user_result.nombre,
+                            monto_credito=self.cotizacion.monto,
+                            
+                            comision_apertura_porcentaje = show_percent(t_pago.c_apertura),
+                            comision_apertura_pesos = str(com_apertura),
+                            
+                            porcentaje_pago_a_konnect = show_percent(t_pago.pago_a_konnect),
+                            pago_a_konnect=to_decimal_7_5(calc_pago_konnect),
+                            iva_pago_a_konnect = calc_IVA(calc_pago_konnect),
+                            total_pago_a_konnect = to_decimal_7_5(calc_pago_konnect + calc_IVA(calc_pago_konnect)),
+                            
+                            porcentaje_pago_broker = show_percent(porcentaje_broker),
+                            pago_broker=to_decimal_7_5(comision_broker),
+                            iva_pago_broker = calc_IVA(comision_broker),
+                            total_pago_broker = to_decimal_7_5(comision_broker + calc_IVA(comision_broker)),
+                            
+                            ganancia_konnect=to_decimal_7_5(gan_konn),
+                            iva_ganancia_konnect = calc_IVA(gan_konn),
+                            total_ganancia_konnect = to_decimal_7_5(gan_konn + calc_IVA(gan_konn)),
+                            
+                        )
