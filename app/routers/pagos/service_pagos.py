@@ -23,21 +23,35 @@ from app.routers.pagos.model.prioritaCalculator import PrioritaCalculator
 from app.routers.pagos.model.centralleasingCalculator import CentralLeasingCalculator
 from app.routers.pagos.model.engenCalculator import EngenCalculator
 from app.routers.pagos.model.bxCalculator import BxmasCalculator
+from app.routers.pagos.model.ionCalculator import IONCalculator
+from app.routers.pagos.model.activeleasingCalculator import ActiveleasingCalculator
+from app.routers.pagos.model.haycashCalculator import haycashCalculator
+from app.routers.pagos.model.fondeadoraCalculator import fondeadoraCalculator
+from app.routers.pagos.model.finantahCalculator import finantahCalculator
+from app.routers.pagos.model.axionexCalculator import axionexCalculator
+from app.routers.pagos.model.heybancoCalculator import heybancoCalculator
     
 
 CALCULOS = {
     1: KonfioCalculator, #✅ Pendinte TDCE
     5: BxmasCalculator,
+    6: IONCalculator,
+    7: heybancoCalculator,
+    8: ActiveleasingCalculator,
+    9: haycashCalculator,
     10: FinsusCalculator, #✅
     11: FinbeAbcCalculator, #
     13: ArrendaMasCalculator,
     14: AfirmeCalculator, #
     16: fincomunCalculator,
+    17: fondeadoraCalculator,
+    18: finantahCalculator,
     19: KapitalizerCalculator,
     20: UnifinCalculator, #✅
     22: JeevesCalculator, #✅
     24: FinamoCalculator, #
     23: PrioritaCalculator,
+    28: axionexCalculator,
     29: FinkargoCalculator, #✅
     32: ClaraCalculator, #✅ Dispersados por mes
     34: FluxoCalculator, #✅ 
@@ -123,7 +137,7 @@ def manager_func(id_cotizacion: int, session: SessionDep, id_usuario: int = None
     response_pagos = financiera.calculate()
     get_id_user = cot_result.id_user # Usuario de la cotizacioin
     recalculate_user = id_usuario  # Usuario que recálcula
-    guardar_registro_pagos(session, response_pagos, id_user=get_id_user, recalculate_user=recalculate_user, motivo=motivo)
+    # guardar_registro_pagos(session, response_pagos, id_user=get_id_user, recalculate_user=recalculate_user, motivo=motivo)
     return response_pagos
 
 
