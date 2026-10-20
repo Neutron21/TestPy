@@ -43,10 +43,10 @@ class UnifinCalculator(BaseFinanciera):
             case 2:
                 porcentaje_broker = t_pago.c_oro
                 comision_broker = t_pago.c_oro * com_apertura
-            case 3:
+            case 3 | 5:
                 porcentaje_broker = t_pago.c_platino
                 comision_broker = t_pago.c_platino * com_apertura
-            case 4:
+            case 4 | 6:
                 porcentaje_broker = t_pago.c_diamante
                 comision_broker = t_pago.c_diamante * com_apertura
 

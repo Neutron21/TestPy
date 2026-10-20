@@ -63,10 +63,10 @@ class IONCalculator(BaseFinanciera):
                             case 2:
                                 porcentaje_broker = t_pago.c_oro
                                 comision_broker = t_pago.c_oro * self.cotizacion.monto
-                            case 3:
+                            case 3 | 5:
                                 porcentaje_broker = t_pago.c_platino
                                 comision_broker = t_pago.c_platino * self.cotizacion.monto
-                            case 4:
+                            case 4 | 6:
                                 porcentaje_broker = t_pago.c_diamante
                                 comision_broker = t_pago.c_diamante * self.cotizacion.monto
                 
