@@ -64,4 +64,6 @@ MEMBRESIAS = {
     2: "ORO",
     3: "PLATINO",
     4: "DIAMANTE",
+    5: "KONNECT",
+    6: "KONNECT EVOLUCIONA",
 }
