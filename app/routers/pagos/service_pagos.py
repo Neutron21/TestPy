@@ -137,7 +137,7 @@ def manager_func(id_cotizacion: int, session: SessionDep, id_usuario: int = None
     response_pagos = financiera.calculate()
     get_id_user = cot_result.id_user # Usuario de la cotizacioin
     recalculate_user = id_usuario  # Usuario que recálcula
-    # guardar_registro_pagos(session, response_pagos, id_user=get_id_user, recalculate_user=recalculate_user, motivo=motivo)
+    guardar_registro_pagos(session, response_pagos, id_user=get_id_user, recalculate_user=recalculate_user, motivo=motivo)
     return response_pagos
 
 
