@@ -156,7 +156,7 @@ class Viabilidad(SQLModel, table=True):
     desc: str
     responsable: str
 
-class CotizacionDTO (SQLModel):
+class CotizacionDTO(SQLModel):
     id_usuario: str = Field(max_length=100, nullable=False)
     id_user: int = Field(nullable=False) 
     id_financiera: int = Field(nullable=False)
@@ -164,18 +164,18 @@ class CotizacionDTO (SQLModel):
     tipo_persona: str = Field(nullable=False)  
     nombre: str = Field(max_length=100, nullable=False)
     rfc: str = Field(max_length=100, nullable=False)
-    plazo: str = Field(max_length=100, nullable=False)
-    edad: int = Field(nullable=False)
+    plazo: Optional[str] = Field(default="0", max_length=100, nullable=True)
+    edad: Optional[int] = Field(default=0, nullable=True)
     monto: int = Field(nullable=False)  
-    ingresos: int = Field(nullable=False)
+    ingresos: Optional[int] = Field(default=0, nullable=True)
     estatus: int = Field(nullable=False) 
-    antiguedad_empresa: int = Field(nullable=False)
-    OpCliente: str = Field(max_length=250, nullable=False)
+    antiguedad_empresa: Optional[int] = Field(default=0, nullable=True)
+    OpCliente: Optional[str] = Field(default="N/A", max_length=250, nullable=True)
     broker: int = Field(default=None, nullable=True)
-    sede: Optional[int] = Field(default=None, nullable=True) # aun no se recibe del front
+    sede: Optional[int] = Field(default=None, nullable=True)
     destinoCredito: str = Field(max_length=250, nullable=False)
     custom_prod: Optional[str] = Field(default=None, nullable=True)
-    fecha_pago: Optional[date] = Field(default=None)
+    fecha_pago: Optional[date] = Field(default=None, nullable=True)
 
 
 
