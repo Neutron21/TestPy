@@ -119,7 +119,7 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         template = env.get_template(template_name)
         html_content = template.render(**vars(bodyMail), isLink=withLink)
 
-        if cotizacion.id_financiera == 39:
+        if cotizacion.id_financiera == 39 or cotizacion.id_financiera == 14:
             background_tasks.add_task(enviar_correo_con_expediente_zip, cotizacion, html_content, correos, bodyMail.cotizacionB64)
         else:
             background_tasks.add_task(enviar_correo, bodyMail, html_content, correos)
