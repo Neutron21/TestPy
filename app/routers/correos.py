@@ -34,7 +34,7 @@ async def obtener_financieras_con_correos(session: SessionDep):
         INNER JOIN correos c ON f.id = c.id_financiera
         LEFT JOIN categorias cat ON c.categoria_id = cat.id
         WHERE c.v_comercial <> 0 AND f.fase >= 1
-        ORDER BY f.nombre ASC, c.correo ASC;
+        ORDER BY f.nombre ASC, cat.nombre, c.nombre ASC;
     """)
     
     resultados = session.exec(query).all()
