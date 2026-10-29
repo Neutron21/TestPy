@@ -91,7 +91,7 @@ async def obtener_correos(id_financiera: int, session: SessionDep):
 
     return correos  
 
-# 3. ACCIONES DE ESCRITURA (POST / PUT)
+# 3. ACCIONES DE ESCRITURA (POST / PUT / DELETE)
 @router.post("/correo", response_model=Correos)
 async def create_correo(correo_data: CorreosDTO, session: SessionDep):
     nuevo_correo = Correos.model_validate(correo_data.model_dump())
@@ -113,3 +113,16 @@ async def update_correo(id_correo: int, correo_data: CorreosDTO, session: Sessio
     session.commit()
     session.refresh(correo_existente)
     return correo_existente
+
+@router.delete("/correo/{id_correo}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_correo(id_correo: int, session: SessionDep):
+    correo_existente = session.get(Correos, id_correo)
+    if not correo_existente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Correo no encontrado",
+        )
+    
+    session.delete(correo_existente)
+    session.commit()
+    return None

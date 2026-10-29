@@ -223,17 +223,20 @@ class CorreosPagos(SQLModel, table=True):
     visible: bool = Field(default=True)
 
 class CorreosDTO(SQLModel):
-    id_financiera: int = Field(default=None)
-    correo: str = Field(default=None)
-    nombre: str = Field(default=None)
-    v_comercial: bool = Field(default=True) # vista comercial
-    v_mail: bool = Field(default=True) # envio de correos
-    telefono: str = Field(default=None)
-    categoria_id: int = Field(foreign_key="categorias.id")
+    id_financiera: int
+    correo: str
+    nombre: str
+    v_comercial: bool = True
+    v_mail: bool = True
+    telefono: str | None = None
+    categoria_id: int
 
-class Correos(CorreosDTO ,table=True ):  
-    pass
-    id_correo: int | None = Field(default=None, primary_key=True)
+
+class Correos(CorreosDTO, table=True):
+    id_correo: int | None = Field(
+        default=None,
+        primary_key=True
+    )
 
 class ReqMail(BaseModel):
     isNew:  bool
