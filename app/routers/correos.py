@@ -2,11 +2,13 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import text
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import Correos, CorreosDTO, Financieras
+from app.models import Correos, CorreosDTO, Categorias
 
 router = APIRouter(tags=["Correos"])
 
+# ==========================================
 # 1. RUTAS ESTÁTICAS PRIMERO
+# ==========================================
 @router.get("/correos/activos", response_model=list[Correos])  
 async def obtener_todos_los_correos_activos(session: SessionDep):
     query = select(Correos).where(Correos.v_comercial == 1)
@@ -16,6 +18,13 @@ async def obtener_todos_los_correos_activos(session: SessionDep):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se encontraron correos activos")  
 
     return correos
+
+@router.get("/categorias", response_model=list[Categorias])
+async def obtener_categorias(session: SessionDep):
+    categorias = session.exec(select(Categorias)).all()
+    if not categorias:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se encontraron categorías")
+    return categorias
 
 @router.get("/financieras/con-correos")
 async def obtener_financieras_con_correos(session: SessionDep):
@@ -68,7 +77,9 @@ async def obtener_financieras_con_correos(session: SessionDep):
 
     return financieras_ordenadas
 
+# ==========================================
 # 2. RUTAS CON PARÁMETROS DINÁMICOS DESPUÉS
+# ==========================================
 @router.get("/correos/activos/{id_financiera}", response_model=list[Correos])  
 async def obtener_correos_activos(id_financiera: int, session: SessionDep):
     query = select(Correos).where(
@@ -91,7 +102,9 @@ async def obtener_correos(id_financiera: int, session: SessionDep):
 
     return correos  
 
+# ==========================================
 # 3. ACCIONES DE ESCRITURA (POST / PUT / DELETE)
+# ==========================================
 @router.post("/correo", response_model=Correos)
 async def create_correo(correo_data: CorreosDTO, session: SessionDep):
     nuevo_correo = Correos.model_validate(correo_data.model_dump())

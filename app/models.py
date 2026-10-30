@@ -217,9 +217,6 @@ class CorreosPagos(SQLModel, table=True):
     nombre_contacto: str
     telefono: int
     correo: str    
-
-
-
     visible: bool = Field(default=True)
 
 class CorreosDTO(SQLModel):
@@ -230,13 +227,19 @@ class CorreosDTO(SQLModel):
     v_mail: bool = True
     telefono: str | None = None
     categoria_id: int
+    categoria_id: int | None = Field(default=None, foreign_key="categorias.id")  
 
 
 class Correos(CorreosDTO, table=True):
     id_correo: int | None = Field(
         default=None,
         primary_key=True
+
     )
+class Categorias(SQLModel, table=True):
+    __tablename__ = "categorias"  
+    id: int | None = Field(default=None, primary_key=True)
+    nombre: str    
 
 class ReqMail(BaseModel):
     isNew:  bool
