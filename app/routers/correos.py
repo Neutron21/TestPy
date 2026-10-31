@@ -2,14 +2,16 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import text
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import Correos, CorreosDTO, Financieras
+from app.models import Correos, CorreosDTO, Categorias
 
 router = APIRouter(tags=["Correos"])
 
+# ==========================================
 # 1. RUTAS ESTÁTICAS PRIMERO
+# ==========================================
 @router.get("/correos/activos", response_model=list[Correos])  
 async def obtener_todos_los_correos_activos(session: SessionDep):
-    query = select(Correos).where(Correos.v_comercial == 1)
+    query = select(Correos)
     correos = session.exec(query).all()  
 
     if not correos:  
@@ -17,13 +19,21 @@ async def obtener_todos_los_correos_activos(session: SessionDep):
 
     return correos
 
+@router.get("/categorias", response_model=list[Categorias])
+async def obtener_categorias(session: SessionDep):
+    categorias = session.exec(select(Categorias)).all()
+    if not categorias:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se encontraron categorías")
+    return categorias
+
 @router.get("/financieras/con-correos")
 async def obtener_financieras_con_correos(session: SessionDep):
     query = text("""
             SELECT 
             f.id AS id_financiera,
             f.nombre AS financiera,
-            f.img AS img, 
+            CONCAT('assets/imgsProd/', f.img) AS img, 
+            f.fase,
             c.id_correo AS id_correo,
             c.nombre AS nombre_contacto,
             c.correo AS correo,
@@ -32,8 +42,8 @@ async def obtener_financieras_con_correos(session: SessionDep):
         FROM financieras f
         INNER JOIN correos c ON f.id = c.id_financiera
         LEFT JOIN categorias cat ON c.categoria_id = cat.id
-        WHERE c.v_comercial <> 0  
-        ORDER BY f.nombre ASC, c.correo ASC;
+        WHERE c.v_comercial <> 0 AND f.fase >= 1
+        ORDER BY f.nombre ASC, cat.nombre, c.nombre ASC;
     """)
     
     resultados = session.exec(query).all()
@@ -67,7 +77,9 @@ async def obtener_financieras_con_correos(session: SessionDep):
 
     return financieras_ordenadas
 
+# ==========================================
 # 2. RUTAS CON PARÁMETROS DINÁMICOS DESPUÉS
+# ==========================================
 @router.get("/correos/activos/{id_financiera}", response_model=list[Correos])  
 async def obtener_correos_activos(id_financiera: int, session: SessionDep):
     query = select(Correos).where(
@@ -90,7 +102,9 @@ async def obtener_correos(id_financiera: int, session: SessionDep):
 
     return correos  
 
-# 3. ACCIONES DE ESCRITURA (POST / PUT)
+# ==========================================
+# 3. ACCIONES DE ESCRITURA (POST / PUT / DELETE)
+# ==========================================
 @router.post("/correo", response_model=Correos)
 async def create_correo(correo_data: CorreosDTO, session: SessionDep):
     nuevo_correo = Correos.model_validate(correo_data.model_dump())
@@ -112,3 +126,16 @@ async def update_correo(id_correo: int, correo_data: CorreosDTO, session: Sessio
     session.commit()
     session.refresh(correo_existente)
     return correo_existente
+
+@router.delete("/correo/{id_correo}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_correo(id_correo: int, session: SessionDep):
+    correo_existente = session.get(Correos, id_correo)
+    if not correo_existente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Correo no encontrado",
+        )
+    
+    session.delete(correo_existente)
+    session.commit()
+    return None

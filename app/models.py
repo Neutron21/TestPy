@@ -156,7 +156,7 @@ class Viabilidad(SQLModel, table=True):
     desc: str
     responsable: str
 
-class CotizacionDTO (SQLModel):
+class CotizacionDTO(SQLModel):
     id_usuario: str = Field(max_length=100, nullable=False)
     id_user: int = Field(nullable=False) 
     id_financiera: int = Field(nullable=False)
@@ -164,18 +164,18 @@ class CotizacionDTO (SQLModel):
     tipo_persona: str = Field(nullable=False)  
     nombre: str = Field(max_length=100, nullable=False)
     rfc: str = Field(max_length=100, nullable=False)
-    plazo: str = Field(max_length=100, nullable=False)
-    edad: int = Field(nullable=False)
+    plazo: Optional[str] = Field(default="0", max_length=100, nullable=True)
+    edad: Optional[int] = Field(default=0, nullable=True)
     monto: int = Field(nullable=False)  
-    ingresos: int = Field(nullable=False)
+    ingresos: Optional[int] = Field(default=0, nullable=True)
     estatus: int = Field(nullable=False) 
-    antiguedad_empresa: int = Field(nullable=False)
-    OpCliente: str = Field(max_length=250, nullable=False)
+    antiguedad_empresa: Optional[int] = Field(default=0, nullable=True)
+    OpCliente: Optional[str] = Field(default="N/A", max_length=250, nullable=True)
     broker: int = Field(default=None, nullable=True)
-    sede: Optional[int] = Field(default=None, nullable=True) # aun no se recibe del front
+    sede: Optional[int] = Field(default=None, nullable=True)
     destinoCredito: str = Field(max_length=250, nullable=False)
     custom_prod: Optional[str] = Field(default=None, nullable=True)
-    fecha_pago: Optional[date] = Field(default=None)
+    fecha_pago: Optional[date] = Field(default=None, nullable=True)
 
 
 
@@ -217,23 +217,29 @@ class CorreosPagos(SQLModel, table=True):
     nombre_contacto: str
     telefono: int
     correo: str    
-
-
-
     visible: bool = Field(default=True)
 
 class CorreosDTO(SQLModel):
-    id_financiera: int = Field(default=None)
-    correo: str = Field(default=None)
-    nombre: str = Field(default=None)
-    v_comercial: bool = Field(default=True) # vista comercial
-    v_mail: bool = Field(default=True) # envio de correos
-    telefono: str = Field(default=None)
-    categoria_id: int = Field(foreign_key="categorias.id")
+    id_financiera: int
+    correo: str
+    nombre: str
+    v_comercial: bool = True
+    v_mail: bool = True
+    telefono: str | None = None
+    categoria_id: int
+    categoria_id: int | None = Field(default=None, foreign_key="categorias.id")  
 
-class Correos(CorreosDTO ,table=True ):  
-    pass
-    id_correo: int | None = Field(default=None, primary_key=True)
+
+class Correos(CorreosDTO, table=True):
+    id_correo: int | None = Field(
+        default=None,
+        primary_key=True
+
+    )
+class Categorias(SQLModel, table=True):
+    __tablename__ = "categorias"  
+    id: int | None = Field(default=None, primary_key=True)
+    nombre: str    
 
 class ReqMail(BaseModel):
     isNew:  bool
