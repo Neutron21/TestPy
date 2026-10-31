@@ -11,7 +11,7 @@ router = APIRouter(tags=["Correos"])
 # ==========================================
 @router.get("/correos/activos", response_model=list[Correos])  
 async def obtener_todos_los_correos_activos(session: SessionDep):
-    query = select(Correos).where(Correos.v_comercial == 1)
+    query = select(Correos)
     correos = session.exec(query).all()  
 
     if not correos:  
@@ -32,7 +32,7 @@ async def obtener_financieras_con_correos(session: SessionDep):
             SELECT 
             f.id AS id_financiera,
             f.nombre AS financiera,
-            f.img AS img, 
+            CONCAT('assets/imgsProd/', f.img) AS img, 
             f.fase,
             c.id_correo AS id_correo,
             c.nombre AS nombre_contacto,
