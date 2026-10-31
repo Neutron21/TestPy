@@ -34,6 +34,7 @@ def calc_IVA(value: Decimal) -> Decimal:
 
 FINANCIERAS = {
     1: "KONFIO",
+    2: "BANCREA",
     3: "COVALTO",
     5: "BX+",
     6: "ION",
@@ -42,13 +43,16 @@ FINANCIERAS = {
     9: "HAY CASH",
     10: "FINSUS",
     11: "FINBE ABC",
+    12: "XEPELIN",
     14: "AFIRME",
     13: "ARRENDA+",
+    15: "CUALLI",
     16: "FINCOMUN",
     17: "FONDEADORA",
     18: "FINANTAH",
     19: "KAPITALIZER",
     20: "UNIFIN",
+    21: "EFEX",
     22: "JEEVES",
     23: "PRIORITA",
     24: "FINAMO",
@@ -57,7 +61,13 @@ FINANCIERAS = {
     29: "FINKARGO",
     32: "CLARA",
     34: "FLUXO",
-    35: "ENGEN"
+    35: "ENGEN",
+    37: "PYMIO",
+    38: "IVENTA LEASING",
+    39: "BANORTE",
+    41: "RENDAFIN",
+    42: "MAS LEASING",
+    44: "I MASS TURBO"
 }
 MEMBRESIAS = {
     1: "PLATA",

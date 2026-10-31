@@ -1,237 +1,88 @@
-from decimal import Decimal
+from sqlmodel import  select
 from fastapi import HTTPException
 
+from app.routers.pagos.model.baseFinanciera import BaseFinanciera, to_decimal_7_5, show_percent, calc_IVA
+from app.models import  Pagos, ResponsePagos, Usuarios, Productos
+from app.routers.pagos.model.baseFinanciera import MEMBRESIAS, FINANCIERAS
 
-class CovaltoCalculator:
-    # Producto IDs
-    PRODUCTO_CREDITO_SIMPLE_REVOLVENTE = 22
-    PRODUCTO_FACTORAJE = 25
+class CovaltoCalculator(BaseFinanciera):
 
-    # Mientras no exista un campo que distinga los dos factorajes,
-    # el producto 25 se tratará como CXA por defecto.
-    TIPO_FACTORAJE_DEFAULT = "CXA"
+ def bussinesRules(self):
 
-    # Rangos de montos y porcentajes pagados a Konnect.
-    # Los límites superiores se incluyen en cada rango.
-    REGLAS_MONTO = (
-        {
-            "min": Decimal("1000000"),
-            "max": Decimal("6000000"),
-            "pago_konnect": Decimal("0.50"),
-            "indice": 0,
-        },
-        {
-            "min": Decimal("6000000"),
-            "max": Decimal("21000000"),
-            "pago_konnect": Decimal("0.60"),
-            "indice": 1,
-        },
-        {
-            "min": Decimal("21000000"),
-            "max": Decimal("51000000"),
-            "pago_konnect": Decimal("0.70"),
-            "indice": 2,
-        },
-        {
-            "min": Decimal("51000000"),
-            "max": Decimal("100000000"),
-            "pago_konnect": Decimal("0.80"),
-            "indice": 3,
-        },
-    )
+        query_pagos = select(Pagos).where(Pagos.id_financiera == self.cotizacion.id_financiera)
+                    
+        self.pagos_result = self.session.exec(query_pagos).first()
+        if not self.pagos_result:
+            raise HTTPException(status_code=404, detail="Regla no encontrada")
 
-    # Porcentajes de comisión de apertura por tipo de producto.
-    COMISION_APERTURA = {
-        "CREDITO_SIMPLE_REVOLVENTE": Decimal("0.035"),
-        "CXA": Decimal("0.035"),
-        "OPERATIVA": Decimal("0.015"),
-    }
+        query_user = select(Usuarios).where(Usuarios.id == self.cotizacion.id_user)
+        self.user_result = self.session.exec(query_user).first()
+        self.id_membresia = self.user_result.membresia
 
-    MEMBRESIAS = {
-        1: "PLATA",
-        2: "ORO",
-        3: "PLATINO",
-        4: "DIAMANTE",
-    }
-
-    # Porcentajes de pago al broker por rango y membresía.
-    # Orden de cada fila: Plata, Oro, Platino, Diamante.
-    PORCENTAJES_BROKER = {
-        "CREDITO_SIMPLE_REVOLVENTE": (
-            (Decimal("0.25"), Decimal("0.30"),
-             Decimal("0.35"), Decimal("0.40")),
-            (Decimal("0.30"), Decimal("0.36"),
-             Decimal("0.42"), Decimal("0.48")),
-            (Decimal("0.35"), Decimal("0.42"),
-             Decimal("0.5005"), Decimal("0.5502")),
-            (Decimal("0.40"), Decimal("0.48"),
-             Decimal("0.5504"), Decimal("0.64")),
-        ),
-        "CXA": (
-            (Decimal("0.25"), Decimal("0.30"),
-             Decimal("0.35"), Decimal("0.40")),
-            (Decimal("0.30"), Decimal("0.36"),
-             Decimal("0.42"), Decimal("0.48")),
-            (Decimal("0.35"), Decimal("0.42"),
-             Decimal("0.5005"), Decimal("0.5502")),
-            (Decimal("0.40"), Decimal("0.48"),
-             Decimal("0.5504"), Decimal("0.64")),
-        ),
-        "OPERATIVA": (
-            (Decimal("0.25"), Decimal("0.30"),
-             Decimal("0.35"), Decimal("0.40")),
-            (Decimal("0.30"), Decimal("0.36"),
-             Decimal("0.42"), Decimal("0.48")),
-            (Decimal("0.35"), Decimal("0.42"),
-             Decimal("0.5005"), Decimal("0.5502")),
-            (Decimal("0.40"), Decimal("0.48"),
-             Decimal("0.5504"), Decimal("0.64")),
-        ),
-    }
-
-    # Porcentajes de ganancia, orden: Plata, Oro, Platino, Diamante.
-    PORCENTAJES_GANANCIA_BROKER = (
-        (Decimal("0.25"), Decimal("0.20"),
-         Decimal("0.15"), Decimal("0.10")),
-        (Decimal("0.30"), Decimal("0.24"),
-         Decimal("0.18"), Decimal("0.12")),
-        (Decimal("0.35"), Decimal("0.28"),
-         Decimal("0.1995"), Decimal("0.1498")),
-        (Decimal("0.40"), Decimal("0.32"),
-         Decimal("0.2496"), Decimal("0.16")),
-    )
-
-    # Ganancia de Konnect por rango.
-    # None significa que no se debe calcular ganancia de Konnect.
-    PORCENTAJES_GANANCIA_KONNECT = {
-        "CREDITO_SIMPLE_REVOLVENTE": (
-            Decimal("-0.10"),
-            Decimal("-0.12"),
-            Decimal("-0.1498"),
-            Decimal("-0.16"),
-        ),
-        "CXA": (
-            Decimal("-0.10"),
-            Decimal("-0.12"),
-            Decimal("-0.1498"),
-            Decimal("-0.16"),
-        ),
-        "OPERATIVA": (None, None, None, None),
-    }
-
-    @classmethod
-    def obtener_rango(cls, monto: Decimal) -> dict:
-        """
-        Selecciona el rango de monto.
-        Los límites compartidos se asignan al rango inferior:
-        6 MDP -> 50%, 21 MDP -> 60%, 51 MDP -> 70%.
-        """
-        monto = Decimal(str(monto))
-
-        for indice, regla in enumerate(cls.REGLAS_MONTO):
-            minimo = regla["min"]
-            maximo = regla["max"]
-
-            if indice == 0:
-                cumple_minimo = monto >= minimo
-            else:
-                cumple_minimo = monto > minimo
-
-            if cumple_minimo and monto <= maximo:
-                return regla
-
-        raise ValueError(
-            "Covalto solo admite montos desde $1,000,000 "
-            "hasta $100,000,000."
-        )
-
-    @classmethod
-    def obtener_tipo_operacion(cls, producto_id: int, tipo_factoraje=None):
-        """
-        Devuelve la clave usada para consultar las reglas.
-        El tipo de factoraje debe venir de un dato externo si se
-        necesita distinguir CXA de Procesamiento para el mismo ID 25.
-        """
-        if producto_id == cls.PRODUCTO_CREDITO_SIMPLE_REVOLVENTE:
-            return "CREDITO_SIMPLE_REVOLVENTE"
-
-        if producto_id == cls.PRODUCTO_FACTORAJE:
-            tipo = (
-                tipo_factoraje or cls.TIPO_FACTORAJE_DEFAULT
-            ).strip().upper()
-
-            if tipo in ("CXA", "FACTORAJE CXA"):
-                return "CXA"
-
-            if tipo in (
-                "OPERATIVA",
-                "PROCESAMIENTO",
-                "FACTORAJE POR OPERATIVA (PROCESAMIENTO)",
-            ):
-                return "OPERATIVA"
-
-            raise ValueError(
-                "Tipo de factoraje no reconocido. "
-                "Usa 'CXA' u 'OPERATIVA'."
-            )
-
-        raise ValueError(
-            f"El producto {producto_id} no está configurado para Covalto."
-        )
-
-    @classmethod
-    def obtener_porcentajes(
-        cls,
-        monto: Decimal,
-        producto_id: int,
-        membresia_id: int,
-        tipo_factoraje=None,
-    ) -> dict:
-        """
-        Obtiene las reglas aplicables a una cotización.
-        No calcula ni modifica el modelo ResponsePagos.
-        """
-        rango = cls.obtener_rango(monto)
-
-        tipo_operacion = cls.obtener_tipo_operacion(
-            producto_id,
-            tipo_factoraje,
-        )
-
-        if membresia_id not in cls.MEMBRESIAS:
-            raise ValueError(
-                f"La membresía {membresia_id} no es válida."
-            )
-
-        indice_rango = rango["indice"]
-        indice_membresia = membresia_id - 1
-
-        comision_apertura = cls.COMISION_APERTURA[tipo_operacion]
-
-        porcentaje_broker = cls.PORCENTAJES_BROKER[
-            tipo_operacion
-        ][indice_rango][indice_membresia]
-
-        porcentaje_ganancia_broker = (
-            cls.PORCENTAJES_GANANCIA_BROKER[
-                indice_rango
-            ][indice_membresia]
-        )
-
-        porcentaje_ganancia_konnect = (
-            cls.PORCENTAJES_GANANCIA_KONNECT[
-                tipo_operacion
-            ][indice_rango]
-        )
-
-        return {
-            "tipo_operacion": tipo_operacion,
-            "rango": indice_rango + 1,
-            "comision_apertura": comision_apertura,
-            "pago_konnect": rango["pago_konnect"],
-            "porcentaje_broker": porcentaje_broker,
-            "ganancia_broker": porcentaje_ganancia_broker,
-            "ganancia_konnect": porcentaje_ganancia_konnect,
-        }
+        query_producto = select(Productos.nombre).where(Productos.id == self.cotizacion.producto)
+        self.producto_nombre = self.session.exec(query_producto).first()
 
 
+ def calculate(self):
+
+        self.bussinesRules()
+        print(f"Calculando {FINANCIERAS.get(self.cotizacion.id_financiera)} por producto")
+
+        # t_pago = next((p for p in self.pagos_result), "None")
+        t_pago = self.pagos_result
+        print(f"t_pago: {t_pago}")
+        com_apertura = 0
+        #  com_apertura = self.cotizacion.monto * t_pago.pago_a_konnect
+        # print(f"com_apertura: {t_pago.c_apertura}% de {self.cotizacion.monto} -> {com_apertura}")
+        calc_pago_konnect = self.cotizacion.monto * t_pago.pago_a_konnect
+        print(f"Pago Konnect: {calc_pago_konnect}, {t_pago.pago_a_konnect} de {self.cotizacion.monto}")
+    
+        match self.id_membresia:
+            case 1:
+                porcentaje_broker = t_pago.c_plata
+                comision_broker = t_pago.c_plata * self.cotizacion.monto
+            case 2:
+                porcentaje_broker = t_pago.c_oro
+                comision_broker = t_pago.c_oro * self.cotizacion.monto
+            case 3:
+                porcentaje_broker = t_pago.c_platino
+                comision_broker = t_pago.c_platino * self.cotizacion.monto
+            case 4:
+                porcentaje_broker = t_pago.c_diamante
+                comision_broker = t_pago.c_diamante * self.cotizacion.monto
+
+        print(f"Membreisa Broker: {MEMBRESIAS.get(self.id_membresia)}")
+        print(f"Comision Broker: {comision_broker}")
+        gan_konn = calc_pago_konnect - comision_broker
+        print(f"Ganancia Konnect: {gan_konn}")
+
+        return ResponsePagos(
+            id_cotizacion=self.cotizacion.id_cotizacion,
+            id_financiera=self.cotizacion.id_financiera,
+            financiera=FINANCIERAS.get(self.cotizacion.id_financiera),
+            regla=t_pago.regla,
+            id_producto=self.cotizacion.producto,
+            producto=self.producto_nombre,
+            membresia_broker=MEMBRESIAS.get(self.id_membresia),
+            nombre_usuario=self.user_result.nombre,
+            monto_credito=self.cotizacion.monto,
+            
+            comision_apertura_porcentaje = show_percent(t_pago.c_apertura),
+            comision_apertura_pesos = str(com_apertura),
+            
+            porcentaje_pago_a_konnect = show_percent(t_pago.pago_a_konnect),
+            pago_a_konnect=to_decimal_7_5(calc_pago_konnect),
+            iva_pago_a_konnect = calc_IVA(calc_pago_konnect),
+            total_pago_a_konnect = to_decimal_7_5(calc_pago_konnect + calc_IVA(calc_pago_konnect)),
+            
+            porcentaje_pago_broker = show_percent(porcentaje_broker),
+            pago_broker=to_decimal_7_5(comision_broker),
+            iva_pago_broker = calc_IVA(comision_broker),
+            total_pago_broker = to_decimal_7_5(comision_broker + calc_IVA(comision_broker)),
+            
+            ganancia_konnect=to_decimal_7_5(gan_konn),
+            iva_ganancia_konnect = calc_IVA(gan_konn),
+            total_ganancia_konnect = to_decimal_7_5(gan_konn + calc_IVA(gan_konn)),
+            
+        )     
+   

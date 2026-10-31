@@ -15,7 +15,6 @@ from app.routers.pagos.model.finkargoCalculator import FinkargoCalculator
 from app.routers.pagos.model.unifinCalculator import UnifinCalculator
 from app.routers.pagos.model.afirmeCalculator import AfirmeCalculator
 from app.routers.pagos.model.finamoCalculator import FinamoCalculator
-# from app.routers.pagos.model.covaltoCalculator import CovaltoCalculator
 from app.routers.pagos.model.fincomunCalculator import fincomunCalculator 
 from app.routers.pagos.model.kapitalizarCalculator import KapitalizerCalculator
 from app.routers.pagos.model.arrendamasCalculator import ArrendaMasCalculator
@@ -30,10 +29,23 @@ from app.routers.pagos.model.fondeadoraCalculator import fondeadoraCalculator
 from app.routers.pagos.model.finantahCalculator import finantahCalculator
 from app.routers.pagos.model.axionexCalculator import axionexCalculator
 from app.routers.pagos.model.heybancoCalculator import heybancoCalculator
+from app.routers.pagos.model.covaltoCalculator import CovaltoCalculator
+from app.routers.pagos.model.xepelinCalculator import XepelinCalculator
+from app.routers.pagos.model.cualliCalculator import CualliCalculator
+from app.routers.pagos.model.bancreaCalculator import BancreaCalculator
+from app.routers.pagos.model.efexCalculator import EfexCalculator
+from app.routers.pagos.model.imassturboCalculator import ImasturboCalculator
+from app.routers.pagos.model.pymioCalculator import PymioCalculator
+from app.routers.pagos.model.inventaleasingCalculator import InventaCalculator
+from app.routers.pagos.model.banorteCalculator import BanorteCalculator
+from app.routers.pagos.model.rendafinCalculator import RendafinCalculator
+from app.routers.pagos.model.masleasingCalculator import MasleasingCalculator
     
 
 CALCULOS = {
     1: KonfioCalculator, #✅ Pendinte TDCE
+    2: BancreaCalculator,
+    3: CovaltoCalculator,
     5: BxmasCalculator,
     6: IONCalculator,
     7: heybancoCalculator,
@@ -41,13 +53,16 @@ CALCULOS = {
     9: haycashCalculator,
     10: FinsusCalculator, #✅
     11: FinbeAbcCalculator, #
+    12: XepelinCalculator,
     13: ArrendaMasCalculator,
     14: AfirmeCalculator, #
+    15: CualliCalculator,
     16: fincomunCalculator,
     17: fondeadoraCalculator,
     18: finantahCalculator,
     19: KapitalizerCalculator,
     20: UnifinCalculator, #✅
+    21: EfexCalculator,
     22: JeevesCalculator, #✅
     24: FinamoCalculator, #
     23: PrioritaCalculator,
@@ -55,8 +70,14 @@ CALCULOS = {
     29: FinkargoCalculator, #✅
     32: ClaraCalculator, #✅ Dispersados por mes
     34: FluxoCalculator, #✅ 
-    35: EngenCalculator
-    # 3: CovaltoCalculator,
+    35: EngenCalculator,
+    37: PymioCalculator,
+    38: InventaCalculator,
+    39: BanorteCalculator,
+    41: RendafinCalculator,
+    42: MasleasingCalculator,
+    44: ImasturboCalculator
+    
 
     
     
