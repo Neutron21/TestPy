@@ -18,7 +18,7 @@ def mexico_timestamp():
 # MODELOS OFICIALES
 class TipoFinEnum(str, Enum):
     LIGA = "L"
-    MAIL = "M"
+    MAIL = "M" 
 
 class FinancierasDTO(SQLModel):
     id: int = Field(primary_key=True)
@@ -73,6 +73,17 @@ class UsuarioDTO(BaseModel):
     nivel: Optional[int] = None
     id_financiera: Optional[int] = None
     id_superior: Optional[int] = None   # ← AHORA SÍ SE MANDA
+
+
+class UsuarioUpdate(BaseModel):
+    nombre: Optional[str] = None
+    email: Optional[str] = None
+    rfc: Optional[str] = None
+    rol: Optional[str] = None
+    membresia: Optional[int] = None
+    id_broker: Optional[int] = None
+    id_sede: Optional[int] = None
+    celular: Optional[str] = None
     
 
 class Usuarios(SQLModel, table=True):
@@ -92,7 +103,9 @@ class Usuarios(SQLModel, table=True):
     default_factory=lambda: datetime.now(ZoneInfo("America/Mexico_City"))
     )
     comisiones: str 
-    f_ultimo_pago: Optional[date] = None
+    f_ultimo_pago: Optional[date] = Field(
+    default_factory=lambda: datetime.now(ZoneInfo("America/Mexico_City"))
+    )
 
 class UsuarioSimple(BaseModel):
     id: int
@@ -144,7 +157,7 @@ class Viabilidad(SQLModel, table=True):
     desc: str
     responsable: str
 
-class CotizacionDTO (SQLModel):
+class CotizacionDTO(SQLModel):
     id_usuario: str = Field(max_length=100, nullable=False)
     id_user: int = Field(nullable=False) 
     id_financiera: int = Field(nullable=False)
@@ -152,18 +165,18 @@ class CotizacionDTO (SQLModel):
     tipo_persona: str = Field(nullable=False)  
     nombre: str = Field(max_length=100, nullable=False)
     rfc: str = Field(max_length=100, nullable=False)
-    plazo: str = Field(max_length=100, nullable=False)
-    edad: int = Field(nullable=False)
+    plazo: Optional[str] = Field(default="0", max_length=100, nullable=True)
+    edad: Optional[int] = Field(default=0, nullable=True)
     monto: int = Field(nullable=False)  
-    ingresos: int = Field(nullable=False)
+    ingresos: Optional[int] = Field(default=0, nullable=True)
     estatus: int = Field(nullable=False) 
-    antiguedad_empresa: int = Field(nullable=False)
-    OpCliente: str = Field(max_length=250, nullable=False)
+    antiguedad_empresa: Optional[int] = Field(default=0, nullable=True)
+    OpCliente: Optional[str] = Field(default="N/A", max_length=250, nullable=True)
     broker: int = Field(default=None, nullable=True)
-    sede: Optional[int] = Field(default=None, nullable=True) # aun no se recibe del front
+    sede: Optional[int] = Field(default=None, nullable=True)
     destinoCredito: str = Field(max_length=250, nullable=False)
     custom_prod: Optional[str] = Field(default=None, nullable=True)
-    fecha_pago: Optional[date] = Field(default=None)
+    fecha_pago: Optional[date] = Field(default=None, nullable=True)
 
 
 
@@ -174,12 +187,23 @@ class Cotizacion (CotizacionDTO, table=True ):
     id_cotizacion: int | None = Field(default=None, primary_key=True, nullable=False)
     id_user: int = Field(foreign_key="usuarios.id", nullable=False)
     fecha_pago: Optional[date] = Field(default=None)
+    
+class CotizacionResponse(CotizacionDTO):
+    id_cotizacion: int
+    timestamp: datetime
+    ultimo_comentario: Optional[datetime] = None    
 
 
 class ComentariosDTO(SQLModel):
-    id_cotizacion: int = Field(default=None)
+    id_cotizacion: int = Field(default=None, foreign_key="cotizacion.id_cotizacion")
     id_usuario: str = Field(default=None)
     comentarios: str = Field(default=None)
+
+class Comentarios(ComentariosDTO, table=True):
+    pass
+    id_comentario: Optional[int] | None = Field(primary_key=True)
+    timestamp: datetime = Field(default_factory=mexico_timestamp, nullable=False) 
+    visible: bool = Field(default=True)   
 
 class FechaPagoDTO(BaseModel):
     id_cotizacion: int
@@ -194,25 +218,29 @@ class CorreosPagos(SQLModel, table=True):
     nombre_contacto: str
     telefono: int
     correo: str    
-
-
-class Comentarios(ComentariosDTO, table=True):
-    pass
-    id_comentario: Optional[int] | None = Field(primary_key=True)
-    timestamp: datetime = Field(default_factory=mexico_timestamp, nullable=False)
+    visible: bool = Field(default=True)
 
 class CorreosDTO(SQLModel):
-    id_financiera: int = Field(default=None)
-    correo: str = Field(default=None)
-    nombre: str = Field(default=None)
-    v_comercial: bool = Field(default=True) # vista comercial
-    v_mail: bool = Field(default=True) # envio de correos
-    telefono: str = Field(default=None)
-    categoria_id: int = Field(foreign_key="categorias.id")
+    id_financiera: int
+    correo: str
+    nombre: str
+    v_comercial: bool = True
+    v_mail: bool = True
+    telefono: str | None = None
+    categoria_id: int
+    categoria_id: int | None = Field(default=None, foreign_key="categorias.id")  
 
-class Correos(CorreosDTO ,table=True ):  
-    pass
-    id_correo: int | None = Field(default=None, primary_key=True)
+
+class Correos(CorreosDTO, table=True):
+    id_correo: int | None = Field(
+        default=None,
+        primary_key=True
+
+    )
+class Categorias(SQLModel, table=True):
+    __tablename__ = "categorias"  
+    id: int | None = Field(default=None, primary_key=True)
+    nombre: str    
 
 class ReqMail(BaseModel):
     isNew:  bool
@@ -379,6 +407,40 @@ class Pagos(SQLModel, table=True):
     ganancia_diamante: Decimal = Field (DECIMAL(7, 5), nullable=False)
     ganancia_konnect: Decimal = Field (DECIMAL(7, 5), nullable=False)
 
+class CalculoComisionesBase(SQLModel, table=True):
+    # __tablename__ = "pagos_calculados"
+
+    id: int | None = Field(default=None, primary_key=True)
+    id_cotizacion: int
+    version: int
+    id_financiera: int | None = None
+    id_producto: int | None = None
+    id_usuario: int | None = None
+    membresia_broker: str | None = Field(default=None, max_length=50)
+    porcentaje_pago_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(8, 5))
+    pago_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    iva_pago_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    total_pago_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    porcentaje_pago_broker: Decimal | None = Field(default=None, sa_type=DECIMAL(8, 5))
+    pago_broker: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    iva_pago_broker: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    total_pago_broker: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    ganancia_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    iva_ganancia_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    total_ganancia_konnect: Decimal | None = Field(default=None, sa_type=DECIMAL(12, 2))
+    regla_aplicada: str | None = None
+    fecha_calculo: datetime = Field(default_factory=mexico_timestamp, nullable=False)
+    es_vigente: bool | None = None
+    recalculado_por: int | None = None
+    motivo_recalculo: str | None = None
+    
+class TrackStatusCreate(CalculoComisionesBase):
+    pass
+
+class TrackStatusResponse(CalculoComisionesBase):
+    id: int
+    fecha_calculo: datetime
+
 class ResponsePagos(BaseModel):
     id_cotizacion: int
     id_financiera: int
@@ -413,6 +475,7 @@ class ResponsePagos(BaseModel):
 class TrackStatusBase(SQLModel):
     id_cotizacion: int
     id_status: int
+    id_usuario: int
 
 class TrackStatusCreate(TrackStatusBase):
     pass
@@ -425,7 +488,41 @@ class Track_Status(TrackStatusBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     id_cotizacion: int = Field(foreign_key="cotizacion.id_cotizacion")
     id_status: int = Field(foreign_key="estatus_tramites.id")
+    id_usuario: int = Field(foreign_key="usuarios.id")
     fecha: datetime = Field(
         default_factory=mexico_timestamp,
         nullable=False
     )
+class CalculoComisiones(SQLModel, table=True):
+    __tablename__ = "calculo_comisiones"
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    id_cotizacion: int = Field(nullable=False)
+    version: int = Field(nullable=False)
+    id_financiera: Optional[int] = Field(default=None)
+    id_producto: Optional[int] = Field(default=None)
+    id_usuario: int = Field(default=None)
+    membresia_broker: Optional[str] = Field(default=None)
+    monto_credito: Decimal_7_5 # type: ignore
+
+    
+    porcentaje_pago_konnect: Optional[Decimal] = Field(default=None)
+    pago_konnect: Optional[Decimal] = Field(default=None)
+    iva_pago_konnect: Optional[Decimal] = Field(default=None)
+    total_pago_konnect: Optional[Decimal] = Field(default=None)
+
+    porcentaje_pago_broker: Optional[Decimal] = Field(default=None)
+    pago_broker: Optional[Decimal] = Field(default=None)
+    iva_pago_broker: Optional[Decimal] = Field(default=None)
+    total_pago_broker: Optional[Decimal] = Field(default=None)
+    
+    ganancia_konnect: Optional[Decimal] = Field(default=None)
+    iva_ganancia_konnect: Optional[Decimal] = Field(default=None)
+    total_ganancia_konnect: Optional[Decimal] = Field(default=None)
+
+    regla_aplicada: Optional[str] = Field(default=None)  # Coincide con tu BD
+    fecha_calculo: datetime = Field(default_factory=mexico_timestamp)
+    es_vigente: Optional[int] = Field(default=1)
+    recalculado_por: Optional[int] = Field(default=None)
+    motivo_recalculo: Optional[str] = Field(default=None)    
+    

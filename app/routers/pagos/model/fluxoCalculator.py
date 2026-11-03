@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from sqlmodel import select
+from fastapi import HTTPException
 from app.routers.pagos.model.baseFinanciera import FINANCIERAS, MEMBRESIAS, BaseFinanciera, to_decimal_7_5, show_percent, calc_IVA
 from app.models import Cotizacion, Pagos, Productos, ResponsePagos, Usuarios
 
@@ -14,6 +15,8 @@ class FluxoCalculator(BaseFinanciera):
             (Pagos.id_producto == self.cotizacion.producto)
             )
         self.pagos_result = self.session.exec(query_pagos).first()
+        if not self.pagos_result:
+            raise HTTPException(status_code=404, detail="Regla no encontrada")
         print(self.pagos_result)
 
         query_user = select(Usuarios).where(Usuarios.id == self.cotizacion.id_user)
@@ -23,7 +26,7 @@ class FluxoCalculator(BaseFinanciera):
         query_producto = select(Productos.nombre).where(Productos.id == self.cotizacion.producto)
         self.producto_nombre = self.session.exec(query_producto).first()
 
-    def calculate(self):
+    def calculate(self) -> ResponsePagos:
         self.bussinesRules()
         print(f"Calculando {FINANCIERAS.get(self.cotizacion.id_financiera)} por monto de producto")
 
@@ -38,12 +41,13 @@ class FluxoCalculator(BaseFinanciera):
             case 2:
                 porcentaje_broker = t_pago.c_oro
                 comision_broker = t_pago.c_oro * self.cotizacion.monto
-            case 3:
+            case 3 | 5:
                 porcentaje_broker = t_pago.c_platino
                 comision_broker = t_pago.c_platino * self.cotizacion.monto
-            case 4:
+            case 4 | 6:
                 porcentaje_broker = t_pago.c_diamante
                 comision_broker = t_pago.c_diamante * self.cotizacion.monto
+            
 
         gan_konn = calc_pago_konnect - comision_broker
 
@@ -61,7 +65,7 @@ class FluxoCalculator(BaseFinanciera):
             comision_apertura_porcentaje = show_percent(self.pagos_result.c_apertura),
             comision_apertura_pesos = str(com_apertura),
             
-            porcentaje_pago_a_konnect = show_percent(self.pagos_result.pago_a_konnect) ,
+            porcentaje_pago_a_konnect = show_percent(self.pagos_result.pago_a_konnect),
             pago_a_konnect=to_decimal_7_5(calc_pago_konnect),
             iva_pago_a_konnect = calc_IVA(calc_pago_konnect),
             total_pago_a_konnect = calc_pago_konnect + calc_IVA(calc_pago_konnect),
@@ -74,4 +78,4 @@ class FluxoCalculator(BaseFinanciera):
             ganancia_konnect=to_decimal_7_5(gan_konn),
             iva_ganancia_konnect = calc_IVA(gan_konn),
             total_ganancia_konnect = gan_konn + calc_IVA(gan_konn)
-        )     
+        )

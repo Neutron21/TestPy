@@ -6,9 +6,13 @@ from app.models import (
     UsuarioDTO,
     UsuarioResponse,
     UsuarioSimple,
+    UsuarioUpdate,
     Usuarios
 )
 from datetime import datetime, timedelta
+from fastapi import BackgroundTasks
+
+from app.routers.send_mail import enviar_correo_solicitud_utms
 
 
 router = APIRouter(tags=["Usuarios"])
@@ -200,3 +204,100 @@ async def payment_status(id_user: int, session: SessionDep):
     return {
         "status": "active"
     }
+# ============================================================
+# Pedir UMTs Usuario Nuevo/Existente
+# ============================================================
+@router.post("/usuarios/{id_usuario}/notificar-utms-faltantes")
+async def notificar_utms_faltantes(
+    id_usuario: int, 
+    session: SessionDep, 
+    background_tasks: BackgroundTasks
+):
+    user = session.exec(select(Usuarios).where(Usuarios.id == id_usuario)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no existe")
+
+    # 1. Calcular financieras faltantes
+    ids_base = (1, 4, 11, 12, 32, 37)
+    query = text("""
+        SELECT financieras.id, financieras.nombre 
+        FROM financieras 
+        WHERE financieras.id IN :ids_base
+        AND financieras.id NOT IN (
+            SELECT id_financiera FROM utms WHERE id_usuario = :id_usuario
+        )
+    """)
+    faltantes = session.execute(query, {"ids_base": ids_base, "id_usuario": id_usuario}).mappings().all()
+    if not faltantes:
+        return {"ok": False, "mensaje": "El usuario ya cuenta con UTMs para todas las financieras."}
+
+    ids_faltantes = [fin["id"] for fin in faltantes]
+
+    # 2. Reutilizar la función de envío
+    destinatarios = enviar_correo_solicitud_utms(
+        user, ids_faltantes, "Solicitud de UTMs Faltantes", session, background_tasks
+    )
+
+    if not destinatarios:
+        return {"ok": False, "mensaje": "No se encontraron correos para las financieras faltantes."}
+
+    return {
+        "ok": True,
+        "mensaje": "Correo enviado correctamente",
+        "instituciones_faltantes": list(faltantes),
+        "destinatarios": destinatarios
+    }
+
+# ============================================================
+# Actualizar usuario
+# ============================================================
+@router.patch(
+    "/usuarios/{id_usuario}",
+    response_model=Usuarios
+)
+async def update_usuario(
+    id_usuario: int,
+    usuario_data: UsuarioUpdate,
+    session: SessionDep
+):
+
+    usuario = session.exec(
+        select(Usuarios).where(Usuarios.id == id_usuario)
+    ).first()
+
+    if not usuario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuario no existe"
+        )
+
+    # Si se está modificando el correo, verificar que no exista otro usuario
+    if usuario_data.email is not None and usuario_data.email != usuario.email:
+
+        existing = session.exec(
+            select(Usuarios).where(
+                Usuarios.email == usuario_data.email,
+                Usuarios.id != id_usuario
+            )
+        ).first()
+
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El correo ya existe"
+            )
+
+    # Obtener solamente los campos que fueron enviados
+    datos = usuario_data.model_dump(exclude_unset=True)
+
+    # Actualizar usuario
+    for campo, valor in datos.items():
+        setattr(usuario, campo, valor)
+
+    session.add(usuario)
+    session.commit()
+    session.refresh(usuario)
+
+    return usuario
+
+

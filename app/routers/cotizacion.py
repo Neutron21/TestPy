@@ -9,10 +9,9 @@ from sqlmodel import update
 from datetime import date
 from fastapi import APIRouter
 from sqlmodel import select
+from app.models import Sedes
 
 from app.models import Cotizacion
-
-
 from app.routers import comentarios
 
 router = APIRouter(tags=["Cotizacion"])
@@ -25,39 +24,47 @@ async def get_cotizacion_by_id(id_cotizacion: int, session: SessionDep):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Cotización")
     return  cotizacion
 
-@router.get("/cotizaciones", response_model=list[Cotizacion])
+@router.get("/cotizaciones") 
 async def obtener_cotizaciones_por_usuario(
     session: SessionDep,
     id_user: Optional[int] = Query(None),
     nivel_user: Optional[int] = Query(None)):
 
+    # Usamos una subconsulta con ROW_NUMBER() para garantizar que siempretraiga el último comentario exacto
+    join_sql = """
+            LEFT JOIN (
+                SELECT id_cotizacion, comentarios AS texto_comentario, timestamp AS fecha_ultimo_comentario,
+                ROW_NUMBER() OVER(PARTITION BY id_cotizacion ORDER BY timestamp DESC) as rn
+                FROM comentarios
+            ) uc ON c.id_cotizacion = uc.id_cotizacion AND uc.rn = 1
+        """
+
+    select_fields = "c.*, uc.texto_comentario, uc.fecha_ultimo_comentario"
+
     if nivel_user == 4:
-        # MasterBroker ve todo
-        cotizaciones = session.exec(select(Cotizacion).order_by(desc(Cotizacion.timestamp))).all()
+        query = text(f"SELECT {select_fields} FROM cotizacion c {join_sql} ORDER BY c.timestamp DESC")
+        result = session.execute(query)
     elif nivel_user in [2, 3]:
-        # Director o Gerente ve las suyas y las de sus subordinados
-        query = text("""
+        query = text(f"""
             WITH RECURSIVE subordinates AS (
               SELECT id FROM usuarios WHERE id = :user_id
               UNION ALL
               SELECT u.id FROM usuarios u
               INNER JOIN subordinates s ON u.id_superior = s.id
             )
-            SELECT * FROM cotizacion WHERE id_user IN (SELECT id FROM subordinates)
-            ORDER BY timestamp DESC
+            SELECT {select_fields} FROM cotizacion c {join_sql}
+            WHERE c.id_user IN (SELECT id FROM subordinates)
+            ORDER BY c.timestamp DESC
         """)
         result = session.execute(query, {"user_id": id_user})
-        cotizaciones = [Cotizacion(**dict(row._mapping)) for row in result.fetchall()]
-
     else:
-        # Operador solo ve las suyas
-        cotizaciones = session.exec(
-            select(Cotizacion).where(Cotizacion.id_user == id_user).order_by(desc(Cotizacion.timestamp))
-        ).all()
+        query = text(f"SELECT {select_fields} FROM cotizacion c {join_sql} WHERE c.id_user = :id_user ORDER BY c.timestamp DESC")
+        result = session.execute(query, {"id_user": id_user})
     
-    return cotizaciones
+    return [dict(row._mapping) for row in result.fetchall()]
 
-@router.get("/cotizacion/buscar/", response_model=List[Cotizacion])
+
+@router.get("/cotizacion/buscar/")
 async def buscador_cotizaciones(
     session: SessionDep,
     estatus: Optional[int] = Query(None),
@@ -70,45 +77,55 @@ async def buscador_cotizaciones(
     user: Optional[int] = Query(None),
     rol: Optional[str] = Query(None),
     ):
-    rows = [] 
     
     if estatus is None and fin is None and not folioUserRfc and not fechaDesde and not fechaHasta and not broker and not idUser:
         raise HTTPException(status_code=400, detail="Error: Campos incompletos.")
 
     query_filters = ""
     params = {}
+    alias_prefix = "c." 
+    
+    # Aplicamos la misma lógica segura aquí también
+    join_sql = """
+            LEFT JOIN (
+                SELECT id_cotizacion, comentarios AS texto_comentario, timestamp AS fecha_ultimo_comentario,
+                ROW_NUMBER() OVER(PARTITION BY id_cotizacion ORDER BY timestamp DESC) as rn
+                FROM comentarios
+            ) uc ON c.id_cotizacion = uc.id_cotizacion AND uc.rn = 1
+        """
 
     if estatus is not None:
-        query_filters += " AND estatus = :estatus"
+        query_filters += f" AND {alias_prefix}estatus = :estatus"
         params["estatus"] = estatus
 
     if fin is not None:
-        query_filters += " AND id_financiera = :fin"
+        query_filters += f" AND {alias_prefix}id_financiera = :fin"
         params["fin"] = fin
 
     if broker is not None:
-        query_filters += " AND broker = :broker"
+        query_filters += f" AND {alias_prefix}broker = :broker"
         params["broker"] = broker
     
     if idUser is not None:
-        query_filters += " AND id_user = :idUser"
+        query_filters += f" AND {alias_prefix}id_user = :idUser"
         params["idUser"] = idUser
 
     if fechaDesde and fechaHasta:
-        query_filters += " AND timestamp BETWEEN :fechaDesde AND :fechaHasta"
+        query_filters += f" AND {alias_prefix}timestamp BETWEEN :fechaDesde AND :fechaHasta"
         params["fechaDesde"] = fechaDesde
         params["fechaHasta"] = fechaHasta + " 23:59:59"
 
     if folioUserRfc:
         like = f"%{folioUserRfc}%"
         if rol == 'a':
-            query_filters += " AND (id_usuario LIKE :like OR nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
+            query_filters += " AND (c.id_usuario LIKE :like OR c.nombre LIKE :like OR c.rfc LIKE :like OR c.id_cotizacion = :folioUserRfc)"
         else:
-            query_filters += " AND (nombre LIKE :like OR rfc LIKE :like OR id_cotizacion = :folioUserRfc)"
+            query_filters += " AND (c.nombre LIKE :like OR c.rfc LIKE :like OR c.id_cotizacion = :folioUserRfc)"
         params["like"] = like
         params["folioUserRfc"] = folioUserRfc
 
-    # Aquí decides si usas recursive o no
+    select_fields = "c.*, uc.texto_comentario, uc.fecha_ultimo_comentario"
+
     if rol != 'a' and user:
         query = f"""
         WITH RECURSIVE subordinates AS (
@@ -117,32 +134,28 @@ async def buscador_cotizaciones(
             SELECT u.id FROM usuarios u
             JOIN subordinates s ON u.id_superior = s.id
         )
-        SELECT * FROM cotizacion
-        WHERE id_user IN (SELECT id FROM subordinates)
+        SELECT {select_fields} FROM cotizacion c
+        {join_sql}
+        WHERE c.id_user IN (SELECT id FROM subordinates)
         {query_filters}
-        ORDER BY timestamp DESC
+        ORDER BY c.timestamp DESC
         """
         params["user_id"] = user
     else:
         query = f"""
-        SELECT * FROM cotizacion
+        SELECT {select_fields} FROM cotizacion c
+        {join_sql}
         WHERE 1=1
         {query_filters}
-        ORDER BY timestamp DESC
+        ORDER BY c.timestamp DESC
         """
 
-    print(f"QUERY: {query}")
-    print(f"PARAMS: {params}")
     result = session.execute(text(query), params)
-
-    rows = [Cotizacion(**row._mapping) for row in result]
-    print(f"Total rows: {len(rows)}")
-    print(f"Contenido: {rows}")
+    rows = [dict(row._mapping) for row in result]
    
     return rows
-
 @router.get("/cotizacion/byFin/{id_financiera}" , response_model=List[Cotizacion])
-async def get_cotizacion_by_id(id_financiera: int, session: SessionDep):
+async def get_cotizacion_by_fin_endpoint(id_financiera: int, session: SessionDep):
     query = select(Cotizacion).where(Cotizacion.id_financiera == id_financiera).order_by(desc(Cotizacion.timestamp))
     cotizacion = session.exec(query).all()
     if not cotizacion:
@@ -159,13 +172,18 @@ async def create_cotizacion(usuario_data: CotizacionDTO, session: SessionDep):
 
 @router.patch("/cotizacion/status_udpate", response_model=Cotizacion)
 async def update_estatus_cotizacion(
-    estatus_data: EstatusUpdate, session: SessionDep,):
+    estatus_data: EstatusUpdate, session: SessionDep):
 
     cotizacion = session.get(Cotizacion, estatus_data.id_cotizacion)
     if not cotizacion:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
     
     cotizacion.estatus = estatus_data.estatus
+    
+    # 👈 Si el estatus es Pagado (9), guardamos la fecha de hoy automáticamente
+    if estatus_data.estatus == 9:
+        cotizacion.fecha_pago = date.today()
+        
     session.add(cotizacion)
     session.commit()
     session.refresh(cotizacion)
@@ -173,7 +191,7 @@ async def update_estatus_cotizacion(
     return cotizacion
 
 @router.patch("/cotizacion/monto_udpate", response_model=Cotizacion)
-async def update_estatus_cotizacion(
+async def update_monto_cotizacion(
     request: MontoUpdate, session: SessionDep,):
 
     cotizacion = session.get(Cotizacion, request.id_cotizacion)
@@ -186,6 +204,7 @@ async def update_estatus_cotizacion(
     session.refresh(cotizacion)
     
     return cotizacion
+
 @router.patch("/updatefechaPago")
 async def update_fecha_pago(
     data: FechaPagoDTO,
@@ -208,8 +227,16 @@ async def update_fecha_pago(
 
     except Exception as e:
         session.rollback()
-        print(f"Error detectado: {e}")
         raise HTTPException(
             status_code=500, 
-            detail="Error de integridad: el sistema intentó tocar la tabla comentarios"
+            detail="Error de integridad"
         )
+@router.get("/operativa/{id_operativa}")
+async def get_operativa_nombre(id_operativa: int, session: SessionDep):
+    query = select(Sedes).where(Sedes.id == id_operativa)
+    operativa = session.exec(query).first()
+    
+    if not operativa:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Operativa")
+    
+    return {"nombre": operativa.nombre}

@@ -29,20 +29,41 @@ def show_percent(value: Decimal) -> str:
     return f"{str(percent.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP))} %"
 
 def calc_IVA(value: Decimal) -> Decimal:
-    return value.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP) * iva_value
+    iva = value * iva_value
+    return iva.quantize(Decimal("0.00001"), rounding=ROUND_HALF_UP)
 
 FINANCIERAS = {
     1: "KONFIO",
+    3: "COVALTO",
+    5: "BX+",
+    6: "ION",
+    7: "HEY BANCO",
+    8: "ACTIVE LEASING",
+    9: "HAY CASH",
     10: "FINSUS",
     11: "FINBE ABC",
+    14: "AFIRME",
+    13: "ARRENDA+",
+    16: "FINCOMUN",
+    17: "FONDEADORA",
+    18: "FINANTAH",
+    19: "KAPITALIZER",
+    20: "UNIFIN",
     22: "JEEVES",
+    23: "PRIORITA",
+    24: "FINAMO",
+    27: "CENTRAL LEASING",
+    28: "AXIONEX",
     29: "FINKARGO",
     32: "CLARA",
     34: "FLUXO",
+    35: "ENGEN"
 }
 MEMBRESIAS = {
     1: "PLATA",
     2: "ORO",
     3: "PLATINO",
     4: "DIAMANTE",
+    5: "KONNECT",
+    6: "KONNECT EVOLUCIONA",
 }

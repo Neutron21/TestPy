@@ -72,3 +72,28 @@ async def create_utm(session: SessionDep, utmRequest: UtmsCreate):
     session.refresh(nuevo)
 
     return nuevo
+
+@router.get("/utms/faltantes/{id_usuario}")
+async def get_financieras_faltantes(session: SessionDep, id_usuario: int):
+    ids_base = (1, 4, 11, 12, 32, 37)
+
+    query = text("""
+        SELECT financieras.id, financieras.nombre 
+        FROM financieras 
+        WHERE financieras.id IN :ids_base
+        AND financieras.id NOT IN (
+            SELECT id_financiera 
+            FROM utms 
+            WHERE id_usuario = :id_usuario
+        )
+    """)
+
+    result = session.execute(
+        query, 
+        {"ids_base": ids_base, "id_usuario": id_usuario}
+    ).mappings().all()
+
+    if not result:
+        return {"mensaje": "El usuario ya cuenta con UTMs para todas las financieras del catálogo."}
+
+    return list(result)

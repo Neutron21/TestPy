@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Header
 from sqlalchemy import text
-from sqlmodel import select
+from sqlmodel import delete, select
 from jinja2 import Environment, FileSystemLoader
 import os
 import shutil
@@ -10,13 +10,14 @@ import base64
 from datetime import date, timedelta
 from sqlmodel import select
 from app.db import SessionDep
-from app.models import CorreosPagos, Cotizacion, Productos
+from app.models import Comentarios, CorreosPagos, Cotizacion, Productos, Track_Status, Usuarios
 
 from app.db import SessionDep
-from app.models import Usuarios
 from app.routers.bigQuery.dashboard import ( sync_brokers, sync_categorias, sync_cotizacion, sync_estatus_tramites, sync_financieras,
-                                             sync_productos, sync_sedes, sync_subCategorias, sync_usuarios)
-from utils.email import enviar_correo_informativo, enviar_correo_simple, enviar_correo_pago_vencida, fillFirma
+                                             sync_productos, sync_sedes, sync_subCategorias, sync_usuarios, sync_membresias,
+                                             sync_track_status, sync_comentarios)
+from app.utils.logger_config import logger
+from app.utils.email import enviar_correo_informativo, enviar_correo_simple, enviar_correo_pago_vencida, fillFirma
 
 router = APIRouter(tags=["Tareas"])
 
@@ -53,17 +54,25 @@ def borrar_carpetas(ids):
     return eliminadas
 
 
-# 💬 Borra comentarios asociados a las cotizaciones
-def borrar_comentarios_prueba(session, ids):
+# 🧹 Borra los hijos asociados a las cotizaciones antes de eliminar el padre
+def borrar_hijos_prueba(session, ids):
     if not ids:
-        return 0
+        return {"comentarios": 0, "track_status": 0}
 
-    result = session.execute(text("""
-        DELETE FROM comentarios
-        WHERE id_cotizacion IN :ids
-    """), {"ids": tuple(ids)})
+    ids_tuple = tuple(ids)
 
-    return result.rowcount
+    comentarios_borrados = session.exec(
+        delete(Comentarios).where(Comentarios.id_cotizacion.in_(ids_tuple))
+    ).rowcount
+
+    track_status_borrados = session.exec(
+        delete(Track_Status).where(Track_Status.id_cotizacion.in_(ids_tuple))
+    ).rowcount
+
+    return {
+        "comentarios": comentarios_borrados,
+        "track_status": track_status_borrados,
+    }
 
 
 # 🧨 Borra registros en BD
@@ -95,9 +104,15 @@ def validar_cron_token_bq(x_cron_token: str = Header(None)):
         raise HTTPException(status_code=500, detail="Error de configuración en el servidor")
     if not x_cron_token:
         raise HTTPException(status_code=400, detail="X Token requerido")
+    bq_secret = os.getenv("CRON_SECRET_BQ")
+    print(f"SECRET LEN: {len(bq_secret)}")
+    print(f"HEADER LEN: {len(x_cron_token)}")
+    print(f"IGUALES: {bq_secret == x_cron_token}")
 
+    print(f"SECRET REPR: {repr(bq_secret)}")
+    print(f"HEADER REPR: {repr(x_cron_token)}")
     if x_cron_token != os.getenv("CRON_SECRET_BQ"):
-        raise HTTPException(status_code=401, detail="X Token inválido")
+        raise HTTPException(status_code=401, detail="X Token inválido BQ")
 # 🚀 ENDPOINT PRINCIPAL
 @router.delete("/cotizaciones/borrar-pruebas")
 def borrar_pruebas(session: SessionDep, _ = Depends(validar_cron_token)):
@@ -116,16 +131,19 @@ def borrar_pruebas(session: SessionDep, _ = Depends(validar_cron_token)):
     # 🗑 2. Borrar carpetas
     carpetas_borradas = borrar_carpetas(ids)
 
-    # 🧨 3. Borrar BD
+    # � 3. Borrar hijos antes del padre para evitar conflictos por FK
+    hijos_borrados = borrar_hijos_prueba(session, ids)
+
+    # 🧨 4. Borrar BD
     total_bd = borrar_cotizaciones_prueba(session, ids)
-    comentarios_borrados = borrar_comentarios_prueba(session, ids)
 
     session.commit()
 
     return {
         "mensaje": "Cotizaciones de prueba eliminadas correctamente",
         "total_bd": total_bd,
-        "comentarios_borrados": comentarios_borrados,
+        "comentarios_borrados": hijos_borrados["comentarios"],
+        "track_status_borrados": hijos_borrados["track_status"],
         "carpetas_borradas": carpetas_borradas
     }
 
@@ -261,22 +279,29 @@ async def sync_all(session: SessionDep, background_tasks: BackgroundTasks, _ = D
     }
 
 def syncAllDashboard(session):
-    results = {}
+    try:
+        results = {}
 
-    results["brokers"] = sync_brokers(session)
-    results["cotizacion"] = sync_cotizacion(session)
-    results["categorias"] = sync_categorias(session)
-    results["estatus_tramites"] = sync_estatus_tramites(session)
-    results["financieras"] = sync_financieras(session)
-    results["productos"] = sync_productos(session)
-    results["sedes"] = sync_sedes(session)
-    results["subCategorias"] = sync_subCategorias(session)
-    results["usuarios"] = sync_usuarios(session)
-    print(results)
-    return {
-        "status": "ok",
-        "synced": results
-    }
+        results["brokers"] = sync_brokers(session)
+        results["cotizacion"] = sync_cotizacion(session)
+        results["categorias"] = sync_categorias(session)
+        results["estatus_tramites"] = sync_estatus_tramites(session)
+        results["financieras"] = sync_financieras(session)
+        results["productos"] = sync_productos(session)
+        results["sedes"] = sync_sedes(session)
+        results["subCategorias"] = sync_subCategorias(session)
+        results["usuarios"] = sync_usuarios(session)
+        results["membresias"] = sync_membresias(session)
+        results["track_status"] = sync_track_status(session)
+        results["comentarios"] = sync_comentarios(session)
+        print(results)
+        return {
+            "status": "ok",
+            "synced": results
+        }
+    except Exception as exc:
+        logger.critical("Error crítico en syncAllDashboard: %s", exc, exc_info=True)
+        raise
 
 @router.post("/catalogo-socios")
 async def catalogo_socios(
@@ -285,20 +310,22 @@ async def catalogo_socios(
     _ = Depends(validar_cron_token)
 ):
     statement = text("""
-        SELECT 
-            u.id,         
-            u.nombre,
-            u.email,
-            b.nombre AS broker,
-            s.nombre AS sede,
-            u.celular
-        FROM usuarios u
-        INNER JOIN brokers b on b.id = u.id_broker
-        INNER JOIN sedes s on s.id = u.id_sede
-        WHERE u.id_financiera IS NULL
-        AND u.id NOT IN (1,2,9,14,15,23,42,43)
-        ORDER BY u.id
-    """)
+            SELECT 
+                u.id,         
+                u.nombre,
+                u.email,
+                b.nombre AS broker,
+                s.nombre AS sede,
+                u.celular
+            FROM usuarios u
+            INNER JOIN brokers b on b.id = u.id_broker
+            INNER JOIN sedes s on s.id = u.id_sede
+            WHERE u.id_financiera IS NULL
+            AND u.id NOT IN (1,2,9,14,15,23,42,43)
+            AND u.f_ultimo_pago IS NOT NULL
+            AND DATE_ADD(u.f_ultimo_pago, INTERVAL 1 YEAR) >= CURRENT_DATE()
+            ORDER BY u.id
+        """)
 
     usuarios = session.exec(statement).all()
 
@@ -325,7 +352,7 @@ async def catalogo_socios(
     #     "info@konnect.mx", 
     #     "ara.castro@konnect.mx",
     #     "kfigueroa@konnect.mx"
-    #     ]
+        # ]
 
     if not lista_correos:
         return {"message": "No hay correos destino."}

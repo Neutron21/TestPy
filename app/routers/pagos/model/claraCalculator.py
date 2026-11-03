@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from sqlmodel import func, select
+from fastapi import HTTPException
 from app.routers.pagos.model.baseFinanciera import FINANCIERAS, MEMBRESIAS, BaseFinanciera, status_dispersion, to_decimal_7_5, show_percent, calc_IVA
 from app.models import Cotizacion, Pagos, Productos, ResponsePagos, Usuarios
 
@@ -31,6 +32,8 @@ class ClaraCalculator(BaseFinanciera):
             (Pagos.m_max >= self.lineas_broker)
             )
         self.pagos_result = self.session.exec(query_pagos).first()
+        if not self.pagos_result:
+            raise HTTPException(status_code=404, detail="Regla no encontrada")
         print(self.pagos_result)
 
         query_user = select(Usuarios).where(Usuarios.id == self.cotizacion.id_user)
@@ -54,10 +57,10 @@ class ClaraCalculator(BaseFinanciera):
             case 2:
                 porcentaje_broker = t_pago.c_oro
                 comision_broker = t_pago.c_oro * self.cotizacion.monto
-            case 3:
+            case 3 | 5:
                 porcentaje_broker = t_pago.c_platino
                 comision_broker = t_pago.c_platino * self.cotizacion.monto
-            case 4:
+            case 4 | 6:
                 porcentaje_broker = t_pago.c_diamante
                 comision_broker = t_pago.c_diamante * self.cotizacion.monto
 

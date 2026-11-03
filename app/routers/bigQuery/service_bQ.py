@@ -16,9 +16,12 @@ def ensure_table(dataset, table, schema):
         client.create_table(new_table)
         print(f"🚀 Tabla {table} creada")
 
+
 def truncate_table(dataset, table):
+    print(f"🧹 Truncando tabla {dataset}.{table}")
     query = f"TRUNCATE TABLE `{dataset}.{table}`"
     client.query(query).result()
+
 
 def insert_rows(dataset, table, rows):
     print(f"🔹 Insertando {len(rows)} filas en {dataset}.{table}...")
@@ -26,7 +29,7 @@ def insert_rows(dataset, table, rows):
     errors = client.insert_rows_json(table_ref, rows)
     print(f"🔥 Filas insertadas en la tabla {table}")
     if errors:
-        print("❌ BigQuery insert error:", errors)
+        print(f"❌ BigQuery insert error en {table}: {errors}")
         raise RuntimeError(errors)
     
 SCHEMAS = {
@@ -70,6 +73,7 @@ SCHEMAS = {
         bigquery.SchemaField("nombre", "STRING"),
         bigquery.SchemaField("tipo", "STRING"),
         bigquery.SchemaField("fase", "INT64"),
+        bigquery.SchemaField("id_membresia ", "INT64"),
     ],
     "productos": [
         bigquery.SchemaField("id", "INT64"),
@@ -93,6 +97,7 @@ SCHEMAS = {
         bigquery.SchemaField("nombre", "STRING"),
         bigquery.SchemaField("email", "STRING"),
         bigquery.SchemaField("rol", "STRING"),
+        bigquery.SchemaField("rfc", "STRING"),
         bigquery.SchemaField("id_broker", "INT64"),
         bigquery.SchemaField("id_sede", "INT64"),
         bigquery.SchemaField("membresia", "INT64"),
@@ -100,5 +105,53 @@ SCHEMAS = {
         bigquery.SchemaField("nivel", "INT64"),
         bigquery.SchemaField("id_superior", "INT64"),
         bigquery.SchemaField("id_financiera", "INT64"),
+        bigquery.SchemaField("created_at", "TIMESTAMP"),
+        bigquery.SchemaField("comisiones", "STRING"),
+        bigquery.SchemaField("f_ultimo_pago", "DATE"),
     ],
+    "comentarios": [
+        bigquery.SchemaField("id_comentario", "INT64"),
+        bigquery.SchemaField("id_cotizacion", "INT64"),
+        bigquery.SchemaField("id_usuario", "STRING"),
+        bigquery.SchemaField("comentarios", "STRING"),
+        bigquery.SchemaField("timestamp", "TIMESTAMP"),
+        bigquery.SchemaField("visible", "BOOL"),
+    ],
+    "membresias": [
+        bigquery.SchemaField("id", "INT64"),
+        bigquery.SchemaField("nombre", "STRING"),
+    ],
+    "track_status": [
+        bigquery.SchemaField("id", "INT64"),
+        bigquery.SchemaField("id_cotizacion", "INT64"),
+        bigquery.SchemaField("id_status", "INT64"),
+        bigquery.SchemaField("fecha", "TIMESTAMP"),
+        bigquery.SchemaField("id_usuario", "STRING"),
+    ],
+    "calculo_comisiones": [
+    bigquery.SchemaField("id", "INT64"),
+    bigquery.SchemaField("id_cotizacion", "INT64"),
+    bigquery.SchemaField("version", "INT64"),
+    bigquery.SchemaField("id_financiera", "INT64"),
+    bigquery.SchemaField("id_producto", "INT64"),
+    bigquery.SchemaField("id_usuario", "INT64"),
+    bigquery.SchemaField("monto_credito", "INT64"),
+    bigquery.SchemaField("membresia_broker", "STRING"),
+    bigquery.SchemaField("porcentaje_pago_konnect", "NUMERIC"),
+    bigquery.SchemaField("pago_konnect", "NUMERIC"),
+    bigquery.SchemaField("iva_pago_konnect", "NUMERIC"),
+    bigquery.SchemaField("total_pago_konnect", "NUMERIC"),
+    bigquery.SchemaField("porcentaje_pago_broker", "NUMERIC"),
+    bigquery.SchemaField("pago_broker", "NUMERIC"),
+    bigquery.SchemaField("iva_pago_broker", "NUMERIC"),
+    bigquery.SchemaField("total_pago_broker", "NUMERIC"),
+    bigquery.SchemaField("ganancia_konnect", "NUMERIC"),
+    bigquery.SchemaField("iva_ganancia_konnect", "NUMERIC"),
+    bigquery.SchemaField("total_ganancia_konnect", "NUMERIC"),
+    bigquery.SchemaField("regla_aplicada", "STRING"),
+    bigquery.SchemaField("fecha_calculo", "TIMESTAMP"),
+    bigquery.SchemaField("es_vigente", "BOOL"),
+    bigquery.SchemaField("recalculado_por", "INT64"),
+    bigquery.SchemaField("motivo_recalculo", "STRING"),
+],
 }

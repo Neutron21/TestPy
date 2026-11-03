@@ -22,6 +22,8 @@ router = APIRouter(tags=["SendMails"])
 ruta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ruta_templates = os.path.join(ruta_base, "templates")
 env = Environment(loader=FileSystemLoader(ruta_templates))
+FINANCIERAS_ESPECIALES = {7, 14}
+
 
 
 def obtener_jefes(user_id: int, session) -> List[Usuarios]:
@@ -43,7 +45,7 @@ def obtener_mails_ifs(cotizacion: Cotizacion, session) -> List[str]:
     query_producto = select(Productos).where(Productos.id == cotizacion.producto)
     producto = session.exec(query_producto).first()
 
-    if cotizacion.id_financiera == 14:
+    if cotizacion.id_financiera in FINANCIERAS_ESPECIALES:
             query_correos = select(Correos.correo).where(
                 (Correos.id_financiera == cotizacion.id_financiera) &
                 (Correos.v_mail == 1) &
@@ -117,7 +119,7 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
         template = env.get_template(template_name)
         html_content = template.render(**vars(bodyMail), isLink=withLink)
 
-        if cotizacion.id_financiera == 39:
+        if cotizacion.id_financiera == 39 or cotizacion.id_financiera == 14:
             background_tasks.add_task(enviar_correo_con_expediente_zip, cotizacion, html_content, correos, bodyMail.cotizacionB64)
         else:
             background_tasks.add_task(enviar_correo, bodyMail, html_content, correos)
@@ -169,7 +171,6 @@ def mail_dispersion(data: dict, session: SessionDep):
         "ara.castro@konnect.mx",
         "gerencia.operativa@konnect.mx",
         "gerencia.corporativa@konnect.mx" ,
-        "ericka.aguilar@konnect.mx"
 
         ]))
     monto_formateado = "${:,.2f}".format(cotizacion.monto)
@@ -223,7 +224,6 @@ def enviar_correo_nuevo_usuario(
     correos_konnect = [
         "evolucion.talento@konnect.mx",
         "ij.innovaciones@gmail.com",
-        "ernesto.veraza@clara.team", # este correo de Clara se agrega aqui ya que solo atiende peticiones de las utms no de cotizaciones
         "ara.castro@konnect.mx",
         "kfigueroa@konnect.mx"
     ]
@@ -309,4 +309,52 @@ def mail_comentario_direccion(data: ReqMailComentarioDir, session: SessionDep):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+def enviar_correo_solicitud_utms(user, ids_financieras_filtro, titulo_correo, session, background_tasks):
+    correos_financieras = session.exec(
+        select(Correos.correo).where(
+            Correos.id_financiera.in_(ids_financieras_filtro),
+            Correos.v_mail == 1
+        )
+    ).all()
     
+    correos_db = [c[0] if isinstance(c, tuple) else c for c in correos_financieras]
+    if not correos_db:
+        return False
+
+    # correos_konnect = [
+    #     #"evolucion.talento@konnect.mx", 
+    #     "ij.innovaciones@gmail.com",
+    #     "ara.castro@konnect.mx", 
+    #     "kfigueroa@konnect.mx"
+    # ]
+
+    # Preparamos todos los correos a incluir (Financieras + Konnect + Usuario)
+    correos_a_incluir = correos_db # + correos_konnect
+    if user.email:
+        correos_a_incluir.append(user.email)
+
+    lista_correos = list({ c.strip() for c in correos_a_incluir if c and c.strip()})
+
+    broker = session.get(Brokers, user.id_broker) if user.id_broker else None
+    sede = session.get(Sedes, user.id_sede) if user.id_sede else None
+    token = crear_token({"email": user.email, "name": user.nombre, "id_user": user.id})
+
+    html_content = env.get_template("usuario.html").render(
+        nombre=user.nombre, 
+        email=user.email, 
+        id_user=user.id,  
+        telefono=user.celular,
+        broker=broker.nombre if broker else "N/A", 
+        sede=sede.nombre if sede else "N/A",
+        token=token
+    )
+
+    background_tasks.add_task(
+        enviar_correo_simple, 
+        html_content, 
+        lista_correos, 
+        f"Konnect 📋 {titulo_correo} - {user.nombre}"
+    )
+    
+    return lista_correos
