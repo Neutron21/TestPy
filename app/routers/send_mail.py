@@ -171,7 +171,6 @@ def mail_dispersion(data: dict, session: SessionDep):
         "ara.castro@konnect.mx",
         "gerencia.operativa@konnect.mx",
         "gerencia.corporativa@konnect.mx" ,
-
         ]))
     monto_formateado = "${:,.2f}".format(cotizacion.monto)
 
@@ -180,7 +179,8 @@ def mail_dispersion(data: dict, session: SessionDep):
     
     template = env.get_template("dispersion.html")
     html_content = template.render(**request)
-
+    cotizacion.producto = producto.nombre # Asignamos el nombre del producto al objeto cotizacion para el contenido del correo
+    
     enviar_correo_dispersion(cotizacion, html_content, correos)
 
     return {"ok": True, "message": "Correo de dispersión enviado correctamente"}
