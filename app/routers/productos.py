@@ -4,9 +4,59 @@ from sqlmodel import select
 from app.db import SessionDep
 from app.models import ProductoParametros, ProductoResponse, Tp_producto_checklist, Productos, ProductosDTO, ProductosTipoPersonaDTO
 
-
-
 router = APIRouter(tags=["Productos"])
+
+@router.get("/productos/porSector/{financiera_id}")
+async def get_productos_por_sector(financiera_id: int, session: SessionDep):
+    # 1. Obtenemos los productos activos de la financiera
+    query = select(Productos).where(
+        (Productos.institucion_id == financiera_id) & (Productos.visible == True)
+    ).order_by(Productos.nombre)
+    productos_db = session.exec(query).all()
+
+    # Inicializamos los grupos que pide tu maqueta
+    agrupados = {
+        "autos": [],
+        "motos": [],
+        "flotillas": [],
+        "hogar": []
+    }
+
+    for producto in productos_db:
+        # Obtenemos los tipos de persona únicos para este producto
+        tipos = session.exec(
+            select(Tp_producto_checklist.tipo_persona)
+            .where(Tp_producto_checklist.producto_id == producto.id)
+            .distinct()
+        ).all()
+
+        # Armamos el DTO del producto
+        dto = ProductosTipoPersonaDTO(
+            id=producto.id,
+            nombre=producto.nombre,
+            checklist=producto.checklist,
+            ch_viabilidad=producto.ch_viabilidad,
+            institucion_id=producto.institucion_id,
+            tipo_persona=tipos,
+            id_categoria=producto.id_categoria,
+            id_subCategoria=producto.id_subCategoria
+        )
+
+        # Clasificamos según su id_categoria
+        cat = producto.id_categoria
+        if cat == 1:
+            agrupados["autos"].append(dto)
+        elif cat == 2:
+            agrupados["motos"].append(dto)
+        elif cat == 3:
+            agrupados["flotillas"].append(dto)
+        elif cat == 4:
+            agrupados["hogar"].append(dto)
+        else:
+            # Fallback opcional por si hay alguna categoría extra
+            agrupados["autos"].append(dto)
+
+    return agrupados
 
 @router.post("/producto", response_model=Productos) 
 async def create_producto(producto_data: ProductosDTO, session: SessionDep):
@@ -55,9 +105,8 @@ async def get_producto(id_producto: int, session: SessionDep):
         parametros=parametros 
     )
 
-
 @router.get("/productos/tipoPersona/{financiera_id}", response_model=list[ProductosTipoPersonaDTO])
-async def get_producto_by_financiera(financiera_id: int, session: SessionDep):
+async def get_producto_by_financiera_tipo_persona(financiera_id: int, session: SessionDep):
     query = select(Productos).where((Productos.institucion_id == financiera_id) & (Productos.visible == True)).order_by(Productos.nombre)
     productos_db = session.exec(query).all()
 
@@ -104,6 +153,4 @@ async def obtener_plazos(producto_id: int, session: SessionDep):
     raw_plazos = producto.plazo.split(",")
     print(raw_plazos)
    
-
     return {"plazos": raw_plazos}
-

@@ -177,6 +177,7 @@ class CotizacionDTO(SQLModel):
     destinoCredito: str = Field(max_length=250, nullable=False)
     custom_prod: Optional[str] = Field(default=None, nullable=True)
     fecha_pago: Optional[date] = Field(default=None, nullable=True)
+    
 
 
 
@@ -187,6 +188,7 @@ class Cotizacion (CotizacionDTO, table=True ):
     id_cotizacion: int | None = Field(default=None, primary_key=True, nullable=False)
     id_user: int = Field(foreign_key="usuarios.id", nullable=False)
     fecha_pago: Optional[date] = Field(default=None)
+  
     
 class CotizacionResponse(CotizacionDTO):
     id_cotizacion: int
