@@ -85,6 +85,8 @@ async def buscador_cotizaciones(
                 ROW_NUMBER() OVER(PARTITION BY id_cotizacion ORDER BY timestamp DESC) as rn
                 FROM comentarios
             ) uc ON c.id_cotizacion = uc.id_cotizacion AND uc.rn = 1
+            LEFT JOIN productos p ON c.producto = p.id
+            LEFT JOIN categorias cat ON p.id_categoria = cat.id
         """
 
     if estatus is not None:
@@ -104,8 +106,14 @@ async def buscador_cotizaciones(
         params["idUser"] = idUser
 
     if categoria:
-        query_filters += f" AND {alias_prefix}categoria = :categoria"
-        params["categoria"] = categoria
+        query_filters += f""" 
+            AND {alias_prefix}producto IN (
+                SELECT p_sub.id FROM productos p_sub 
+                JOIN categorias cat_sub ON p_sub.id_categoria = cat_sub.id 
+                WHERE LOWER(TRIM(cat_sub.nombre)) LIKE LOWER(TRIM(:categoria_patron))
+            )
+        """
+        params["categoria_patron"] = f"%{categoria.strip()}%"
 
     if fechaDesde and fechaHasta:
         query_filters += f" AND {alias_prefix}timestamp BETWEEN :fechaDesde AND :fechaHasta"
@@ -121,7 +129,7 @@ async def buscador_cotizaciones(
         params["like"] = like
         params["folioUserRfc"] = folioUserRfc
 
-    select_fields = "c.*, uc.texto_comentario, uc.fecha_ultimo_comentario"
+    select_fields = "c.*, uc.texto_comentario, uc.fecha_ultimo_comentario, cat.nombre AS categoria_nombre"
 
     if rol != 'a' and user:
         query = f"""

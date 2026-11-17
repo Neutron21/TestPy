@@ -154,3 +154,14 @@ async def obtener_plazos(producto_id: int, session: SessionDep):
     print(raw_plazos)
    
     return {"plazos": raw_plazos}
+@router.get("/productos/inactivos/financiera-44", response_model=list[Productos])
+async def get_productos_inactivos_financiera_44(session: SessionDep):
+    query = select(Productos).where(
+        (Productos.institucion_id == 44) & 
+        ((Productos.visible == 0) | (Productos.visible == False))
+    ).order_by(Productos.nombre)
+    
+    productos_db = session.exec(query).all()
+    
+    return productos_db if productos_db else []
+

@@ -376,6 +376,10 @@ class ProductoResponse(BaseModel):
 class ProductosTipoPersonaDTO(ProductosDTO):
     id: int
     tipo_persona: List[str] = Field(default_factory=list)
+    id_categoria: Optional[int] = None       
+    id_subCategoria: Optional[int] = None   
+    checklist: Optional[str] = None
+    ch_viabilidad: Optional[str] = None
 
 class Productos(ProductosDTO, table=True):
     id: int | None = Field(default=None, primary_key=True)
