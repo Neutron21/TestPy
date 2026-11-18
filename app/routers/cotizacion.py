@@ -255,3 +255,6 @@ async def get_operativa_nombre(id_operativa: int, session: SessionDep):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Operativa")
     
     return {"nombre": operativa.nombre}
+
+
+
