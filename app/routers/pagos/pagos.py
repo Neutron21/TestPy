@@ -105,23 +105,3 @@ async def obtener_calculo_comisiones_vigentes(session: SessionDep):
     """)
 
     return [dict(row) for row in session.execute(query).mappings().all()]
-
-@router.get("/pagos/calculo-comisiones-por-id/{id}", response_model=CalculoComisiones)
-async def obtener_comision_por_id_siendo_vigente(id: int, session: SessionDep):
-    """
-    Busca un registro por su ID exacto y solo lo devuelve si su campo es_vigente es 1.
-    """
-    statement = (
-        select(CalculoComisiones)
-        .where(CalculoComisiones.id == id)
-        .where(CalculoComisiones.es_vigente == 1)
-    )
-    registro = session.exec(statement).first()
-    
-    if not registro:
-        raise HTTPException(
-            status_code=404, 
-            detail=f"El registro con ID {id} no tiene es_vigente = 1"
-        )
-        
-    return registro
