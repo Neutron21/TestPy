@@ -531,4 +531,9 @@ class CalculoComisiones(SQLModel, table=True):
     es_vigente: Optional[int] = Field(default=1)
     recalculado_por: Optional[int] = Field(default=None)
     motivo_recalculo: Optional[str] = Field(default=None)    
+
+class PolizaUpdateDTO(BaseModel):
+    id_cotizacion: int
+    OpCliente: Optional[str] = None
+    ingresos: Optional[float] = None    
     

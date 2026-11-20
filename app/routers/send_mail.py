@@ -123,9 +123,15 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
             background_tasks.add_task(enviar_correo_con_expediente_zip, cotizacion, html_content, correos, bodyMail.cotizacionB64)
         else:
             background_tasks.add_task(enviar_correo, bodyMail, html_content, correos)
+            correos_enviados = sorted({correo.strip() for correo in correos if correo and correo.strip()})
+
+        return {
+            "mensaje": f"Solicitud recibida, el correo se está enviando en segundo plano.",
+            "destinatarios": correos_enviados
+        }        
 
 
-        return {"mensaje": "Solicitud recibida, el correo se está enviando en segundo plano."}
+    
     except Exception as e:
         logger.error(f"Request :( {request}")
         logger.error(f"Error al preparar correo: {str(e)}")

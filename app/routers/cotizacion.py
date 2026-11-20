@@ -5,7 +5,7 @@ from sqlmodel import select, text, update
 from datetime import date
 
 from app.db import SessionDep
-from app.models import Cotizacion, CotizacionDTO, EstatusUpdate, FechaPagoDTO, MontoUpdate, Sedes
+from app.models import Cotizacion, CotizacionDTO, EstatusUpdate, FechaPagoDTO, MontoUpdate, PolizaUpdateDTO, Sedes
 from app.routers import comentarios
 
 router = APIRouter(tags=["Cotizacion"])
@@ -255,6 +255,22 @@ async def get_operativa_nombre(id_operativa: int, session: SessionDep):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Operativa")
     
     return {"nombre": operativa.nombre}
+@router.patch("/cotizaciones/poliza", response_model=Cotizacion)
+async def update_poliza_cotizacion(request: PolizaUpdateDTO, session: SessionDep):
+    cotizacion = session.get(Cotizacion, request.id_cotizacion)
+    if not cotizacion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cotización no encontrada")
+
+    if request.OpCliente is not None:
+        cotizacion.OpCliente = request.OpCliente
+
+    cotizacion.ingresos = request.ingresos
+
+    session.add(cotizacion)
+    session.commit()
+    session.refresh(cotizacion)
+
+    return cotizacion
 
 
 
