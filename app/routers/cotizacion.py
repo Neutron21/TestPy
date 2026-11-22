@@ -1,28 +1,22 @@
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, status, Path
 from sqlalchemy import desc
-from sqlmodel import select, text
-from app.db import SessionDep
-from app.models import Cotizacion, CotizacionDTO, EstatusUpdate, FechaPagoDTO, MontoUpdate
-import base64
-from sqlmodel import update
+from sqlmodel import select, text, update
 from datetime import date
-from fastapi import APIRouter
-from sqlmodel import select
-from app.models import Sedes
 
-from app.models import Cotizacion
+from app.db import SessionDep
+from app.models import Cotizacion, CotizacionDTO, EstatusUpdate, FechaPagoDTO, MontoUpdate, PolizaUpdateDTO, Sedes
 from app.routers import comentarios
 
 router = APIRouter(tags=["Cotizacion"])
 
-@router.get("/cotizacion/{id_cotizacion}" , response_model=Cotizacion)
+@router.get("/cotizacion/{id_cotizacion}", response_model=Cotizacion)
 async def get_cotizacion_by_id(id_cotizacion: int, session: SessionDep):
     query = select(Cotizacion).where(Cotizacion.id_cotizacion == id_cotizacion)
     cotizacion = session.exec(query).first()
     if not cotizacion:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Cotización")
-    return  cotizacion
+    return cotizacion
 
 @router.get("/cotizaciones") 
 async def obtener_cotizaciones_por_usuario(
@@ -30,7 +24,6 @@ async def obtener_cotizaciones_por_usuario(
     id_user: Optional[int] = Query(None),
     nivel_user: Optional[int] = Query(None)):
 
-    # Usamos una subconsulta con ROW_NUMBER() para garantizar que siempretraiga el último comentario exacto
     join_sql = """
             LEFT JOIN (
                 SELECT id_cotizacion, comentarios AS texto_comentario, timestamp AS fecha_ultimo_comentario,
@@ -74,24 +67,26 @@ async def buscador_cotizaciones(
     folioUserRfc: Optional[str] = Query(None),
     fechaDesde: Optional[str] = Query(None),
     fechaHasta: Optional[str] = Query(None),
+    categoria: Optional[str] = Query(None),
     user: Optional[int] = Query(None),
     rol: Optional[str] = Query(None),
     ):
     
-    if estatus is None and fin is None and not folioUserRfc and not fechaDesde and not fechaHasta and not broker and not idUser:
+    if user is None and estatus is None and fin is None and not folioUserRfc and not fechaDesde and not fechaHasta and not broker and not idUser and not categoria:
         raise HTTPException(status_code=400, detail="Error: Campos incompletos.")
 
     query_filters = ""
     params = {}
     alias_prefix = "c." 
     
-    # Aplicamos la misma lógica segura aquí también
     join_sql = """
             LEFT JOIN (
                 SELECT id_cotizacion, comentarios AS texto_comentario, timestamp AS fecha_ultimo_comentario,
                 ROW_NUMBER() OVER(PARTITION BY id_cotizacion ORDER BY timestamp DESC) as rn
                 FROM comentarios
             ) uc ON c.id_cotizacion = uc.id_cotizacion AND uc.rn = 1
+            LEFT JOIN productos p ON c.producto = p.id
+            LEFT JOIN categorias cat ON p.id_categoria = cat.id
         """
 
     if estatus is not None:
@@ -110,6 +105,16 @@ async def buscador_cotizaciones(
         query_filters += f" AND {alias_prefix}id_user = :idUser"
         params["idUser"] = idUser
 
+    if categoria:
+        query_filters += f""" 
+            AND {alias_prefix}producto IN (
+                SELECT p_sub.id FROM productos p_sub 
+                JOIN categorias cat_sub ON p_sub.id_categoria = cat_sub.id 
+                WHERE LOWER(TRIM(cat_sub.nombre)) LIKE LOWER(TRIM(:categoria_patron))
+            )
+        """
+        params["categoria_patron"] = f"%{categoria.strip()}%"
+
     if fechaDesde and fechaHasta:
         query_filters += f" AND {alias_prefix}timestamp BETWEEN :fechaDesde AND :fechaHasta"
         params["fechaDesde"] = fechaDesde
@@ -124,7 +129,7 @@ async def buscador_cotizaciones(
         params["like"] = like
         params["folioUserRfc"] = folioUserRfc
 
-    select_fields = "c.*, uc.texto_comentario, uc.fecha_ultimo_comentario"
+    select_fields = "c.*, uc.texto_comentario, uc.fecha_ultimo_comentario, cat.nombre AS categoria_nombre"
 
     if rol != 'a' and user:
         query = f"""
@@ -154,33 +159,44 @@ async def buscador_cotizaciones(
     rows = [dict(row._mapping) for row in result]
    
     return rows
-@router.get("/cotizacion/byFin/{id_financiera}" , response_model=List[Cotizacion])
+
+
+@router.get("/cotizacion/byFin/{id_financiera}", response_model=List[Cotizacion])
 async def get_cotizacion_by_fin_endpoint(id_financiera: int, session: SessionDep):
     query = select(Cotizacion).where(Cotizacion.id_financiera == id_financiera).order_by(desc(Cotizacion.timestamp))
     cotizacion = session.exec(query).all()
     if not cotizacion:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Cotización")
-    return  cotizacion
+    return cotizacion
+
 
 @router.post("/cotizacion", response_model=Cotizacion) 
 async def create_cotizacion(usuario_data: CotizacionDTO, session: SessionDep):
-    cotizacion = Cotizacion.model_validate(usuario_data.model_dump())  
+    cotizacion_data = usuario_data.model_dump(exclude_unset=True)  
+    
+    # Extraemos los campos opcionales del formulario de Angular
+    num_p = cotizacion_data.pop("num_poliza", None)
+    valor_p = cotizacion_data.pop("valor_poliza", None)
+    
+    # Guardamos la información de la póliza en la columna existente 'OpCliente' usando 'or' de Python
+    if num_p or valor_p:
+        cotizacion_data["OpCliente"] = f"Póliza: {num_p or 'N/A'} | Valor: {valor_p or 'N/A'}"
+
+    cotizacion = Cotizacion.model_validate(cotizacion_data)  
     session.add(cotizacion)  
     session.commit() 
     session.refresh(cotizacion) 
     return cotizacion  
 
-@router.patch("/cotizacion/status_udpate", response_model=Cotizacion)
-async def update_estatus_cotizacion(
-    estatus_data: EstatusUpdate, session: SessionDep):
 
+@router.patch("/cotizacion/status_udpate", response_model=Cotizacion)
+async def update_estatus_cotizacion(estatus_data: EstatusUpdate, session: SessionDep):
     cotizacion = session.get(Cotizacion, estatus_data.id_cotizacion)
     if not cotizacion:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
     
     cotizacion.estatus = estatus_data.estatus
     
-    # 👈 Si el estatus es Pagado (9), guardamos la fecha de hoy automáticamente
     if estatus_data.estatus == 9:
         cotizacion.fecha_pago = date.today()
         
@@ -190,10 +206,9 @@ async def update_estatus_cotizacion(
     
     return cotizacion
 
-@router.patch("/cotizacion/monto_udpate", response_model=Cotizacion)
-async def update_monto_cotizacion(
-    request: MontoUpdate, session: SessionDep,):
 
+@router.patch("/cotizacion/monto_udpate", response_model=Cotizacion)
+async def update_monto_cotizacion(request: MontoUpdate, session: SessionDep):
     cotizacion = session.get(Cotizacion, request.id_cotizacion)
     if not cotizacion:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
@@ -205,11 +220,9 @@ async def update_monto_cotizacion(
     
     return cotizacion
 
+
 @router.patch("/updatefechaPago")
-async def update_fecha_pago(
-    data: FechaPagoDTO,
-    session: SessionDep
-):
+async def update_fecha_pago(data: FechaPagoDTO, session: SessionDep):
     try:
         session.expunge_all()
         statement = (
@@ -231,6 +244,8 @@ async def update_fecha_pago(
             status_code=500, 
             detail="Error de integridad"
         )
+
+
 @router.get("/operativa/{id_operativa}")
 async def get_operativa_nombre(id_operativa: int, session: SessionDep):
     query = select(Sedes).where(Sedes.id == id_operativa)
@@ -240,3 +255,22 @@ async def get_operativa_nombre(id_operativa: int, session: SessionDep):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la Operativa")
     
     return {"nombre": operativa.nombre}
+@router.patch("/cotizaciones/poliza", response_model=Cotizacion)
+async def update_poliza_cotizacion(request: PolizaUpdateDTO, session: SessionDep):
+    cotizacion = session.get(Cotizacion, request.id_cotizacion)
+    if not cotizacion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cotización no encontrada")
+
+    if request.OpCliente is not None:
+        cotizacion.OpCliente = request.OpCliente
+
+    cotizacion.ingresos = request.ingresos
+
+    session.add(cotizacion)
+    session.commit()
+    session.refresh(cotizacion)
+
+    return cotizacion
+
+
+

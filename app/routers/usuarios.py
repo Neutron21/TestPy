@@ -300,4 +300,31 @@ async def update_usuario(
 
     return usuario
 
+@router.get("/usuarios-completos")
+async def get_usuarios_completos(session: SessionDep):
+    query = text("""
+        SELECT 
+            u.id, u.nombre, u.email, u.rfc, u.rol, u.celular, u.nivel, 
+            u.id_superior, u.id_financiera, u.id_sede, u.comisiones, 
+            u.f_ultimo_pago, u.created_at,
+            u.id_broker, u.membresia,
+            b.nombre as nombre_broker,
+            m.nombre as nombre_membresia,
+            s.nombre as nombre_sede,
+            CASE WHEN u.id_superior IS NOT NULL AND u.id_superior != 0 THEN 'SubUsuario' ELSE 'Usuario' END as tipo_usuario
+        FROM usuarios u
+        LEFT JOIN brokers b ON u.id_broker = b.id
+        LEFT JOIN membresias m ON u.membresia = m.id
+        LEFT JOIN sedes s ON u.id_sede = s.id
+        ORDER BY u.nombre
+    """)
+    result = session.execute(query).mappings().all()
+    return list(result)
+
+@router.get("/sedes",response_model=List[dict])
+async def get_sedes(session: SessionDep):
+    query = text("SELECT id, nombre FROM sedes ORDER BY nombre")
+    result = session.execute(query).mappings().all()
+    return list(result)
+
 

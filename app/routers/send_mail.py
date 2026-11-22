@@ -123,9 +123,15 @@ async def enviar_mail(request: ReqMail, session: SessionDep, background_tasks: B
             background_tasks.add_task(enviar_correo_con_expediente_zip, cotizacion, html_content, correos, bodyMail.cotizacionB64)
         else:
             background_tasks.add_task(enviar_correo, bodyMail, html_content, correos)
+            correos_enviados = sorted({correo.strip() for correo in correos if correo and correo.strip()})
+
+        return {
+            "mensaje": f"Solicitud recibida, el correo se está enviando en segundo plano.",
+            "destinatarios": correos_enviados
+        }        
 
 
-        return {"mensaje": "Solicitud recibida, el correo se está enviando en segundo plano."}
+    
     except Exception as e:
         logger.error(f"Request :( {request}")
         logger.error(f"Error al preparar correo: {str(e)}")
@@ -171,7 +177,6 @@ def mail_dispersion(data: dict, session: SessionDep):
         "ara.castro@konnect.mx",
         "gerencia.operativa@konnect.mx",
         "gerencia.corporativa@konnect.mx" ,
-
         ]))
     monto_formateado = "${:,.2f}".format(cotizacion.monto)
 
@@ -180,7 +185,8 @@ def mail_dispersion(data: dict, session: SessionDep):
     
     template = env.get_template("dispersion.html")
     html_content = template.render(**request)
-
+    cotizacion.producto = producto.nombre # Asignamos el nombre del producto al objeto cotizacion para el contenido del correo
+    
     enviar_correo_dispersion(cotizacion, html_content, correos)
 
     return {"ok": True, "message": "Correo de dispersión enviado correctamente"}

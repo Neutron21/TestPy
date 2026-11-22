@@ -25,9 +25,10 @@ class FinancierasDTO(SQLModel):
     nombre: str = Field(default=None)
     tipo: str = Field(min_length=1, max_length=1)
     fase: int = Field(default=None)
+    img: str = Field(default=None)
+    id_membresia: int = Field(foreign_key="membresias.id")
     liga_carpeta: str = Field(default=None)
     url: str = Field (default=None)
-    img: str = Field (default=None)
 
 
 class Financieras(FinancierasDTO,table=True):
@@ -41,6 +42,7 @@ class Categorias(SQLModel):
 class SubCategorias(SQLModel):
     __tablename__ = "subCategorias"
     id: int = Field(primary_key=True)
+    id_categoria: int = Field(foreign_key="categorias.id")
     nombre: str = Field(default=None)
 
 class ProductosDTO(SQLModel):
@@ -50,7 +52,6 @@ class ProductosDTO(SQLModel):
     institucion_id: int = Field(foreign_key="financiera.id")
     id_categoria: int = Field(foreign_key="categorias.id")
     id_subCategoria: int = Field(foreign_key="subCategorias.id")
-
 
  
 class ProductoFormatoTipoPersona(SQLModel, table=True):
@@ -176,6 +177,7 @@ class CotizacionDTO(SQLModel):
     destinoCredito: str = Field(max_length=250, nullable=False)
     custom_prod: Optional[str] = Field(default=None, nullable=True)
     fecha_pago: Optional[date] = Field(default=None, nullable=True)
+    
 
 
 
@@ -186,6 +188,7 @@ class Cotizacion (CotizacionDTO, table=True ):
     id_cotizacion: int | None = Field(default=None, primary_key=True, nullable=False)
     id_user: int = Field(foreign_key="usuarios.id", nullable=False)
     fecha_pago: Optional[date] = Field(default=None)
+  
     
 class CotizacionResponse(CotizacionDTO):
     id_cotizacion: int
@@ -373,6 +376,10 @@ class ProductoResponse(BaseModel):
 class ProductosTipoPersonaDTO(ProductosDTO):
     id: int
     tipo_persona: List[str] = Field(default_factory=list)
+    id_categoria: Optional[int] = None       
+    id_subCategoria: Optional[int] = None   
+    checklist: Optional[str] = None
+    ch_viabilidad: Optional[str] = None
 
 class Productos(ProductosDTO, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -524,4 +531,9 @@ class CalculoComisiones(SQLModel, table=True):
     es_vigente: Optional[int] = Field(default=1)
     recalculado_por: Optional[int] = Field(default=None)
     motivo_recalculo: Optional[str] = Field(default=None)    
+
+class PolizaUpdateDTO(BaseModel):
+    id_cotizacion: int
+    OpCliente: Optional[str] = None
+    ingresos: Optional[float] = None    
     
