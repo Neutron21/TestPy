@@ -535,5 +535,5 @@ class CalculoComisiones(SQLModel, table=True):
 class PolizaUpdateDTO(BaseModel):
     id_cotizacion: int
     OpCliente: Optional[str] = None
-    ingresos: Optional[float] = None    
+    monto: Optional[float] = None  
     
