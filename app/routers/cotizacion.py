@@ -264,7 +264,7 @@ async def update_poliza_cotizacion(request: PolizaUpdateDTO, session: SessionDep
     if request.OpCliente is not None:
         cotizacion.OpCliente = request.OpCliente
 
-    cotizacion.ingresos = request.ingresos
+    cotizacion.monto = request.monto
 
     session.add(cotizacion)
     session.commit()
