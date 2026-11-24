@@ -72,7 +72,8 @@ class UsuarioDTO(BaseModel):
     celular: Optional[str] = None
     nivel: Optional[int] = None
     id_financiera: Optional[int] = None
-    id_superior: Optional[int] = None   # ← AHORA SÍ SE MANDA
+    id_superior: Optional[int] = None   
+    f_ultimo_pago: Optional[date] = None
 
 
 class UsuarioUpdate(BaseModel):
@@ -84,6 +85,7 @@ class UsuarioUpdate(BaseModel):
     id_broker: Optional[int] = None
     id_sede: Optional[int] = None
     celular: Optional[str] = None
+    f_ultimo_pago: Optional[date] = None
     
 
 class Usuarios(SQLModel, table=True):

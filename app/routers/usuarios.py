@@ -13,6 +13,8 @@ from datetime import datetime, timedelta
 from fastapi import BackgroundTasks
 
 from app.routers.send_mail import enviar_correo_solicitud_utms
+from sqlalchemy.exc import IntegrityError
+
 
 
 router = APIRouter(tags=["Usuarios"])
@@ -327,4 +329,43 @@ async def get_sedes(session: SessionDep):
     result = session.execute(query).mappings().all()
     return list(result)
 
+# ============================================================
+# Eliminar usuario
+# ============================================================
+@router.delete(
+    "/usuarios/{id_usuario}",
+    status_code=status.HTTP_200_OK
+)
+async def delete_usuario(id_usuario: int, session: SessionDep):
+    usuario = session.exec(
+        select(Usuarios).where(Usuarios.id == id_usuario)
+    ).first()
 
+    if not usuario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuario no existe"
+        )
+
+    try:
+        session.execute(
+            text("UPDATE usuarios SET id_superior = NULL WHERE id_superior = :id_user"),
+            {"id_user": id_usuario}
+        )
+
+        session.execute(
+            text("DELETE FROM utms WHERE id_usuario = :id_user"),
+            {"id_user": id_usuario}
+        )
+
+        session.delete(usuario)
+        session.commit()
+
+    except IntegrityError as e:
+        session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Aún existen registros asociados que impiden borrar el usuario: {str(e.orig)}"
+        )
+
+    return {"ok": True, "mensaje": "Usuario eliminado correctamente", "id": id_usuario}
